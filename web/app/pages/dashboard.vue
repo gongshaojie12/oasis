@@ -62,6 +62,20 @@
             <NButton type="primary" size="small">创建第一个模拟</NButton>
           </NuxtLink>
         </div>
+        <div v-else class="recent-list">
+          <NuxtLink
+            v-for="sim in recentSims"
+            :key="sim.id"
+            :to="`/simulations/${sim.id}`"
+            class="recent-item"
+          >
+            <div class="recent-info">
+              <span class="recent-name">{{ sim.name }}</span>
+              <span class="recent-meta">{{ sim.platform }} · {{ sim.agentCount }} agents</span>
+            </div>
+            <CommonStatusTag :status="sim.status" />
+          </NuxtLink>
+        </div>
       </div>
     </div>
   </div>
@@ -71,15 +85,31 @@
 import { NButton } from 'naive-ui'
 
 const authStore = useAuthStore()
+const { $api } = useApi()
+
+const usageStats = ref<any>(null)
+const recentSims = ref<any[]>([])
+const loading = ref(true)
 
 const stats = computed(() => ({
-  totalSims: 0,
-  completedSims: 0,
+  totalSims: usageStats.value?.simulations?.total ?? 0,
+  completedSims: usageStats.value?.simulations?.completed ?? 0,
   remainingQuota: authStore.enterprise?.simQuota ?? 0,
-  totalReports: 0,
+  totalReports: usageStats.value?.reports ?? 0,
 }))
 
-const recentSims = ref([])
+onMounted(async () => {
+  try {
+    const [usageRes, simsRes] = await Promise.all([
+      $api<any>('/api/enterprises/usage'),
+      $api<any>('/api/simulations?pageSize=5'),
+    ])
+    if (usageRes.code === 0) usageStats.value = usageRes.data
+    if (simsRes.code === 0) recentSims.value = simsRes.data.items
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <style scoped>
@@ -162,5 +192,43 @@ const recentSims = ref([])
   background: var(--bg-card);
   border: 1px dashed var(--border-color);
   border-radius: 12px;
+}
+
+.recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recent-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  text-decoration: none;
+  transition: border-color 0.2s;
+}
+
+.recent-item:hover {
+  border-color: var(--accent-blue);
+}
+
+.recent-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.recent-name {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.recent-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 </style>
