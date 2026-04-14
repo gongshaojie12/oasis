@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Environment files (secrets)
+.env
+.env.*
+!.env.production.example
+
+# Node
+web/node_modules
+web/.nuxt
+web/.output
+web/data
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+*.egg-info
+dist
+build
+
+# Docker
+docker-compose*.yml
+.dockerignore
+
+# Dev tools
+.container
+.claude
+docs
+tests
+*.md
+!README.md
+.pre-commit-config.yaml
+
+# Data
+data
+*.db
+*.sqlite
