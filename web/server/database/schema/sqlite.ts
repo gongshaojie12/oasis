@@ -113,3 +113,23 @@ export const llmUsage = sqliteTable('llm_usage', {
   agentTier: text('agent_tier'),
   createdAt: text('created_at').notNull(),
 })
+
+export const llmKeys = sqliteTable('llm_keys', {
+  id: text('id').primaryKey(),
+  enterpriseId: text('enterprise_id').notNull().references(() => enterprises.id),
+  provider: text('provider').notNull(),
+  encryptedKey: text('encrypted_key').notNull(),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+})
+
+export const operationLogs = sqliteTable('operation_logs', {
+  id: text('id').primaryKey(),
+  enterpriseId: text('enterprise_id').notNull().references(() => enterprises.id),
+  userId: text('user_id').notNull().references(() => users.id),
+  action: text('action').notNull(),
+  resourceType: text('resource_type').notNull(),
+  resourceId: text('resource_id'),
+  details: text('details'),
+  createdAt: text('created_at').notNull(),
+})
