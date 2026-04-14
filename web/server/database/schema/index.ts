@@ -18,4 +18,6 @@ export {
   agentTemplates,
   simulationTemplates,
   llmUsage,
+  llmKeys,
+  operationLogs,
 } from './sqlite'
