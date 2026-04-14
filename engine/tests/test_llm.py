@@ -81,3 +81,66 @@ class TestCreateModel:
         settings = Settings(_env_file=None)
         with pytest.raises(KeyError, match="Unknown LLM provider"):
             create_model("nonexistent", "some-model", settings)
+
+
+from engine.llm.tiered import AgentTier, TierConfig, TieredModelAssigner
+
+
+class TestTieredModelAssigner:
+    def test_assign_tiers_covers_all_agents(self):
+        settings = Settings(_env_file=None)
+        assigner = TieredModelAssigner(settings=settings)
+        assignments = assigner.assign_tiers(100)
+        assert len(assignments) == 100
+        assert set(assignments.keys()) == set(range(100))
+
+    def test_assign_tiers_distribution(self):
+        settings = Settings(_env_file=None)
+        assigner = TieredModelAssigner(settings=settings, seed=123)
+        assignments = assigner.assign_tiers(100)
+        core_count = sum(1 for t in assignments.values() if t == AgentTier.CORE)
+        normal_count = sum(1 for t in assignments.values() if t == AgentTier.NORMAL)
+        bg_count = sum(1 for t in assignments.values() if t == AgentTier.BACKGROUND)
+        assert core_count == 10
+        assert normal_count == 25
+        assert bg_count == 65
+        assert core_count + normal_count + bg_count == 100
+
+    def test_assign_tiers_small_count(self):
+        settings = Settings(_env_file=None)
+        assigner = TieredModelAssigner(settings=settings)
+        assignments = assigner.assign_tiers(3)
+        assert len(assignments) == 3
+        all_tiers = set(assignments.values())
+        assert len(all_tiers) >= 1  # at least one tier assigned
+
+    def test_assign_tiers_single_agent(self):
+        settings = Settings(_env_file=None)
+        assigner = TieredModelAssigner(settings=settings)
+        assignments = assigner.assign_tiers(1)
+        assert len(assignments) == 1
+        assert 0 in assignments
+
+    def test_assign_tiers_deterministic_with_same_seed(self):
+        settings = Settings(_env_file=None)
+        a1 = TieredModelAssigner(settings=settings, seed=99).assign_tiers(50)
+        a2 = TieredModelAssigner(settings=settings, seed=99).assign_tiers(50)
+        assert a1 == a2
+
+    def test_tier_summary(self):
+        settings = Settings(_env_file=None)
+        assigner = TieredModelAssigner(settings=settings)
+        summary = assigner.get_tier_summary(100)
+        assert "core" in summary
+        assert "normal" in summary
+        assert "background" in summary
+        assert summary["core"] + summary["normal"] + summary["background"] == 100
+
+    def test_get_model_for_unknown_tier_raises(self):
+        settings = Settings(_env_file=None)
+        assigner = TieredModelAssigner(
+            settings=settings,
+            tier_configs=[],
+        )
+        with pytest.raises(ValueError, match="No configuration found"):
+            assigner.get_model_for_tier(AgentTier.CORE)
