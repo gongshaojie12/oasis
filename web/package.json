@@ -23,6 +23,7 @@
     "naive-ui": "^2.44.1",
     "nanoid": "^5.1.7",
     "nuxt": "^4.4.2",
+    "pinia-plugin-persistedstate": "^4.7.1",
     "postgres": "^3.4.9",
     "vue": "^3.5.32",
     "vue-echarts": "^8.0.1",
