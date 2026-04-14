@@ -1,0 +1,63 @@
+version: "3.8"
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    container_name: oasis-web
+    restart: unless-stopped
+    ports:
+      - "${HOST_PORT:-80}:3000"
+    volumes:
+      - ./data/sqlite:/app/data
+    environment:
+      - DATABASE_TYPE=${DATABASE_TYPE:-sqlite}
+      - DATABASE_URL=${DATABASE_URL:-file:./data/oasis.db}
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - ENGINE_URL=http://engine:8000
+      - SMS_ACCESS_KEY=${SMS_ACCESS_KEY:-}
+      - SMS_ACCESS_SECRET=${SMS_ACCESS_SECRET:-}
+    depends_on:
+      engine:
+        condition: service_healthy
+    networks:
+      - oasis-net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  engine:
+    build:
+      context: .
+      dockerfile: docker/engine.Dockerfile
+    container_name: oasis-engine
+    restart: unless-stopped
+    volumes:
+      - ./data/reports:/app/reports
+    environment:
+      - NUXT_CALLBACK_URL=http://web:3000
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY}
+      - MAX_CONCURRENT_TASKS=${MAX_CONCURRENT_TASKS:-2}
+      - DEFAULT_LLM_PROVIDER=${DEFAULT_LLM_PROVIDER:-deepseek}
+      - DEFAULT_LLM_MODEL=${DEFAULT_LLM_MODEL:-deepseek-chat}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+      - QWEN_API_KEY=${QWEN_API_KEY:-}
+      - DOUBAO_API_KEY=${DOUBAO_API_KEY:-}
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY:-}
+      - ZHIPU_API_KEY=${ZHIPU_API_KEY:-}
+      - KIMI_API_KEY=${KIMI_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    networks:
+      - oasis-net
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+
+networks:
+  oasis-net:
+    driver: bridge
