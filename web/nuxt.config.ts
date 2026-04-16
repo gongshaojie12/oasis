@@ -18,6 +18,9 @@ export default defineNuxtConfig({
     optimizeDeps: {
       include: ['naive-ui', 'vueuc', 'date-fns-tz/formatInTimeZone'],
     },
+    ssr: {
+      noExternal: ['naive-ui', 'vueuc', 'date-fns-tz'],
+    },
   },
 
   runtimeConfig: {
