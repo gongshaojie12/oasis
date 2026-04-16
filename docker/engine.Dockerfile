@@ -1,7 +1,7 @@
 # ============================================
 # Stage 1: Build (install dependencies)
 # ============================================
-FROM python:3.10-slim AS build
+FROM python:3.10-slim-bookworm AS build
 
 WORKDIR /build
 
@@ -27,7 +27,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # ============================================
 # Stage 2: Runtime
 # ============================================
-FROM python:3.10-slim
+FROM python:3.10-slim-bookworm
 
 WORKDIR /app
 
