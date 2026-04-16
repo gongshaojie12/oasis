@@ -5,6 +5,7 @@ const publicPaths = [
   '/api/auth/sms.send',
   '/api/auth/login',
   '/api/auth/register',
+  '/api/auth/admin-login',
   '/api/health',
   '/api/internal/',
 ]

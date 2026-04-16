@@ -8,6 +8,9 @@ export default defineEventHandler(async (event) => {
   // Only apply to authenticated API routes
   if (!path.startsWith('/api/') || !event.context.user) return
 
+  // Superadmin has no enterprise — skip check
+  if (event.context.user.role === 'superadmin') return
+
   const db = useDB()
   const enterpriseId = event.context.user.enterpriseId
 
