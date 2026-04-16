@@ -20,10 +20,10 @@ services:
       - ENGINE_URL=http://engine:8000
       - SMS_ACCESS_KEY=${SMS_ACCESS_KEY:-}
       - SMS_ACCESS_SECRET=${SMS_ACCESS_SECRET:-}
-      - ADMIN_USERNAME=${ADMIN_USERNAME:-}
-      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
-      - TEST_PHONE=${TEST_PHONE:-}
-      - TEST_SMS_CODE=${TEST_SMS_CODE:-}
+      - NUXT_ADMIN_USERNAME=${ADMIN_USERNAME:-}
+      - NUXT_ADMIN_PASSWORD=${ADMIN_PASSWORD:-}
+      - NUXT_TEST_PHONE=${TEST_PHONE:-}
+      - NUXT_TEST_SMS_CODE=${TEST_SMS_CODE:-}
     depends_on:
       engine:
         condition: service_healthy
