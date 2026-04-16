@@ -23,32 +23,40 @@ export default defineEventHandler(async (event) => {
 
   const { phone, code, enterpriseName, userName } = parsed.data
   const db = useDB()
+  const config = useRuntimeConfig()
+  const isTestPhone = config.testPhone && phone === config.testPhone
 
-  // Verify SMS code
-  const smsRecord = await db.select()
-    .from(smsCodes)
-    .where(
-      and(
-        eq(smsCodes.phone, phone),
-        eq(smsCodes.code, code),
-        eq(smsCodes.used, 0)
+  // Verify SMS code (skip for test phone)
+  if (isTestPhone) {
+    if (code !== config.testSmsCode) {
+      return error(ErrorCodes.SMS_CODE_INVALID, '验证码错误')
+    }
+  } else {
+    const smsRecord = await db.select()
+      .from(smsCodes)
+      .where(
+        and(
+          eq(smsCodes.phone, phone),
+          eq(smsCodes.code, code),
+          eq(smsCodes.used, 0)
+        )
       )
-    )
-    .orderBy(smsCodes.createdAt)
-    .limit(1)
+      .orderBy(smsCodes.createdAt)
+      .limit(1)
 
-  if (smsRecord.length === 0) {
-    return error(ErrorCodes.SMS_CODE_INVALID, '验证码错误')
+    if (smsRecord.length === 0) {
+      return error(ErrorCodes.SMS_CODE_INVALID, '验证码错误')
+    }
+
+    if (isExpired(smsRecord[0].expiresAt)) {
+      return error(ErrorCodes.SMS_CODE_EXPIRED, '验证码已过期')
+    }
+
+    // Mark code as used
+    await db.update(smsCodes)
+      .set({ used: 1 })
+      .where(eq(smsCodes.id, smsRecord[0].id))
   }
-
-  if (isExpired(smsRecord[0].expiresAt)) {
-    return error(ErrorCodes.SMS_CODE_EXPIRED, '验证码已过期')
-  }
-
-  // Mark code as used
-  await db.update(smsCodes)
-    .set({ used: 1 })
-    .where(eq(smsCodes.id, smsRecord[0].id))
 
   // Check if phone already registered
   const existingUser = await db.select()

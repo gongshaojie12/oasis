@@ -19,6 +19,13 @@ export default defineEventHandler(async (event) => {
   }
 
   const { phone } = parsed.data
+
+  // Test phone: skip SMS sending entirely
+  const config = useRuntimeConfig()
+  if (config.testPhone && phone === config.testPhone) {
+    return success({ sent: true })
+  }
+
   const db = useDB()
 
   // Rate limit: 60 seconds between sends
