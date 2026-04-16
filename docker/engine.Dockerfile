@@ -5,6 +5,9 @@ FROM python:3.10-slim-bookworm AS build
 
 WORKDIR /build
 
+# Use Chinese mirror for apt to avoid network issues
+RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources
+
 # Install build tools for native extensions (igraph, cairocffi, etc.)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc g++ libffi-dev libcairo2-dev pkg-config \
@@ -30,6 +33,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 FROM python:3.10-slim-bookworm
 
 WORKDIR /app
+
+# Use Chinese mirror for apt to avoid network issues
+RUN sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources
 
 # Runtime system libraries (cairo for cairocffi) + curl for health checks
 RUN apt-get update && apt-get install -y --no-install-recommends \
