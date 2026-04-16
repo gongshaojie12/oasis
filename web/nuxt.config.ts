@@ -34,6 +34,10 @@ export default defineNuxtConfig({
     internalApiKey: process.env.INTERNAL_API_KEY || 'dev-internal-key',
     engineUrl: process.env.ENGINE_URL || 'http://localhost:8000',
     encryptionKey: process.env.ENCRYPTION_KEY || 'dev-encryption-key-32chars!!',
+    adminUsername: process.env.ADMIN_USERNAME || '',
+    adminPassword: process.env.ADMIN_PASSWORD || '',
+    testPhone: process.env.TEST_PHONE || '',
+    testSmsCode: process.env.TEST_SMS_CODE || '',
   },
 
   compatibilityDate: '2025-01-01',
