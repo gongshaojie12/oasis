@@ -9,6 +9,19 @@ export default defineEventHandler(async (event) => {
     return error(ErrorCodes.TOKEN_INVALID, '未登录')
   }
 
+  // Superadmin: return static info, no DB lookup
+  if (user.role === 'superadmin') {
+    return success({
+      user: {
+        id: 'superadmin',
+        phone: '',
+        name: '超级管理员',
+        role: 'superadmin',
+      },
+      enterprise: null,
+    })
+  }
+
   const db = useDB()
 
   const userRecord = await db.select()
