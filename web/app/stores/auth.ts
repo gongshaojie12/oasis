@@ -39,7 +39,7 @@ export const useAuthStore = defineStore('auth', {
       token: string
       refreshToken: string
       user: User
-      enterprise: Enterprise
+      enterprise: Enterprise | null
     }) {
       this.token = data.token
       this.refreshToken = data.refreshToken
