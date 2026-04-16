@@ -107,6 +107,10 @@ ENCRYPTION_KEY=aabbccdd11223344aabbccdd11223344aabbccdd11223344aabbccdd11223344
 INTERNAL_API_KEY=test-internal-key-12345
 SMS_ACCESS_KEY=
 SMS_ACCESS_SECRET=
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=oasis-admin-2026
+TEST_PHONE=13800000000
+TEST_SMS_CODE=888888
 MAX_CONCURRENT_TASKS=2
 DEFAULT_LLM_PROVIDER=deepseek
 DEFAULT_LLM_MODEL=deepseek-chat
@@ -159,6 +163,27 @@ docker compose -f docker-compose.prod.yml --env-file .env.production ps
 
 - **首页**: http://localhost
 - **健康检查**: http://localhost/api/health
+- **管理员登录**: http://localhost/admin/login （账号密码见 `.env.production` 中的 `ADMIN_USERNAME` / `ADMIN_PASSWORD`）
+
+#### 测试账号使用方式
+
+平台提供两种登录方式：
+
+**方式一：管理员登录（无需手机验证码）**
+
+1. 访问 http://localhost/admin/login
+2. 输入用户名 `admin`，密码 `oasis-admin-2026`（或 `.env.production` 中配置的值）
+3. 登录后直接进入 Dashboard
+
+**方式二：手机号登录（使用测试号，无需真实短信）**
+
+1. 首次使用需要先注册：访问 http://localhost/register
+2. 填写企业名称、用户名，手机号输入 `13800000000`，验证码输入 `888888`
+3. 注册成功后自动登录
+4. 后续登录：访问 http://localhost/login，手机号 `13800000000`，验证码 `888888`
+
+> 测试手机号和验证码由 `TEST_PHONE` / `TEST_SMS_CODE` 环境变量控制。
+> 生产环境上线时，将这两个变量留空即可禁用测试号，所有用户走真实短信验证。
 
 ### 1.9 测试完成后停止
 
@@ -273,6 +298,14 @@ vim .env.production
 JWT_SECRET=<替换为 openssl rand -hex 16 的输出>
 ENCRYPTION_KEY=<替换为 openssl rand -hex 32 的输出>
 INTERNAL_API_KEY=<替换为 openssl rand -hex 16 的输出>
+
+# 管理员账号（设置安全的密码）
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=<替换为安全的密码>
+
+# 测试手机号（生产环境建议留空以禁用）
+TEST_PHONE=
+TEST_SMS_CODE=
 
 # 至少填写一个 LLM API Key
 DEEPSEEK_API_KEY=sk-xxxxxxxxxxxxxxxx
@@ -484,6 +517,10 @@ docker builder prune -f
 | INTERNAL_API_KEY | Web ↔ Engine 内部通信密钥 | - | **是** |
 | SMS_ACCESS_KEY | 阿里云短信 AccessKey | - | 否（不用短信可留空） |
 | SMS_ACCESS_SECRET | 阿里云短信 AccessSecret | - | 否 |
+| ADMIN_USERNAME | 管理员登录用户名 | - | 否（不设置则禁用管理员登录） |
+| ADMIN_PASSWORD | 管理员登录密码 | - | 否 |
+| TEST_PHONE | 测试手机号（跳过真实短信） | - | 否（留空则禁用测试号） |
+| TEST_SMS_CODE | 测试手机号的固定验证码 | - | 否 |
 
 ### Engine 服务配置
 
