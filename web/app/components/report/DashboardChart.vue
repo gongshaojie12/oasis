@@ -29,10 +29,11 @@ defineProps<{
 
 <style scoped>
 .chart-container {
-  background: var(--bg-card);
+  background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
 }
 
 .chart-title {

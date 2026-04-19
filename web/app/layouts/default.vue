@@ -1,5 +1,5 @@
 <template>
-  <NConfigProvider :theme="darkTheme" :theme-overrides="themeOverrides">
+  <NConfigProvider :theme-overrides="themeOverrides">
     <NMessageProvider>
       <div class="app-layout">
         <LayoutSidebar />
@@ -25,7 +25,6 @@
 </template>
 
 <script setup lang="ts">
-import { darkTheme } from 'naive-ui'
 import type { GlobalThemeOverrides } from 'naive-ui'
 import { NConfigProvider, NMessageProvider } from 'naive-ui'
 import { useAuthStore } from '~/stores/auth'
@@ -35,16 +34,16 @@ const router = useRouter()
 
 const themeOverrides: GlobalThemeOverrides = {
   common: {
-    primaryColor: '#3b82f6',
-    primaryColorHover: '#60a5fa',
-    primaryColorPressed: '#2563eb',
-    bodyColor: '#0a0e1a',
-    cardColor: '#1a1f36',
-    modalColor: '#1a1f36',
-    popoverColor: '#1a1f36',
-    borderColor: '#2a3158',
-    textColorBase: '#e2e8f0',
-    inputColor: '#111827',
+    primaryColor: '#4f6ef7',
+    primaryColorHover: '#6b85f9',
+    primaryColorPressed: '#3a57d9',
+    bodyColor: '#f5f7fa',
+    cardColor: '#ffffff',
+    modalColor: '#ffffff',
+    popoverColor: '#ffffff',
+    borderColor: '#e8ecf1',
+    textColorBase: '#1a2332',
+    inputColor: '#ffffff',
     borderRadius: '8px',
   },
   Button: {
@@ -52,10 +51,13 @@ const themeOverrides: GlobalThemeOverrides = {
   },
   Card: {
     borderRadius: '12px',
-    borderColor: '#2a3158',
+    borderColor: '#e8ecf1',
   },
   Input: {
     borderRadius: '8px',
+  },
+  DataTable: {
+    borderRadius: '12px',
   },
 }
 
@@ -77,11 +79,12 @@ async function handleLogout() {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--bg-primary);
 }
 
 .app-content {
   flex: 1;
-  padding: 24px;
+  padding: 28px 32px;
   overflow-y: auto;
 }
 

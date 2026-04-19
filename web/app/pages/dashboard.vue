@@ -118,22 +118,23 @@ onMounted(async () => {
 }
 
 .page-title {
-  font-size: 24px;
-  font-weight: 600;
-  margin-bottom: 24px;
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 28px;
+  color: var(--text-primary);
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  gap: 18px;
   margin-bottom: 32px;
 }
 
 .dashboard-sections {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 28px;
 }
 
 .section-header {
@@ -146,40 +147,48 @@ onMounted(async () => {
 .section-header h2 {
   font-size: 16px;
   font-weight: 600;
+  color: var(--text-primary);
 }
 
 .view-all {
   font-size: 13px;
   color: var(--accent-blue);
   text-decoration: none;
+  font-weight: 500;
+}
+
+.view-all:hover {
+  text-decoration: underline;
 }
 
 .quick-actions {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 16px;
 }
 
 .action-card {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 24px;
-  background: var(--bg-card);
+  gap: 12px;
+  padding: 28px;
+  background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 14px;
   color: var(--text-secondary);
   text-decoration: none;
   font-size: 14px;
+  font-weight: 500;
   transition: all 0.2s;
   cursor: pointer;
+  box-shadow: var(--shadow-sm);
 }
 
 .action-card:hover {
-  border-color: var(--accent-blue);
+  box-shadow: var(--shadow-md);
   color: var(--accent-blue);
-  background: var(--bg-hover);
+  transform: translateY(-2px);
 }
 
 .empty-state {
@@ -187,33 +196,35 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  padding: 48px;
+  padding: 52px;
   color: var(--text-secondary);
-  background: var(--bg-card);
-  border: 1px dashed var(--border-color);
-  border-radius: 12px;
+  background: #ffffff;
+  border: 2px dashed var(--border-color);
+  border-radius: 14px;
 }
 
 .recent-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .recent-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--bg-card);
+  padding: 14px 18px;
+  background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 12px;
   text-decoration: none;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
+  box-shadow: var(--shadow-sm);
 }
 
 .recent-item:hover {
-  border-color: var(--accent-blue);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
 
 .recent-info {
@@ -224,6 +235,7 @@ onMounted(async () => {
 
 .recent-name {
   font-size: 14px;
+  font-weight: 500;
   color: var(--text-primary);
 }
 

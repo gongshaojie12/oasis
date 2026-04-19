@@ -22,11 +22,11 @@ export default defineEventHandler(async (event) => {
   const { phone, code } = parsed.data
   const db = useDB()
   const config = useRuntimeConfig()
-  const isTestPhone = config.testPhone && phone === config.testPhone
+  const isTestPhone = config.testPhone && phone === String(config.testPhone)
 
   // Verify SMS code (skip for test phone)
   if (isTestPhone) {
-    if (code !== config.testSmsCode) {
+    if (code !== String(config.testSmsCode)) {
       return error(ErrorCodes.SMS_CODE_INVALID, '验证码错误')
     }
   } else {

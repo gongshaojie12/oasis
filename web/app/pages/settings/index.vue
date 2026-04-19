@@ -277,9 +277,10 @@ onMounted(() => {
 }
 
 .settings-card {
-  background: var(--bg-card) !important;
+  background: #ffffff !important;
   border: 1px solid var(--border-color) !important;
-  border-radius: 12px !important;
+  border-radius: 14px !important;
+  box-shadow: var(--shadow-sm);
 }
 
 .section-title {
@@ -310,9 +311,10 @@ onMounted(() => {
 .usage-item {
   display: flex;
   justify-content: space-between;
-  padding: 12px;
-  background: var(--bg-primary);
-  border-radius: 8px;
+  padding: 14px;
+  background: #f8f9fc;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
 }
 
 .usage-label { font-size: 13px; color: var(--text-secondary); }
@@ -328,9 +330,9 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--bg-primary);
-  border-radius: 8px;
+  padding: 14px 18px;
+  background: #f8f9fc;
+  border-radius: 10px;
   border: 1px solid var(--border-color);
 }
 

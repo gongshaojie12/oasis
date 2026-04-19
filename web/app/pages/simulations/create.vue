@@ -193,13 +193,14 @@ async function handleSubmit() {
 }
 
 .wizard-steps {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
 }
 
 .wizard-content {
-  background: var(--bg-card) !important;
+  background: #ffffff !important;
   border: 1px solid var(--border-color) !important;
-  border-radius: 12px !important;
+  border-radius: 14px !important;
+  box-shadow: var(--shadow-sm);
 }
 
 .step-title {
@@ -212,16 +213,16 @@ async function handleSubmit() {
 .type-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  gap: 14px;
 }
 
 .type-card {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 20px;
+  padding: 22px;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: 14px;
   cursor: pointer;
   transition: all 0.2s;
   background: var(--bg-primary);
@@ -229,11 +230,13 @@ async function handleSubmit() {
 
 .type-card:hover {
   border-color: var(--accent-blue);
+  box-shadow: var(--shadow-sm);
 }
 
 .type-card.selected {
   border-color: var(--accent-blue);
-  background: rgba(59, 130, 246, 0.08);
+  background: #eef1fe;
+  box-shadow: 0 0 0 1px var(--accent-blue);
 }
 
 .type-card strong {
@@ -270,6 +273,7 @@ async function handleSubmit() {
 .confirm-value {
   font-size: 14px;
   color: var(--text-primary);
+  font-weight: 500;
 }
 
 .wizard-nav {

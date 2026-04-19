@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
 
   // Test phone: skip SMS sending entirely
   const config = useRuntimeConfig()
-  if (config.testPhone && phone === config.testPhone) {
+  if (config.testPhone && phone === String(config.testPhone)) {
     return success({ sent: true })
   }
 

@@ -128,17 +128,18 @@ async function handleRegister() {
 <style scoped>
 .auth-card {
   width: 100%;
-  background: var(--bg-card) !important;
+  background: #ffffff !important;
   border: 1px solid var(--border-color) !important;
   border-radius: 16px !important;
-  padding: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow-lg);
 }
 
 .auth-title {
   font-size: 24px;
-  font-weight: 600;
+  font-weight: 700;
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 28px;
   color: var(--text-primary);
 }
 
@@ -154,14 +155,16 @@ async function handleRegister() {
 }
 
 .submit-btn {
-  margin-top: 8px;
-  height: 42px;
+  margin-top: 12px;
+  height: 44px;
   font-size: 15px;
+  font-weight: 600;
+  border-radius: 10px;
 }
 
 .auth-footer {
   text-align: center;
-  margin-top: 20px;
+  margin-top: 24px;
   font-size: 14px;
   color: var(--text-secondary);
 }
@@ -169,6 +172,7 @@ async function handleRegister() {
 .auth-link {
   color: var(--accent-blue);
   text-decoration: none;
+  font-weight: 500;
 }
 
 .auth-link:hover {

@@ -134,7 +134,7 @@ const platformNameMap: Record<string, string> = {
 const columns: DataTableColumns = [
   { title: '名称', key: 'name', ellipsis: { tooltip: true }, width: 200,
     render: (row: any) => h('a', {
-      style: 'color: var(--accent-blue); cursor: pointer; text-decoration: none;',
+      style: 'color: #4f6ef7; cursor: pointer; text-decoration: none; font-weight: 500;',
       onClick: () => router.push(`/simulations/${row.id}`),
     }, row.name),
   },

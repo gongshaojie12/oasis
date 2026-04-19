@@ -154,13 +154,14 @@ onMounted(async () => {
 .detail-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .info-card {
-  background: var(--bg-card) !important;
+  background: #ffffff !important;
   border: 1px solid var(--border-color) !important;
-  border-radius: 12px !important;
+  border-radius: 14px !important;
+  box-shadow: var(--shadow-sm);
 }
 
 .status-bar {
@@ -171,8 +172,8 @@ onMounted(async () => {
 }
 
 .progress-text {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 26px;
+  font-weight: 700;
   color: var(--accent-blue);
 }
 
@@ -190,9 +191,9 @@ onMounted(async () => {
   align-items: center;
   gap: 6px;
   margin-top: 12px;
-  padding: 10px 12px;
-  background: rgba(239, 68, 68, 0.1);
-  border-radius: 8px;
+  padding: 10px 14px;
+  background: #fef2f2;
+  border-radius: 10px;
   color: var(--error);
   font-size: 13px;
 }
@@ -200,7 +201,7 @@ onMounted(async () => {
 .info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 18px;
 }
 
 .card-title {
@@ -213,7 +214,7 @@ onMounted(async () => {
 .detail-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .detail-row {

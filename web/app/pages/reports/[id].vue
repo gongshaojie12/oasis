@@ -68,33 +68,33 @@ const dashboardData = computed(() => report.value?.dashboardData)
 // Build chart options from dashboard data
 const overviewChartOption = computed(() => ({
   backgroundColor: 'transparent',
-  textStyle: { color: '#94a3b8' },
+  textStyle: { color: '#6b7b8d' },
   tooltip: { trigger: 'item' },
   series: [{
     type: 'pie',
     radius: ['40%', '70%'],
     data: [
-      { value: dashboardData.value?.num_steps_completed || 0, name: '已完成轮次' },
-      { value: dashboardData.value?.num_agents || 0, name: 'Agent 数量' },
+      { value: dashboardData.value?.num_steps_completed || 0, name: '已完成轮次', itemStyle: { color: '#4f6ef7' } },
+      { value: dashboardData.value?.num_agents || 0, name: 'Agent 数量', itemStyle: { color: '#8b5cf6' } },
     ],
-    label: { color: '#94a3b8' },
+    label: { color: '#6b7b8d' },
   }],
 }))
 
 const activityChartOption = computed(() => ({
   backgroundColor: 'transparent',
-  textStyle: { color: '#94a3b8' },
+  textStyle: { color: '#6b7b8d' },
   tooltip: { trigger: 'axis' },
   xAxis: {
     type: 'category',
     data: Array.from({ length: dashboardData.value?.num_steps_completed || 5 }, (_, i) => `轮次 ${i + 1}`),
-    axisLabel: { color: '#94a3b8' },
+    axisLabel: { color: '#6b7b8d' },
   },
-  yAxis: { type: 'value', axisLabel: { color: '#94a3b8' } },
+  yAxis: { type: 'value', axisLabel: { color: '#6b7b8d' } },
   series: [{
     type: 'bar',
     data: Array.from({ length: dashboardData.value?.num_steps_completed || 5 }, () => Math.floor(Math.random() * 100)),
-    itemStyle: { color: '#3b82f6' },
+    itemStyle: { color: '#4f6ef7', borderRadius: [4, 4, 0, 0] },
   }],
 }))
 
@@ -120,13 +120,14 @@ onMounted(async () => {
 .report-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
 }
 
 .report-card {
-  background: var(--bg-card) !important;
+  background: #ffffff !important;
   border: 1px solid var(--border-color) !important;
-  border-radius: 12px !important;
+  border-radius: 14px !important;
+  box-shadow: var(--shadow-sm);
 }
 
 .card-title {
@@ -139,7 +140,7 @@ onMounted(async () => {
 .summary-text {
   font-size: 14px;
   color: var(--text-secondary);
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .sim-info {
@@ -155,18 +156,19 @@ onMounted(async () => {
 .charts-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 18px;
 }
 
 .raw-data {
   max-height: 400px;
   overflow: auto;
-  padding: 12px;
-  background: var(--bg-primary);
-  border-radius: 8px;
+  padding: 14px;
+  background: #f8f9fc;
+  border-radius: 10px;
   font-size: 12px;
   color: var(--text-secondary);
   white-space: pre-wrap;
   word-break: break-all;
+  border: 1px solid var(--border-color);
 }
 </style>

@@ -35,7 +35,7 @@ const router = useRouter()
 const columns = [
   { title: '报告标题', key: 'title', ellipsis: { tooltip: true },
     render: (row: any) => h('a', {
-      style: 'color: var(--accent-blue); cursor: pointer; text-decoration: none;',
+      style: 'color: #4f6ef7; cursor: pointer; text-decoration: none; font-weight: 500;',
       onClick: () => router.push(`/reports/${row.id}`),
     }, row.title),
   },

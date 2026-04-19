@@ -4,14 +4,17 @@
       <span class="enterprise-name">{{ enterpriseName }}</span>
     </div>
     <div class="header-right">
-      <div class="quota-info" v-if="quota !== null">
-        <Icon name="carbon:cube" size="16" />
-        <span>剩余 {{ quota }} 次</span>
+      <div class="quota-badge" v-if="quota !== null">
+        <Icon name="carbon:cube" size="15" />
+        <span>{{ quota }} 次配额</span>
       </div>
+      <div class="header-divider" />
       <div class="user-menu" @click="handleLogout">
-        <Icon name="carbon:user-avatar" size="20" />
-        <span>{{ userName }}</span>
-        <Icon name="carbon:logout" size="16" class="logout-icon" />
+        <div class="user-avatar">
+          <Icon name="carbon:user-avatar-filled" size="18" />
+        </div>
+        <span class="user-name">{{ userName }}</span>
+        <Icon name="carbon:chevron-down" size="14" class="chevron-icon" />
       </div>
     </div>
   </header>
@@ -35,35 +38,43 @@ function handleLogout() {
 
 <style scoped>
 .app-header {
-  height: 56px;
-  background: var(--bg-secondary);
+  height: 60px;
+  background: #ffffff;
   border-bottom: 1px solid var(--border-color);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
+  padding: 0 28px;
 }
 
 .enterprise-name {
-  font-size: 14px;
-  color: var(--text-secondary);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .header-right {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 }
 
-.quota-info {
+.header-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-color);
+}
+
+.quota-badge {
   display: flex;
   align-items: center;
   gap: 6px;
   font-size: 13px;
   color: var(--accent-blue);
-  padding: 4px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
+  padding: 5px 14px;
+  background: #eef1fe;
+  border-radius: 20px;
+  font-weight: 500;
 }
 
 .user-menu {
@@ -71,19 +82,33 @@ function handleLogout() {
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
   transition: all 0.2s;
 }
 
 .user-menu:hover {
   background: var(--bg-hover);
-  color: var(--text-primary);
 }
 
-.logout-icon {
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #eef1fe;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-blue);
+}
+
+.user-name {
+  font-weight: 500;
+}
+
+.chevron-icon {
   color: var(--text-secondary);
 }
 </style>

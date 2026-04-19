@@ -1,17 +1,20 @@
 :root {
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #111827;
-  --bg-card: #1a1f36;
-  --bg-hover: #232946;
-  --border-color: #2a3158;
-  --text-primary: #e2e8f0;
-  --text-secondary: #94a3b8;
-  --accent-blue: #3b82f6;
+  --bg-primary: #f5f7fa;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-hover: #f0f2f5;
+  --border-color: #e8ecf1;
+  --text-primary: #1a2332;
+  --text-secondary: #6b7b8d;
+  --accent-blue: #4f6ef7;
   --accent-purple: #8b5cf6;
-  --accent-gradient: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  --accent-gradient: linear-gradient(135deg, #4f6ef7, #8b5cf6);
   --success: #22c55e;
   --warning: #f59e0b;
   --error: #ef4444;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.08);
 }
 
 * {
@@ -37,10 +40,10 @@ html, body, #__nuxt {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: #d0d5dd;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-blue);
+  background: #a0a8b4;
 }
