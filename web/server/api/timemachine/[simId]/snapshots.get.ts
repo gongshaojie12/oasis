@@ -27,9 +27,7 @@ export default defineEventHandler(async (event) => {
 
   if (cached.length > 0) {
     return success(cached.map(s => {
-      let snapshotData
-      try { snapshotData = JSON.parse(s.snapshotData) } catch { snapshotData = {} }
-      return { ...s, snapshotData }
+      try { return JSON.parse(s.snapshotData) } catch { return { round_number: s.roundNumber, metrics: {}, agent_summaries: [], posts: [] } }
     }))
   }
 

@@ -62,13 +62,13 @@ export default defineEventHandler(async (event) => {
     ]
 
     const existing = await db.select().from(agentConversations)
-      .where(eq(agentConversations.id, convId))
+      .where(and(eq(agentConversations.id, convId), eq(agentConversations.enterpriseId, enterpriseId)))
       .limit(1)
 
     if (existing.length > 0) {
       await db.update(agentConversations).set({
         messages: JSON.stringify(newMessages),
-      }).where(eq(agentConversations.id, convId))
+      }).where(and(eq(agentConversations.id, convId), eq(agentConversations.enterpriseId, enterpriseId)))
     } else {
       await db.insert(agentConversations).values({
         id: convId,
