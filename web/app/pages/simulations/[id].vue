@@ -6,6 +6,7 @@
           <NButton v-if="canCancel" type="warning" @click="handleCancel" :loading="cancelling">取消</NButton>
           <NButton v-if="canRetry" type="info" @click="handleRetry" :loading="retrying">重试</NButton>
           <NButton v-if="sim?.status === 'completed'" type="primary" @click="generateAnalysis">生成深度分析报告</NButton>
+          <NButton v-if="sim?.status === 'completed'" type="info" @click="router.push(`/simulations/${id}/timemachine`)">时间机器</NButton>
           <NButton @click="router.push('/simulations')">返回列表</NButton>
         </NSpace>
       </template>
