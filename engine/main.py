@@ -7,6 +7,8 @@ from typing import Any, Optional
 from fastapi import Depends, FastAPI, Header, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from engine.analysts.base import AnalysisContext
+from engine.analysts.debate import DebateEngine
 from engine.callback import CallbackClient
 from engine.config import Settings, get_settings
 from engine.genome.breeder import GenomeBreeder
@@ -75,6 +77,15 @@ class GenomeBreedRequest(BaseModel):
     target_count: int = Field(default=10, ge=1, le=10000)
     mutation_rate: float = Field(default=0.15, ge=0.0, le=1.0)
     strategy: str = Field(default="crossover")
+
+
+class AnalysisRequest(BaseModel):
+    simulation_id: str
+    platform: str = "twitter"
+    num_agents: int = 10
+    num_steps: int = 5
+    db_path: str
+    debate_rounds: int = Field(default=2, ge=1, le=5)
 
 
 # --- Auth dependency ---
@@ -247,3 +258,72 @@ async def breed_genomes(body: GenomeBreedRequest):
         "diversity": round(diversity, 4),
         "count": len(result),
     }
+
+
+@app.post(
+    "/engine/analysis/run",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def run_analysis(body: AnalysisRequest, request: Request):
+    settings = request.app.state.settings
+    qm: TaskQueueManager = request.app.state.queue_manager
+
+    async def analysis_executor(task_info: TaskInfo, params: dict[str, Any]):
+        import sqlite3
+
+        db_path = params["db_path"]
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        trace_data = [dict(r) for r in cursor.execute("SELECT * FROM trace").fetchall()]
+        post_data = [dict(r) for r in cursor.execute("SELECT * FROM post").fetchall()]
+        user_data = [dict(r) for r in cursor.execute("SELECT * FROM user").fetchall()]
+
+        try:
+            follow_data = [dict(r) for r in cursor.execute("SELECT * FROM follow").fetchall()]
+        except Exception:
+            follow_data = []
+
+        conn.close()
+
+        context = AnalysisContext(
+            simulation_id=params["simulation_id"],
+            platform=params["platform"],
+            num_agents=params["num_agents"],
+            num_steps=params["num_steps"],
+            trace_data=trace_data,
+            post_data=post_data,
+            user_data=user_data,
+            follow_data=follow_data,
+        )
+
+        async def llm_call(prompt: str) -> str:
+            from engine.llm.provider import create_model, LLMProviderRegistry
+            registry = LLMProviderRegistry()
+            provider = settings.default_llm_provider or "qwen"
+            model_id = settings.default_llm_model or "qwen-plus"
+            model = create_model(provider, model_id, settings, registry)
+            from camel.messages import BaseMessage
+            user_msg = BaseMessage.make_user_message(role_name="user", content=prompt)
+            response = model.run([user_msg])
+            return response.msgs[0].content
+
+        async def on_progress(phase: str, progress: float) -> None:
+            pass
+
+        engine = DebateEngine(
+            llm_call=llm_call,
+            debate_rounds=params.get("debate_rounds", 2),
+            on_progress=on_progress,
+        )
+        report = await engine.run(context)
+        return report.model_dump()
+
+    params = body.model_dump()
+    task_info = await qm.submit(params)
+
+    original_executor = qm._executor
+    qm.set_executor(analysis_executor)
+
+    return {"task_id": task_info.task_id, "status": task_info.status.value}
