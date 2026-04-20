@@ -35,6 +35,9 @@
 const menuItems = [
   { path: '/dashboard', icon: 'carbon:dashboard', label: '工作台' },
   { path: '/simulations', icon: 'carbon:play-outline', label: '模拟任务' },
+  { path: '/genomes', icon: 'carbon:dna', label: '基因组列表' },
+  { path: '/genomes/create', icon: 'carbon:add', label: '新建基因组' },
+  { path: '/genomes/breed', icon: 'carbon:network-4', label: '群体繁殖' },
   { path: '/reports', icon: 'carbon:report', label: '报告中心' },
   { path: '/templates', icon: 'carbon:template', label: '模板管理' },
   { path: '/settings', icon: 'carbon:settings', label: '企业设置' },
