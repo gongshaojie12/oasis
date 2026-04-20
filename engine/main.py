@@ -13,6 +13,9 @@ from engine.callback import CallbackClient
 from engine.config import Settings, get_settings
 from engine.genome.breeder import GenomeBreeder
 from engine.genome.schema import BreedStrategy, GenomeData
+from engine.graph.schema import GraphData
+from engine.graph.analyzer import GraphAnalyzer
+from engine.graph.mapper import GraphToSimulationMapper
 from engine.queue import TaskInfo, TaskQueueManager, TaskStatus
 from engine.reporter import ProgressReporter
 from engine.runner import SimulationRunner
@@ -86,6 +89,14 @@ class AnalysisRequest(BaseModel):
     num_steps: int = 5
     db_path: str
     debate_rounds: int = Field(default=2, ge=1, le=5)
+
+
+class GraphAnalyzeRequest(BaseModel):
+    graph_data: dict[str, Any]
+
+
+class GraphMapRequest(BaseModel):
+    graph_data: dict[str, Any]
 
 
 # --- Auth dependency ---
@@ -347,3 +358,24 @@ async def get_analysis_status(task_id: str, request: Request):
     if task_id not in tasks:
         raise HTTPException(status_code=404, detail="Analysis task not found")
     return tasks[task_id]
+
+
+@app.post(
+    "/engine/graph/analyze",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def analyze_graph(body: GraphAnalyzeRequest):
+    graph = GraphData.model_validate(body.graph_data)
+    analyzer = GraphAnalyzer(graph)
+    result = analyzer.analyze()
+    return result.model_dump()
+
+
+@app.post(
+    "/engine/graph/to-simulation",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def graph_to_simulation(body: GraphMapRequest):
+    graph = GraphData.model_validate(body.graph_data)
+    mapper = GraphToSimulationMapper(graph)
+    return mapper.map()
