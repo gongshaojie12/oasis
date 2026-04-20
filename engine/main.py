@@ -99,6 +99,28 @@ class GraphMapRequest(BaseModel):
     graph_data: dict[str, Any]
 
 
+class SnapshotRequest(BaseModel):
+    db_path: str
+    num_steps: int
+    round_number: Optional[int] = None
+
+
+class AgentChatRequest(BaseModel):
+    db_path: str
+    agent_id: int
+    round_context: int
+    message: str
+    history: Optional[list[dict[str, Any]]] = None
+
+
+class RoundtableRequest(BaseModel):
+    db_path: str
+    agent_ids: list[int]
+    round_context: int
+    topic: str
+    num_rounds: int = Field(default=3, ge=1, le=5)
+
+
 # --- Auth dependency ---
 
 def verify_internal_key(
@@ -379,3 +401,85 @@ async def graph_to_simulation(body: GraphMapRequest):
     graph = GraphData.model_validate(body.graph_data)
     mapper = GraphToSimulationMapper(graph)
     return mapper.map()
+
+
+@app.post(
+    "/engine/timemachine/snapshots",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def extract_snapshots(body: SnapshotRequest):
+    from engine.timemachine.snapshot import SnapshotExtractor
+
+    extractor = SnapshotExtractor(body.db_path)
+    if body.round_number is not None:
+        snap = extractor.extract_round(body.round_number)
+        return {"snapshot": snap.model_dump()}
+    else:
+        snaps = extractor.extract_all(body.num_steps)
+        return {"snapshots": [s.model_dump() for s in snaps]}
+
+
+@app.post(
+    "/engine/timemachine/chat",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def agent_chat(body: AgentChatRequest, request: Request):
+    from engine.timemachine.chat import AgentChatEngine, ChatMessage
+
+    settings = request.app.state.settings
+
+    async def llm_call(prompt: str) -> str:
+        from engine.llm.provider import LLMProviderRegistry, create_model
+        from camel.messages import BaseMessage
+
+        registry = LLMProviderRegistry()
+        provider = settings.default_llm_provider or "qwen"
+        model_id = settings.default_llm_model or "qwen-plus"
+        model = create_model(provider, model_id, settings, registry)
+        user_msg = BaseMessage.make_user_message(role_name="user", content=prompt)
+        response = model.run([user_msg])
+        return response.msgs[0].content
+
+    history = None
+    if body.history:
+        history = [ChatMessage(**m) for m in body.history]
+
+    engine = AgentChatEngine(db_path=body.db_path, llm_call=llm_call)
+    result = await engine.chat(
+        agent_id=body.agent_id,
+        round_context=body.round_context,
+        user_message=body.message,
+        history=history,
+    )
+    return result.model_dump()
+
+
+@app.post(
+    "/engine/timemachine/roundtable",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def roundtable(body: RoundtableRequest, request: Request):
+    from engine.timemachine.chat import AgentChatEngine
+
+    settings = request.app.state.settings
+
+    async def llm_call(prompt: str) -> str:
+        from engine.llm.provider import LLMProviderRegistry, create_model
+        from camel.messages import BaseMessage
+
+        registry = LLMProviderRegistry()
+        provider = settings.default_llm_provider or "qwen"
+        model_id = settings.default_llm_model or "qwen-plus"
+        model = create_model(provider, model_id, settings, registry)
+        user_msg = BaseMessage.make_user_message(role_name="user", content=prompt)
+        response = model.run([user_msg])
+        return response.msgs[0].content
+
+    engine = AgentChatEngine(db_path=body.db_path, llm_call=llm_call)
+    messages = await engine.roundtable(
+        agent_ids=body.agent_ids,
+        round_context=body.round_context,
+        topic=body.topic,
+        num_rounds=body.num_rounds,
+    )
+    return {"messages": [m.model_dump() for m in messages]}
