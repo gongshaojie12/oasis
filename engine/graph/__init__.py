@@ -7,6 +7,7 @@ from .schema import (
     GraphNode,
     NodeType,
 )
+from .analyzer import GraphAnalyzer
 from .mapper import GraphToSimulationMapper
 
 __all__ = [
@@ -16,5 +17,6 @@ __all__ = [
     "GraphEdge",
     "GraphNode",
     "NodeType",
+    "GraphAnalyzer",
     "GraphToSimulationMapper",
 ]
