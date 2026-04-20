@@ -4,7 +4,7 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Any, Optional
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request
+from fastapi import Depends, FastAPI, Header, HTTPException, Request, WebSocket
 from pydantic import BaseModel, Field
 
 from engine.analysts.base import AnalysisContext
@@ -172,6 +172,8 @@ async def lifespan(app: FastAPI):
     # Store on app.state for endpoint access
     app.state.settings = settings
     app.state.queue_manager = queue_manager
+    from engine.websocket.handler import SimulationWSManager
+    app.state.ws_manager = SimulationWSManager()
 
     logger.info("Engine started (max_concurrent=%d)", settings.max_concurrent_tasks)
     yield
@@ -661,3 +663,9 @@ async def simulation_health(body: SimHealthRequest):
         return {"health_score": health_score, "indicators": indicators}
     except Exception as e:
         return {"health_score": 0.0, "indicators": {}, "error": str(e)}
+
+
+@app.websocket("/engine/ws/{task_id}")
+async def ws_simulation(websocket: WebSocket, task_id: str):
+    ws_manager: SimulationWSManager = websocket.app.state.ws_manager
+    await ws_manager.handle_client(task_id, websocket)
