@@ -23,11 +23,11 @@
 
           <div v-if="analysisResult" style="position: absolute; bottom: 16px; left: 16px; z-index: 10">
             <n-card size="small" style="max-width: 300px; opacity: 0.95">
-              <template #header>分析结果</template>
+              <template #header>{{ $t('worldBuilder.analysisResult') }}</template>
               <n-space vertical size="small">
-                <n-text>节点: {{ analysisResult.node_count }} | 边: {{ analysisResult.edge_count }}</n-text>
-                <n-text>密度: {{ analysisResult.density }}</n-text>
-                <n-text>社区数: {{ analysisResult.communities?.length || 0 }}</n-text>
+                <n-text>{{ $t('worldBuilder.nodeCount', { count: analysisResult.node_count }) }} | {{ $t('worldBuilder.edgeCount', { count: analysisResult.edge_count }) }}</n-text>
+                <n-text>{{ $t('worldBuilder.density') }}: {{ analysisResult.density }}</n-text>
+                <n-text>{{ $t('worldBuilder.communities') }}: {{ analysisResult.communities?.length || 0 }}</n-text>
               </n-space>
             </n-card>
           </div>
@@ -42,20 +42,20 @@
       @delete="deleteNode"
     />
 
-    <n-modal v-model:show="showEdgeModal" title="添加关系" preset="card" style="width: 400px">
+    <n-modal v-model:show="showEdgeModal" :title="$t('worldBuilder.addEdge')" preset="card" style="width: 400px">
       <n-form>
-        <n-form-item label="起点">
+        <n-form-item :label="$t('worldBuilder.source')">
           <n-select v-model:value="edgeForm.source" :options="nodeSelectOptions" />
         </n-form-item>
-        <n-form-item label="终点">
+        <n-form-item :label="$t('worldBuilder.target')">
           <n-select v-model:value="edgeForm.target" :options="nodeSelectOptions" />
         </n-form-item>
-        <n-form-item label="关系类型">
+        <n-form-item :label="$t('worldBuilder.edgeType')">
           <n-select v-model:value="edgeForm.type" :options="edgeTypeOptions" />
         </n-form-item>
       </n-form>
       <template #action>
-        <n-button type="primary" @click="addEdge">添加</n-button>
+        <n-button type="primary" @click="addEdge">{{ $t('common.add') }}</n-button>
       </template>
     </n-modal>
   </div>
@@ -68,6 +68,7 @@ import { useWorldBuilderStore } from '~/stores/world-builder'
 const route = useRoute()
 const message = useMessage()
 const store = useWorldBuilderStore()
+const { $t } = useI18n()
 
 const id = route.params.id as string
 const selectedNode = ref<any>(null)
@@ -82,14 +83,14 @@ const nodeSelectOptions = computed(() =>
   nodes.value.map((n: any) => ({ label: n.label, value: n.id }))
 )
 
-const edgeTypeOptions = [
-  { label: '关注 (follows)', value: 'follows' },
-  { label: '对立 (opposes)', value: 'opposes' },
-  { label: '隶属 (belongs_to)', value: 'belongs_to' },
-  { label: '兴趣 (interested_in)', value: 'interested_in' },
-  { label: '影响 (influences)', value: 'influences' },
-  { label: '发布 (publishes)', value: 'publishes' },
-]
+const edgeTypeOptions = computed(() => [
+  { label: $t('worldBuilder.edgeTypes.follows'), value: 'follows' },
+  { label: $t('worldBuilder.edgeTypes.opposes'), value: 'opposes' },
+  { label: $t('worldBuilder.edgeTypes.belongs_to'), value: 'belongs_to' },
+  { label: $t('worldBuilder.edgeTypes.interested_in'), value: 'interested_in' },
+  { label: $t('worldBuilder.edgeTypes.influences'), value: 'influences' },
+  { label: $t('worldBuilder.edgeTypes.publishes'), value: 'publishes' },
+])
 
 let counter = 0
 
@@ -113,8 +114,8 @@ function addNode(type: string) {
 }
 
 function addEdge() {
-  if (!edgeForm.value.source || !edgeForm.value.target) return message.warning('请选择起点和终点')
-  if (edgeForm.value.source === edgeForm.value.target) return message.warning('不能自连接')
+  if (!edgeForm.value.source || !edgeForm.value.target) return message.warning($t('worldBuilder.selectSourceTarget'))
+  if (edgeForm.value.source === edgeForm.value.target) return message.warning($t('worldBuilder.noSelfLoop'))
   const edge = {
     id: `e_${Date.now()}`,
     source: edgeForm.value.source,
@@ -162,7 +163,7 @@ async function runAnalyze() {
   const res = await store.analyze(id)
   if (res.code === 0) {
     analysisResult.value = res.data
-    message.success('分析完成')
+    message.success($t('worldBuilder.analyzeComplete'))
   } else {
     message.error(res.message)
   }
@@ -182,7 +183,7 @@ function exportJson() {
 async function toSimulation() {
   const res = await store.toSimulation(id)
   if (res.code === 0) {
-    message.success(`已生成 ${res.data.num_agents} 个 Agent 的仿真配置`)
+    message.success($t('worldBuilder.toSimulationSuccess', { count: res.data.num_agents }))
   } else {
     message.error(res.message)
   }

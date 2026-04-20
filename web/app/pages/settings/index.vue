@@ -1,28 +1,28 @@
 <template>
   <div class="settings-page">
-    <CommonPageHeader title="企业设置" />
+    <CommonPageHeader :title="$t('settings.title')" />
 
     <NTabs type="line" v-model:value="activeTab">
       <!-- Enterprise Info -->
-      <NTabPane name="info" tab="企业信息">
+      <NTabPane name="info" :tab="$t('settings.tabs.info')">
         <NCard class="settings-card">
           <NForm label-placement="left" label-width="100">
-            <NFormItem label="企业名称">
+            <NFormItem :label="$t('settings.enterpriseName')">
               <NInput v-model:value="enterpriseForm.name" />
             </NFormItem>
-            <NFormItem label="联系电话">
+            <NFormItem :label="$t('settings.contactPhone')">
               <NInput v-model:value="enterpriseForm.contactPhone" />
             </NFormItem>
             <NFormItem>
               <NButton type="primary" :loading="savingEnterprise" @click="saveEnterprise">
-                保存修改
+                {{ $t('common.saveChanges') }}
               </NButton>
             </NFormItem>
           </NForm>
 
           <NDivider />
 
-          <h3 class="section-title">团队成员</h3>
+          <h3 class="section-title">{{ $t('settings.teamMembers') }}</h3>
           <NDataTable
             :columns="memberColumns"
             :data="members"
@@ -33,45 +33,45 @@
       </NTabPane>
 
       <!-- Plan & Quota -->
-      <NTabPane name="plan" tab="套餐与配额">
+      <NTabPane name="plan" :tab="$t('settings.tabs.plan')">
         <NCard class="settings-card">
           <div class="quota-grid">
-            <CommonStatCard icon="carbon:cube" label="当前套餐" :value="authStore.enterprise?.planType || 'basic'" icon-bg="rgba(59,130,246,0.15)" />
-            <CommonStatCard icon="carbon:calculator" label="剩余配额" :value="String(authStore.enterprise?.simQuota ?? 0)" icon-bg="rgba(139,92,246,0.15)" />
-            <CommonStatCard icon="carbon:calendar" label="到期时间" :value="authStore.enterprise?.quotaExpires ? new Date(authStore.enterprise.quotaExpires).toLocaleDateString('zh-CN') : '无限期'" icon-bg="rgba(245,158,11,0.15)" />
+            <CommonStatCard icon="carbon:cube" :label="$t('settings.currentPlan')" :value="authStore.enterprise?.planType || 'basic'" icon-bg="rgba(59,130,246,0.15)" />
+            <CommonStatCard icon="carbon:calculator" :label="$t('settings.remainingQuota')" :value="String(authStore.enterprise?.simQuota ?? 0)" icon-bg="rgba(139,92,246,0.15)" />
+            <CommonStatCard icon="carbon:calendar" :label="$t('settings.expiryDate')" :value="authStore.enterprise?.quotaExpires ? new Date(authStore.enterprise.quotaExpires).toLocaleDateString('zh-CN') : $t('settings.unlimited')" icon-bg="rgba(245,158,11,0.15)" />
           </div>
 
           <NDivider />
 
-          <h3 class="section-title">用量统计</h3>
+          <h3 class="section-title">{{ $t('settings.usageStats') }}</h3>
           <div v-if="usageStats" class="usage-grid">
-            <div class="usage-item"><span class="usage-label">总模拟次数</span><span class="usage-value">{{ usageStats.simulations.total }}</span></div>
-            <div class="usage-item"><span class="usage-label">已完成</span><span class="usage-value">{{ usageStats.simulations.completed }}</span></div>
-            <div class="usage-item"><span class="usage-label">运行中</span><span class="usage-value">{{ usageStats.simulations.running }}</span></div>
-            <div class="usage-item"><span class="usage-label">失败</span><span class="usage-value">{{ usageStats.simulations.failed }}</span></div>
-            <div class="usage-item"><span class="usage-label">报告数量</span><span class="usage-value">{{ usageStats.reports }}</span></div>
-            <div class="usage-item"><span class="usage-label">LLM 总消耗</span><span class="usage-value">{{ usageStats.llm.totalCost }} 元</span></div>
+            <div class="usage-item"><span class="usage-label">{{ $t('settings.usage.totalSims') }}</span><span class="usage-value">{{ usageStats.simulations.total }}</span></div>
+            <div class="usage-item"><span class="usage-label">{{ $t('settings.usage.completed') }}</span><span class="usage-value">{{ usageStats.simulations.completed }}</span></div>
+            <div class="usage-item"><span class="usage-label">{{ $t('settings.usage.running') }}</span><span class="usage-value">{{ usageStats.simulations.running }}</span></div>
+            <div class="usage-item"><span class="usage-label">{{ $t('settings.usage.failed') }}</span><span class="usage-value">{{ usageStats.simulations.failed }}</span></div>
+            <div class="usage-item"><span class="usage-label">{{ $t('settings.usage.reports') }}</span><span class="usage-value">{{ usageStats.reports }}</span></div>
+            <div class="usage-item"><span class="usage-label">{{ $t('settings.usage.llmCost') }}</span><span class="usage-value">{{ usageStats.llm.totalCost }} {{ $t('settings.currency') }}</span></div>
           </div>
         </NCard>
       </NTabPane>
 
       <!-- LLM Keys -->
-      <NTabPane name="keys" tab="API Key 管理">
+      <NTabPane name="keys" :tab="$t('settings.tabs.keys')">
         <NCard class="settings-card">
-          <p class="hint-text">配置自有 API Key 后，模拟将使用您的 Key 调用 LLM 服务</p>
+          <p class="hint-text">{{ $t('settings.keyHint') }}</p>
           <div class="keys-list">
             <div v-for="provider in providers" :key="provider.id" class="key-item">
               <div class="key-info">
                 <strong>{{ provider.name }}</strong>
-                <NTag v-if="provider.hasKey" type="success" size="small">已配置</NTag>
-                <NTag v-else type="default" size="small">未配置</NTag>
+                <NTag v-if="provider.hasKey" type="success" size="small">{{ $t('settings.configured') }}</NTag>
+                <NTag v-else type="default" size="small">{{ $t('settings.notConfigured') }}</NTag>
               </div>
               <div class="key-actions">
                 <NButton size="small" @click="openKeyModal(provider)">
-                  {{ provider.hasKey ? '更新' : '配置' }}
+                  {{ provider.hasKey ? $t('settings.update') : $t('settings.configure') }}
                 </NButton>
                 <NButton v-if="provider.hasKey" size="small" type="error" quaternary @click="deleteKey(provider.id)">
-                  删除
+                  {{ $t('common.delete') }}
                 </NButton>
               </div>
             </div>
@@ -79,22 +79,22 @@
         </NCard>
 
         <!-- Key Modal -->
-        <NModal v-model:show="showKeyModal" preset="dialog" :title="`配置 ${keyForm.providerName} API Key`" style="width: 450px">
+        <NModal v-model:show="showKeyModal" preset="dialog" :title="$t('settings.configureKey', { provider: keyForm.providerName })" style="width: 450px">
           <NForm label-placement="top">
-            <NFormItem label="API Key">
-              <NInput v-model:value="keyForm.apiKey" type="password" show-password-on="click" placeholder="输入 API Key" />
+            <NFormItem :label="$t('settings.apiKey')">
+              <NInput v-model:value="keyForm.apiKey" type="password" show-password-on="click" :placeholder="$t('settings.apiKeyPlaceholder')" />
             </NFormItem>
           </NForm>
           <template #action>
-            <NButton @click="showKeyModal = false">取消</NButton>
-            <NButton :loading="testingKey" @click="testKey">测试连通性</NButton>
-            <NButton type="primary" :loading="savingKey" @click="saveKey">保存</NButton>
+            <NButton @click="showKeyModal = false">{{ $t('common.cancel') }}</NButton>
+            <NButton :loading="testingKey" @click="testKey">{{ $t('settings.testConnection') }}</NButton>
+            <NButton type="primary" :loading="savingKey" @click="saveKey">{{ $t('common.save') }}</NButton>
           </template>
         </NModal>
       </NTabPane>
 
       <!-- Logs -->
-      <NTabPane name="logs" tab="操作日志">
+      <NTabPane name="logs" :tab="$t('settings.tabs.logs')">
         <NCard class="settings-card">
           <NDataTable
             :columns="logColumns"
@@ -118,6 +118,7 @@ import {
 const { $api } = useApi()
 const authStore = useAuthStore()
 const message = useMessage()
+const { $t } = useI18n()
 
 const activeTab = ref('info')
 
@@ -126,14 +127,14 @@ const enterpriseForm = reactive({ name: '', contactPhone: '' })
 const members = ref<any[]>([])
 const savingEnterprise = ref(false)
 
-const memberColumns = [
-  { title: '姓名', key: 'name' },
-  { title: '手机号', key: 'phone' },
-  { title: '角色', key: 'role', width: 80 },
-  { title: '最后登录', key: 'lastLoginAt', width: 180,
+const memberColumns = computed(() => [
+  { title: $t('settings.memberName'), key: 'name' },
+  { title: $t('settings.memberPhone'), key: 'phone' },
+  { title: $t('settings.memberRole'), key: 'role', width: 80 },
+  { title: $t('settings.lastLogin'), key: 'lastLoginAt', width: 180,
     render: (row: any) => row.lastLoginAt ? new Date(row.lastLoginAt).toLocaleString('zh-CN') : '-',
   },
-]
+])
 
 // Usage Stats
 const usageStats = ref<any>(null)
@@ -149,29 +150,29 @@ const testingKey = ref(false)
 const logs = ref<any[]>([])
 const loadingLogs = ref(false)
 
-const actionNameMap: Record<string, string> = {
-  create: '创建', update: '更新', delete: '删除', cancel: '取消', retry: '重试',
-}
+const actionNameMap = computed<Record<string, string>>(() => ({
+  create: $t('settings.actions.create'), update: $t('settings.actions.update'), delete: $t('common.delete'), cancel: $t('common.cancel'), retry: $t('common.retry'),
+}))
 
-const resourceNameMap: Record<string, string> = {
-  simulation: '模拟任务', template: '模板', enterprise: '企业信息', llm_key: 'API Key',
-}
+const resourceNameMap = computed<Record<string, string>>(() => ({
+  simulation: $t('simulation.title'), template: $t('template.title'), enterprise: $t('settings.enterpriseInfo'), llm_key: $t('settings.apiKey'),
+}))
 
-const logColumns = [
-  { title: '操作人', key: 'userName', width: 100 },
-  { title: '操作', key: 'action', width: 80,
-    render: (row: any) => actionNameMap[row.action] || row.action,
+const logColumns = computed(() => [
+  { title: $t('settings.operator'), key: 'userName', width: 100 },
+  { title: $t('settings.action'), key: 'action', width: 80,
+    render: (row: any) => actionNameMap.value[row.action] || row.action,
   },
-  { title: '资源', key: 'resourceType', width: 100,
-    render: (row: any) => resourceNameMap[row.resourceType] || row.resourceType,
+  { title: $t('settings.resource'), key: 'resourceType', width: 100,
+    render: (row: any) => resourceNameMap.value[row.resourceType] || row.resourceType,
   },
-  { title: '详情', key: 'details', ellipsis: { tooltip: true },
+  { title: $t('settings.details'), key: 'details', ellipsis: { tooltip: true },
     render: (row: any) => row.details ? JSON.stringify(row.details) : '-',
   },
-  { title: '时间', key: 'createdAt', width: 180,
+  { title: $t('common.time'), key: 'createdAt', width: 180,
     render: (row: any) => new Date(row.createdAt).toLocaleString('zh-CN'),
   },
-]
+])
 
 async function loadEnterpriseInfo() {
   const res = await $api<any>('/api/enterprises/current')
@@ -190,7 +191,7 @@ async function saveEnterprise() {
   })
   savingEnterprise.value = false
   if (res.code === 0) {
-    message.success('已更新')
+    message.success($t('common.updateSuccess'))
     await authStore.fetchMe()
   } else {
     message.error(res.message)
@@ -215,7 +216,7 @@ function openKeyModal(provider: any) {
 }
 
 async function testKey() {
-  if (!keyForm.apiKey) { message.warning('请输入 API Key'); return }
+  if (!keyForm.apiKey) { message.warning($t('settings.apiKeyRequired')); return }
   testingKey.value = true
   const res = await $api<any>('/api/llm/keys/test', {
     method: 'POST',
@@ -223,14 +224,14 @@ async function testKey() {
   })
   testingKey.value = false
   if (res.code === 0 && res.data.connected) {
-    message.success('连接成功')
+    message.success($t('settings.connectionSuccess'))
   } else {
-    message.error(res.data?.reason || '连接失败')
+    message.error(res.data?.reason || $t('settings.connectionFailed'))
   }
 }
 
 async function saveKey() {
-  if (!keyForm.apiKey) { message.warning('请输入 API Key'); return }
+  if (!keyForm.apiKey) { message.warning($t('settings.apiKeyRequired')); return }
   savingKey.value = true
   const res = await $api<any>('/api/llm/keys', {
     method: 'POST',
@@ -238,7 +239,7 @@ async function saveKey() {
   })
   savingKey.value = false
   if (res.code === 0) {
-    message.success('已保存')
+    message.success($t('common.saveSuccess'))
     showKeyModal.value = false
     await loadProviders()
   } else {
@@ -249,7 +250,7 @@ async function saveKey() {
 async function deleteKey(provider: string) {
   const res = await $api<any>(`/api/llm/keys/${provider}`, { method: 'DELETE' })
   if (res.code === 0) {
-    message.success('已删除')
+    message.success($t('common.deleteSuccess'))
     await loadProviders()
   } else {
     message.error(res.message)

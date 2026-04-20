@@ -1,18 +1,18 @@
 <template>
   <div>
-    <CommonPageHeader title="世界构建器" subtitle="通过知识图谱构建社交世界">
+    <CommonPageHeader :title="$t('worldBuilder.title')" :subtitle="$t('worldBuilder.subtitle')">
       <template #actions>
         <n-space>
-          <n-button type="primary" @click="showCreate = true">新建图谱</n-button>
-          <n-button @click="showImport = true">导入 JSON</n-button>
+          <n-button type="primary" @click="showCreate = true">{{ $t('worldBuilder.create') }}</n-button>
+          <n-button @click="showImport = true">{{ $t('worldBuilder.import') }}</n-button>
         </n-space>
       </template>
     </CommonPageHeader>
 
     <n-spin :show="store.loading">
-      <n-empty v-if="!store.items.length && !store.loading" description="还没有图谱，创建一个开始构建世界">
+      <n-empty v-if="!store.items.length && !store.loading" :description="$t('worldBuilder.noData')">
         <template #extra>
-          <n-button type="primary" @click="showCreate = true">新建图谱</n-button>
+          <n-button type="primary" @click="showCreate = true">{{ $t('worldBuilder.create') }}</n-button>
         </template>
       </n-empty>
 
@@ -23,16 +23,16 @@
             <template #header-extra>
               <n-popconfirm @positive-click="handleDelete(g.id)">
                 <template #trigger>
-                  <n-button size="tiny" quaternary type="error" @click.stop>删除</n-button>
+                  <n-button size="tiny" quaternary type="error" @click.stop>{{ $t('common.delete') }}</n-button>
                 </template>
-                确定删除此图谱？
+                {{ $t('worldBuilder.deleteConfirm') }}
               </n-popconfirm>
             </template>
             <n-space vertical>
               <n-text v-if="g.description" depth="3">{{ g.description }}</n-text>
               <n-space>
-                <n-tag size="small" type="info">{{ g.nodeCount }} 个节点</n-tag>
-                <n-tag size="small" type="success">{{ g.edgeCount }} 条关系</n-tag>
+                <n-tag size="small" type="info">{{ $t('worldBuilder.nodeCount', { count: g.nodeCount }) }}</n-tag>
+                <n-tag size="small" type="success">{{ $t('worldBuilder.edgeCount', { count: g.edgeCount }) }}</n-tag>
               </n-space>
               <n-text depth="3" style="font-size: 12px">{{ formatTime(g.updatedAt) }}</n-text>
             </n-space>
@@ -41,31 +41,31 @@
       </n-grid>
     </n-spin>
 
-    <n-modal v-model:show="showCreate" title="新建图谱" preset="card" style="width: 450px">
+    <n-modal v-model:show="showCreate" :title="$t('worldBuilder.create')" preset="card" style="width: 450px">
       <n-form>
-        <n-form-item label="名称">
-          <n-input v-model:value="createForm.name" placeholder="输入图谱名称" />
+        <n-form-item :label="$t('common.name')">
+          <n-input v-model:value="createForm.name" :placeholder="$t('worldBuilder.namePlaceholder')" />
         </n-form-item>
-        <n-form-item label="描述">
-          <n-input v-model:value="createForm.description" type="textarea" placeholder="可选描述" />
+        <n-form-item :label="$t('worldBuilder.description')">
+          <n-input v-model:value="createForm.description" type="textarea" :placeholder="$t('worldBuilder.descriptionPlaceholder')" />
         </n-form-item>
       </n-form>
       <template #action>
-        <n-button type="primary" @click="handleCreate" :loading="creating">创建</n-button>
+        <n-button type="primary" @click="handleCreate" :loading="creating">{{ $t('common.create') }}</n-button>
       </template>
     </n-modal>
 
-    <n-modal v-model:show="showImport" title="导入图谱" preset="card" style="width: 500px">
+    <n-modal v-model:show="showImport" :title="$t('worldBuilder.import')" preset="card" style="width: 500px">
       <n-form>
-        <n-form-item label="名称">
-          <n-input v-model:value="importForm.name" placeholder="图谱名称" />
+        <n-form-item :label="$t('common.name')">
+          <n-input v-model:value="importForm.name" :placeholder="$t('worldBuilder.namePlaceholder')" />
         </n-form-item>
-        <n-form-item label="JSON 数据">
-          <n-input v-model:value="importForm.json" type="textarea" :rows="8" placeholder='{"nodes": [...], "edges": [...]}' />
+        <n-form-item :label="$t('worldBuilder.jsonData')">
+          <n-input v-model:value="importForm.json" type="textarea" :rows="8" :placeholder="$t('worldBuilder.jsonPlaceholder')" />
         </n-form-item>
       </n-form>
       <template #action>
-        <n-button type="primary" @click="handleImport" :loading="importing">导入</n-button>
+        <n-button type="primary" @click="handleImport" :loading="importing">{{ $t('worldBuilder.import') }}</n-button>
       </template>
     </n-modal>
   </div>
@@ -78,6 +78,7 @@ import { useWorldBuilderStore } from '~/stores/world-builder'
 const router = useRouter()
 const message = useMessage()
 const store = useWorldBuilderStore()
+const { $t } = useI18n()
 
 const showCreate = ref(false)
 const showImport = ref(false)
@@ -89,7 +90,7 @@ const importForm = ref({ name: '', json: '' })
 function formatTime(t: string) { return t ? new Date(t).toLocaleString('zh-CN') : '-' }
 
 async function handleCreate() {
-  if (!createForm.value.name) return message.warning('请输入名称')
+  if (!createForm.value.name) return message.warning($t('worldBuilder.nameRequired'))
   creating.value = true
   const res = await store.create(createForm.value.name, createForm.value.description)
   creating.value = false
@@ -102,20 +103,20 @@ async function handleCreate() {
 }
 
 async function handleImport() {
-  if (!importForm.value.name || !importForm.value.json) return message.warning('请填写完整')
+  if (!importForm.value.name || !importForm.value.json) return message.warning($t('worldBuilder.fillComplete'))
   importing.value = true
   try {
     const graphData = JSON.parse(importForm.value.json)
     const res = await store.importGraph(importForm.value.name, graphData)
     if (res.code === 0) {
       showImport.value = false
-      message.success(`已导入 ${res.data.nodeCount} 个节点`)
+      message.success($t('worldBuilder.importSuccess', { count: res.data.nodeCount }))
       await store.fetchList()
     } else {
       message.error(res.message)
     }
   } catch {
-    message.error('JSON 格式错误')
+    message.error($t('worldBuilder.jsonError'))
   }
   importing.value = false
 }
@@ -123,7 +124,7 @@ async function handleImport() {
 async function handleDelete(id: string) {
   const res = await store.remove(id)
   if (res.code === 0) {
-    message.success('已删除')
+    message.success($t('common.deleteSuccess'))
     await store.fetchList()
   }
 }

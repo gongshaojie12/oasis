@@ -1,29 +1,29 @@
 <template>
   <div class="dashboard">
-    <h1 class="page-title">工作台</h1>
+    <h1 class="page-title">{{ $t('dashboard.title') }}</h1>
 
     <div class="stats-grid">
       <CommonStatCard
         icon="carbon:play-outline"
-        label="模拟总次数"
+        :label="$t('dashboard.stats.totalSims')"
         :value="stats.totalSims"
         icon-bg="rgba(59, 130, 246, 0.15)"
       />
       <CommonStatCard
         icon="carbon:checkmark-outline"
-        label="已完成"
+        :label="$t('dashboard.stats.completed')"
         :value="stats.completedSims"
         icon-bg="rgba(34, 197, 94, 0.15)"
       />
       <CommonStatCard
         icon="carbon:cube"
-        label="剩余配额"
+        :label="$t('dashboard.stats.remainingQuota')"
         :value="stats.remainingQuota"
         icon-bg="rgba(139, 92, 246, 0.15)"
       />
       <CommonStatCard
         icon="carbon:report"
-        label="报告数量"
+        :label="$t('dashboard.stats.reports')"
         :value="stats.totalReports"
         icon-bg="rgba(245, 158, 11, 0.15)"
       />
@@ -32,34 +32,34 @@
     <div class="dashboard-sections">
       <div class="section">
         <div class="section-header">
-          <h2>快速开始</h2>
+          <h2>{{ $t('dashboard.quickStart') }}</h2>
         </div>
         <div class="quick-actions">
           <NuxtLink to="/simulations/create" class="action-card">
             <Icon name="carbon:add-alt" size="24" />
-            <span>新建模拟</span>
+            <span>{{ $t('simulation.create') }}</span>
           </NuxtLink>
           <NuxtLink to="/reports" class="action-card">
             <Icon name="carbon:report" size="24" />
-            <span>查看报告</span>
+            <span>{{ $t('report.view') }}</span>
           </NuxtLink>
           <NuxtLink to="/templates" class="action-card">
             <Icon name="carbon:template" size="24" />
-            <span>模板管理</span>
+            <span>{{ $t('template.manage') }}</span>
           </NuxtLink>
         </div>
       </div>
 
       <div class="section">
         <div class="section-header">
-          <h2>最近任务</h2>
-          <NuxtLink to="/simulations" class="view-all">查看全部</NuxtLink>
+          <h2>{{ $t('dashboard.recentTasks') }}</h2>
+          <NuxtLink to="/simulations" class="view-all">{{ $t('common.viewAll') }}</NuxtLink>
         </div>
         <div class="empty-state" v-if="recentSims.length === 0">
           <Icon name="carbon:no-image" size="48" />
-          <p>暂无模拟任务</p>
+          <p>{{ $t('dashboard.noSimulations') }}</p>
           <NuxtLink to="/simulations/create">
-            <NButton type="primary" size="small">创建第一个模拟</NButton>
+            <NButton type="primary" size="small">{{ $t('dashboard.createFirst') }}</NButton>
           </NuxtLink>
         </div>
         <div v-else class="recent-list">

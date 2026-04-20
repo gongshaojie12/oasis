@@ -1,14 +1,14 @@
 <template>
   <div class="templates-page">
-    <CommonPageHeader title="模板管理" />
+    <CommonPageHeader :title="$t('template.title')" />
 
     <NTabs type="line" v-model:value="activeTab">
       <!-- Agent Templates Tab -->
-      <NTabPane name="agents" tab="Agent 画像模板">
+      <NTabPane name="agents" :tab="$t('template.agentTemplates')">
         <div class="tab-header">
           <NButton type="primary" size="small" @click="showAgentModal = true">
             <template #icon><Icon name="carbon:add" /></template>
-            新建 Agent 模板
+            {{ $t('template.createAgent') }}
           </NButton>
         </div>
 
@@ -22,11 +22,11 @@
       </NTabPane>
 
       <!-- Simulation Templates Tab -->
-      <NTabPane name="simulations" tab="模拟配置模板">
+      <NTabPane name="simulations" :tab="$t('template.simulationTemplates')">
         <div class="tab-header">
           <NButton type="primary" size="small" @click="showSimModal = true">
             <template #icon><Icon name="carbon:add" /></template>
-            新建模拟模板
+            {{ $t('template.createSimulation') }}
           </NButton>
         </div>
 
@@ -41,43 +41,43 @@
     </NTabs>
 
     <!-- Agent Template Modal -->
-    <NModal v-model:show="showAgentModal" preset="dialog" title="新建 Agent 模板" style="width: 500px">
+    <NModal v-model:show="showAgentModal" preset="dialog" :title="$t('template.createAgent')" style="width: 500px">
       <NForm label-placement="left" label-width="80">
-        <NFormItem label="模板名称">
-          <NInput v-model:value="agentForm.name" placeholder="模板名称" />
+        <NFormItem :label="$t('template.name')">
+          <NInput v-model:value="agentForm.name" :placeholder="$t('template.name')" />
         </NFormItem>
-        <NFormItem label="平台">
-          <NSelect v-model:value="agentForm.platform" :options="platformOptions" placeholder="选择平台" />
+        <NFormItem :label="$t('common.platform')">
+          <NSelect v-model:value="agentForm.platform" :options="platformOptions" :placeholder="$t('template.selectPlatform')" />
         </NFormItem>
-        <NFormItem label="画像配置">
-          <NInput v-model:value="agentForm.profileConfigStr" type="textarea" :rows="6" placeholder='JSON 格式，例如 {"age": 25, "interest": "科技"}' />
+        <NFormItem :label="$t('template.profileConfig')">
+          <NInput v-model:value="agentForm.profileConfigStr" type="textarea" :rows="6" :placeholder="$t('template.profileConfigPlaceholder')" />
         </NFormItem>
       </NForm>
       <template #action>
-        <NButton @click="showAgentModal = false">取消</NButton>
-        <NButton type="primary" :loading="savingAgent" @click="saveAgentTemplate">保存</NButton>
+        <NButton @click="showAgentModal = false">{{ $t('common.cancel') }}</NButton>
+        <NButton type="primary" :loading="savingAgent" @click="saveAgentTemplate">{{ $t('common.save') }}</NButton>
       </template>
     </NModal>
 
     <!-- Simulation Template Modal -->
-    <NModal v-model:show="showSimModal" preset="dialog" title="新建模拟模板" style="width: 500px">
+    <NModal v-model:show="showSimModal" preset="dialog" :title="$t('template.createSimulation')" style="width: 500px">
       <NForm label-placement="left" label-width="80">
-        <NFormItem label="模板名称">
-          <NInput v-model:value="simForm.name" placeholder="模板名称" />
+        <NFormItem :label="$t('template.name')">
+          <NInput v-model:value="simForm.name" :placeholder="$t('template.name')" />
         </NFormItem>
-        <NFormItem label="业务类型">
-          <NSelect v-model:value="simForm.type" :options="typeOptions" placeholder="选择类型" />
+        <NFormItem :label="$t('simulation.businessType')">
+          <NSelect v-model:value="simForm.type" :options="typeOptions" :placeholder="$t('template.selectType')" />
         </NFormItem>
-        <NFormItem label="平台">
-          <NSelect v-model:value="simForm.platform" :options="platformOptions" placeholder="选择平台" />
+        <NFormItem :label="$t('common.platform')">
+          <NSelect v-model:value="simForm.platform" :options="platformOptions" :placeholder="$t('template.selectPlatform')" />
         </NFormItem>
-        <NFormItem label="配置">
-          <NInput v-model:value="simForm.configStr" type="textarea" :rows="6" placeholder='JSON 格式' />
+        <NFormItem :label="$t('template.config')">
+          <NInput v-model:value="simForm.configStr" type="textarea" :rows="6" :placeholder="$t('template.configPlaceholder')" />
         </NFormItem>
       </NForm>
       <template #action>
-        <NButton @click="showSimModal = false">取消</NButton>
-        <NButton type="primary" :loading="savingSim" @click="saveSimTemplate">保存</NButton>
+        <NButton @click="showSimModal = false">{{ $t('common.cancel') }}</NButton>
+        <NButton type="primary" :loading="savingSim" @click="saveSimTemplate">{{ $t('common.save') }}</NButton>
       </template>
     </NModal>
   </div>
@@ -92,6 +92,7 @@ import {
 
 const { $api } = useApi()
 const message = useMessage()
+const { $t } = useI18n()
 
 const activeTab = ref('agents')
 const agentTemplates = ref<any[]>([])
@@ -113,46 +114,46 @@ const platformOptions = [
   { label: 'B站', value: 'bilibili' }, { label: '视频号', value: 'wechat_video' },
 ]
 
-const typeOptions = [
-  { label: '社交营销', value: 'marketing_sim' },
-  { label: '舆情预测', value: 'sentiment_predict' },
-  { label: '推荐算法', value: 'recsys_test' },
-  { label: '社会研究', value: 'research' },
-  { label: '数字孪生', value: 'digital_twin' },
-  { label: '合成数据', value: 'synthetic_data' },
-]
+const typeOptions = computed(() => [
+  { label: $t('simulation.types.marketing_sim'), value: 'marketing_sim' },
+  { label: $t('simulation.types.sentiment_predict'), value: 'sentiment_predict' },
+  { label: $t('simulation.types.recsys_test'), value: 'recsys_test' },
+  { label: $t('simulation.types.research'), value: 'research' },
+  { label: $t('simulation.types.digital_twin'), value: 'digital_twin' },
+  { label: $t('simulation.types.synthetic_data'), value: 'synthetic_data' },
+])
 
-const agentColumns = [
-  { title: '名称', key: 'name' },
-  { title: '平台', key: 'platform', width: 100 },
-  { title: '类型', key: 'isPublic', width: 80,
-    render: (row: any) => row.isPublic ? '公共' : '私有',
+const agentColumns = computed(() => [
+  { title: $t('common.name'), key: 'name' },
+  { title: $t('common.platform'), key: 'platform', width: 100 },
+  { title: $t('template.visibility'), key: 'isPublic', width: 80,
+    render: (row: any) => row.isPublic ? $t('template.public') : $t('template.private'),
   },
-  { title: '创建时间', key: 'createdAt', width: 180,
+  { title: $t('common.createdAt'), key: 'createdAt', width: 180,
     render: (row: any) => new Date(row.createdAt).toLocaleString('zh-CN'),
   },
-  { title: '操作', key: 'actions', width: 100,
+  { title: $t('common.actions'), key: 'actions', width: 100,
     render: (row: any) => row.isPublic ? '-' : h(NButton, {
       size: 'tiny', quaternary: true, type: 'error',
       onClick: () => deleteAgentTemplate(row.id),
-    }, () => '删除'),
+    }, () => $t('common.delete')),
   },
-]
+])
 
-const simColumns = [
-  { title: '名称', key: 'name' },
-  { title: '类型', key: 'type', width: 100 },
-  { title: '平台', key: 'platform', width: 100 },
-  { title: '创建时间', key: 'createdAt', width: 180,
+const simColumns = computed(() => [
+  { title: $t('common.name'), key: 'name' },
+  { title: $t('common.type'), key: 'type', width: 100 },
+  { title: $t('common.platform'), key: 'platform', width: 100 },
+  { title: $t('common.createdAt'), key: 'createdAt', width: 180,
     render: (row: any) => new Date(row.createdAt).toLocaleString('zh-CN'),
   },
-  { title: '操作', key: 'actions', width: 100,
+  { title: $t('common.actions'), key: 'actions', width: 100,
     render: (row: any) => row.isPublic ? '-' : h(NButton, {
       size: 'tiny', quaternary: true, type: 'error',
       onClick: () => deleteSimTemplate(row.id),
-    }, () => '删除'),
+    }, () => $t('common.delete')),
   },
-]
+])
 
 async function loadAgentTemplates() {
   loadingAgents.value = true
@@ -177,7 +178,7 @@ async function saveAgentTemplate() {
       body: { name: agentForm.name, platform: agentForm.platform, profileConfig },
     })
     if (res.code === 0) {
-      message.success('模板已创建')
+      message.success($t('template.createSuccess'))
       showAgentModal.value = false
       agentForm.name = ''; agentForm.platform = ''; agentForm.profileConfigStr = '{}'
       await loadAgentTemplates()
@@ -185,7 +186,7 @@ async function saveAgentTemplate() {
       message.error(res.message)
     }
   } catch {
-    message.error('配置格式错误，请输入有效的 JSON')
+    message.error($t('template.configError'))
   } finally {
     savingAgent.value = false
   }
@@ -200,7 +201,7 @@ async function saveSimTemplate() {
       body: { name: simForm.name, type: simForm.type, platform: simForm.platform, config },
     })
     if (res.code === 0) {
-      message.success('模板已创建')
+      message.success($t('template.createSuccess'))
       showSimModal.value = false
       simForm.name = ''; simForm.type = ''; simForm.platform = ''; simForm.configStr = '{}'
       await loadSimTemplates()
@@ -208,7 +209,7 @@ async function saveSimTemplate() {
       message.error(res.message)
     }
   } catch {
-    message.error('配置格式错误，请输入有效的 JSON')
+    message.error($t('template.configError'))
   } finally {
     savingSim.value = false
   }
@@ -217,7 +218,7 @@ async function saveSimTemplate() {
 async function deleteAgentTemplate(id: string) {
   const res = await $api<any>(`/api/templates/agents/${id}`, { method: 'DELETE' })
   if (res.code === 0) {
-    message.success('已删除')
+    message.success($t('common.deleteSuccess'))
     await loadAgentTemplates()
   } else {
     message.error(res.message)
@@ -227,7 +228,7 @@ async function deleteAgentTemplate(id: string) {
 async function deleteSimTemplate(id: string) {
   const res = await $api<any>(`/api/templates/simulations/${id}`, { method: 'DELETE' })
   if (res.code === 0) {
-    message.success('已删除')
+    message.success($t('common.deleteSuccess'))
     await loadSimTemplates()
   } else {
     message.error(res.message)

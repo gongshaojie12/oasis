@@ -1,11 +1,11 @@
 <template>
   <div>
-    <CommonPageHeader title="深度分析" subtitle="多视角辩论式仿真分析报告" />
+    <CommonPageHeader :title="$t('analysis.title')" :subtitle="$t('analysis.subtitle')" />
 
     <n-card>
-      <n-empty v-if="!reports.length && !loading" description="暂无分析报告，请在完成的仿真任务中点击「生成深度分析报告」">
+      <n-empty v-if="!reports.length && !loading" :description="$t('analysis.noData')">
         <template #extra>
-          <n-button type="primary" @click="router.push('/simulations')">前往仿真任务</n-button>
+          <n-button type="primary" @click="router.push('/simulations')">{{ $t('analysis.goToSimulations') }}</n-button>
         </template>
       </n-empty>
 
@@ -39,6 +39,7 @@ import { ref, onMounted } from 'vue'
 const router = useRouter()
 const loading = ref(true)
 const reports = ref<any[]>([])
+const { $t } = useI18n()
 
 function statusType(s: string): 'info' | 'success' | 'error' | 'warning' {
   if (s === 'completed') return 'success'
@@ -48,8 +49,13 @@ function statusType(s: string): 'info' | 'success' | 'error' | 'warning' {
 }
 
 function statusLabel(s: string) {
-  const map: Record<string, string> = { pending: '等待中', analyzing: '分析中', completed: '已完成', failed: '失败' }
-  return map[s] || s
+  const map = computed<Record<string, string>>(() => ({
+    pending: $t('simulation.status.pending'),
+    analyzing: $t('analysis.status.analyzing'),
+    completed: $t('simulation.status.completed'),
+    failed: $t('simulation.status.failed')
+  }))
+  return map.value[s] || s
 }
 
 function formatTime(t: string) {

@@ -1,6 +1,6 @@
 <template>
   <div class="reports-page">
-    <CommonPageHeader title="报告中心" />
+    <CommonPageHeader :title="$t('report.title')" />
 
     <NDataTable
       :columns="columns"
@@ -19,7 +19,7 @@
     </div>
 
     <div v-if="!store.loading && store.items.length === 0" class="empty-state">
-      <NEmpty description="暂无报告，完成模拟后将自动生成报告" />
+      <NEmpty :description="$t('report.noData')" />
     </div>
   </div>
 </template>
@@ -31,25 +31,26 @@ import { useReportsStore } from '~/stores/reports'
 
 const store = useReportsStore()
 const router = useRouter()
+const { $t } = useI18n()
 
-const columns = [
-  { title: '报告标题', key: 'title', ellipsis: { tooltip: true },
+const columns = computed(() => [
+  { title: $t('report.reportTitle'), key: 'title', ellipsis: { tooltip: true },
     render: (row: any) => h('a', {
       style: 'color: #4f6ef7; cursor: pointer; text-decoration: none; font-weight: 500;',
       onClick: () => router.push(`/reports/${row.id}`),
     }, row.title),
   },
-  { title: '摘要', key: 'summary', ellipsis: { tooltip: true } },
-  { title: '创建时间', key: 'createdAt', width: 180,
+  { title: $t('report.summary'), key: 'summary', ellipsis: { tooltip: true } },
+  { title: $t('common.createdAt'), key: 'createdAt', width: 180,
     render: (row: any) => new Date(row.createdAt).toLocaleString('zh-CN'),
   },
-  { title: '操作', key: 'actions', width: 120,
+  { title: $t('common.actions'), key: 'actions', width: 120,
     render: (row: any) => h(NButton, {
       size: 'tiny', quaternary: true,
       onClick: () => router.push(`/reports/${row.id}`),
-    }, () => '查看详情'),
+    }, () => $t('common.viewDetails')),
   },
-]
+])
 
 onMounted(() => store.fetchList())
 </script>

@@ -1,13 +1,13 @@
 <template>
   <div class="detail-page">
-    <CommonPageHeader :title="sim?.name || '模拟详情'">
+    <CommonPageHeader :title="sim?.name || $t('simulation.detail')">
       <template #actions>
         <NSpace>
-          <NButton v-if="canCancel" type="warning" @click="handleCancel" :loading="cancelling">取消</NButton>
-          <NButton v-if="canRetry" type="info" @click="handleRetry" :loading="retrying">重试</NButton>
-          <NButton v-if="sim?.status === 'completed'" type="primary" @click="generateAnalysis">生成深度分析报告</NButton>
-          <NButton v-if="sim?.status === 'completed'" type="info" @click="router.push(`/simulations/${id}/timemachine`)">时间机器</NButton>
-          <NButton @click="router.push('/simulations')">返回列表</NButton>
+          <NButton v-if="canCancel" type="warning" @click="handleCancel" :loading="cancelling">{{ $t('common.cancel') }}</NButton>
+          <NButton v-if="canRetry" type="info" @click="handleRetry" :loading="retrying">{{ $t('common.retry') }}</NButton>
+          <NButton v-if="sim?.status === 'completed'" type="primary" @click="generateAnalysis">{{ $t('analysis.generate') }}</NButton>
+          <NButton v-if="sim?.status === 'completed'" type="info" @click="router.push(`/simulations/${id}/timemachine`)">{{ $t('timeMachine.title') }}</NButton>
+          <NButton @click="router.push('/simulations')">{{ $t('common.backToList') }}</NButton>
         </NSpace>
       </template>
     </CommonPageHeader>
@@ -28,7 +28,7 @@
             class="progress-bar"
           />
           <div v-if="sse.currentStep.value > 0" class="step-info">
-            步骤 {{ sse.currentStep.value }} / {{ sse.totalSteps.value }}
+            {{ $t('simulation.step', { current: sse.currentStep.value, total: sse.totalSteps.value }) }}
           </div>
           <div v-if="displayError" class="error-info">
             <Icon name="carbon:warning" size="16" />
@@ -39,23 +39,23 @@
         <!-- Details Grid -->
         <div class="info-grid">
           <NCard class="info-card">
-            <h3 class="card-title">基本信息</h3>
+            <h3 class="card-title">{{ $t('simulation.basicInfo') }}</h3>
             <div class="detail-list">
-              <div class="detail-row"><span class="label">名称</span><span>{{ sim.name }}</span></div>
-              <div class="detail-row"><span class="label">类型</span><span>{{ typeNameMap[sim.type] || sim.type }}</span></div>
-              <div class="detail-row"><span class="label">平台</span><span>{{ platformNameMap[sim.platform] || sim.platform }}</span></div>
-              <div class="detail-row"><span class="label">Agent 数量</span><span>{{ sim.agentCount || '-' }}</span></div>
-              <div class="detail-row"><span class="label">模拟轮次</span><span>{{ sim.timeSteps || '-' }}</span></div>
-              <div class="detail-row"><span class="label">LLM 模型</span><span>{{ sim.llmModel || '默认' }}</span></div>
+              <div class="detail-row"><span class="label">{{ $t('common.name') }}</span><span>{{ sim.name }}</span></div>
+              <div class="detail-row"><span class="label">{{ $t('common.type') }}</span><span>{{ typeNameMap[sim.type] || sim.type }}</span></div>
+              <div class="detail-row"><span class="label">{{ $t('common.platform') }}</span><span>{{ platformNameMap[sim.platform] || sim.platform }}</span></div>
+              <div class="detail-row"><span class="label">{{ $t('simulation.agentCount') }}</span><span>{{ sim.agentCount || '-' }}</span></div>
+              <div class="detail-row"><span class="label">{{ $t('simulation.timeSteps') }}</span><span>{{ sim.timeSteps || '-' }}</span></div>
+              <div class="detail-row"><span class="label">{{ $t('simulation.llmModel') }}</span><span>{{ sim.llmModel || $t('common.default') }}</span></div>
             </div>
           </NCard>
 
           <NCard class="info-card">
-            <h3 class="card-title">时间信息</h3>
+            <h3 class="card-title">{{ $t('simulation.timeInfo') }}</h3>
             <div class="detail-list">
-              <div class="detail-row"><span class="label">创建时间</span><span>{{ formatTime(sim.createdAt) }}</span></div>
-              <div class="detail-row"><span class="label">开始时间</span><span>{{ formatTime(sim.startedAt) }}</span></div>
-              <div class="detail-row"><span class="label">完成时间</span><span>{{ formatTime(sim.completedAt) }}</span></div>
+              <div class="detail-row"><span class="label">{{ $t('common.createdAt') }}</span><span>{{ formatTime(sim.createdAt) }}</span></div>
+              <div class="detail-row"><span class="label">{{ $t('simulation.startedAt') }}</span><span>{{ formatTime(sim.startedAt) }}</span></div>
+              <div class="detail-row"><span class="label">{{ $t('simulation.completedAt') }}</span><span>{{ formatTime(sim.completedAt) }}</span></div>
             </div>
           </NCard>
         </div>
@@ -74,6 +74,7 @@ const route = useRoute()
 const router = useRouter()
 const message = useMessage()
 const store = useSimulationsStore()
+const { $t } = useI18n()
 
 const id = route.params.id as string
 const loading = ref(true)
@@ -128,7 +129,7 @@ async function handleCancel() {
   const res = await store.cancel(id)
   cancelling.value = false
   if (res.code === 0) {
-    message.success('已取消')
+    message.success($t('common.cancelSuccess'))
     await store.fetchOne(id)
   } else {
     message.error(res.message)
@@ -140,7 +141,7 @@ async function handleRetry() {
   const res = await store.retry(id)
   retrying.value = false
   if (res.code === 0) {
-    message.success('已重新提交')
+    message.success($t('common.retrySuccess'))
     await store.fetchOne(id)
     sse.connect()
   } else {

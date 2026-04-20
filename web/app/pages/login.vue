@@ -1,23 +1,23 @@
 <template>
   <div>
     <NCard class="auth-card">
-      <h2 class="auth-title">登录</h2>
+      <h2 class="auth-title">{{ $t('auth.login') }}</h2>
 
       <NForm ref="formRef" :model="form" :rules="rules">
-        <NFormItem path="phone" label="手机号">
-          <NInput v-model:value="form.phone" placeholder="请输入手机号" maxlength="11" />
+        <NFormItem path="phone" :label="$t('auth.phone')">
+          <NInput v-model:value="form.phone" :placeholder="$t('auth.phonePlaceholder')" maxlength="11" />
         </NFormItem>
 
-        <NFormItem path="code" label="验证码">
+        <NFormItem path="code" :label="$t('auth.code')">
           <div class="code-row">
-            <NInput v-model:value="form.code" placeholder="请输入验证码" maxlength="6" />
+            <NInput v-model:value="form.code" :placeholder="$t('auth.codePlaceholder')" maxlength="6" />
             <NButton
               :disabled="countdown > 0 || !isPhoneValid"
               :loading="sendingCode"
               @click="sendCode"
               class="code-btn"
             >
-              {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
+              {{ countdown > 0 ? `${countdown}s` : $t('auth.getCode') }}
             </NButton>
           </div>
         </NFormItem>
@@ -29,12 +29,12 @@
           @click="handleLogin"
           class="submit-btn"
         >
-          登录
+          {{ $t('auth.login') }}
         </NButton>
       </NForm>
 
       <div class="auth-footer">
-        还没有账号？<NuxtLink to="/register" class="auth-link">立即注册</NuxtLink>
+        {{ $t('auth.noAccount') }}<NuxtLink to="/register" class="auth-link">{{ $t('auth.registerNow') }}</NuxtLink>
       </div>
     </NCard>
   </div>
@@ -48,6 +48,7 @@ definePageMeta({ layout: 'guest' })
 const authStore = useAuthStore()
 const router = useRouter()
 const message = useMessage()
+const { $t } = useI18n()
 
 const form = reactive({ phone: '', code: '' })
 const sendingCode = ref(false)
@@ -56,10 +57,10 @@ const countdown = ref(0)
 
 const isPhoneValid = computed(() => /^1[3-9]\d{9}$/.test(form.phone))
 
-const rules = {
-  phone: { required: true, message: '请输入手机号', trigger: 'blur' },
-  code: { required: true, message: '请输入验证码', trigger: 'blur' },
-}
+const rules = computed(() => ({
+  phone: { required: true, message: $t('auth.phoneRequired'), trigger: 'blur' },
+  code: { required: true, message: $t('auth.codeRequired'), trigger: 'blur' },
+}))
 
 async function sendCode() {
   if (!isPhoneValid.value) return
@@ -70,7 +71,7 @@ async function sendCode() {
       body: { phone: form.phone },
     })
     if ((res as any).code === 0) {
-      message.success('验证码已发送')
+      message.success($t('auth.codeSent'))
       countdown.value = 60
       const timer = setInterval(() => {
         countdown.value--
@@ -80,7 +81,7 @@ async function sendCode() {
       message.error((res as any).message)
     }
   } catch (err: any) {
-    message.error('发送失败，请稍后重试')
+    message.error($t('auth.sendFailed'))
   } finally {
     sendingCode.value = false
   }
@@ -97,13 +98,13 @@ async function handleLogin() {
     const data = res as any
     if (data.code === 0) {
       authStore.setAuth(data.data)
-      message.success('登录成功')
+      message.success($t('auth.loginSuccess'))
       await router.push('/dashboard')
     } else {
       message.error(data.message)
     }
   } catch (err: any) {
-    message.error('登录失败，请稍后重试')
+    message.error($t('auth.loginFailed'))
   } finally {
     submitting.value = false
   }

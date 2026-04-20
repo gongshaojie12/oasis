@@ -1,17 +1,17 @@
 <template>
   <div class="create-page">
-    <CommonPageHeader title="新建模拟" subtitle="配置模拟参数并提交" />
+    <CommonPageHeader :title="$t('simulation.create')" :subtitle="$t('simulation.createSubtitle')" />
 
     <NSteps :current="currentStep" class="wizard-steps">
-      <NStep title="选择业务类型" />
-      <NStep title="配置参数" />
-      <NStep title="确认提交" />
+      <NStep :title="$t('simulation.wizard.step1')" />
+      <NStep :title="$t('simulation.wizard.step2')" />
+      <NStep :title="$t('simulation.wizard.step3')" />
     </NSteps>
 
     <NCard class="wizard-content">
       <!-- Step 1: Business Type -->
       <div v-if="currentStep === 1">
-        <h3 class="step-title">选择业务方向</h3>
+        <h3 class="step-title">{{ $t('simulation.selectBusinessType') }}</h3>
         <div class="type-grid">
           <div
             v-for="t in businessTypes"
@@ -29,52 +29,52 @@
 
       <!-- Step 2: Platform + Parameters -->
       <div v-if="currentStep === 2">
-        <h3 class="step-title">配置模拟参数</h3>
+        <h3 class="step-title">{{ $t('simulation.configureParameters') }}</h3>
         <NForm label-placement="left" label-width="100">
-          <NFormItem label="模拟名称">
-            <NInput v-model:value="form.name" placeholder="例如：新品推广微博模拟" maxlength="100" />
+          <NFormItem :label="$t('simulation.name')">
+            <NInput v-model:value="form.name" :placeholder="$t('simulation.namePlaceholder')" maxlength="100" />
           </NFormItem>
-          <NFormItem label="选择平台">
-            <NSelect v-model:value="form.platform" :options="platformOptions" placeholder="选择平台" />
+          <NFormItem :label="$t('simulation.selectPlatform')">
+            <NSelect v-model:value="form.platform" :options="platformOptions" :placeholder="$t('simulation.selectPlatform')" />
           </NFormItem>
-          <NFormItem label="Agent 数量">
+          <NFormItem :label="$t('simulation.agentCount')">
             <NInputNumber v-model:value="form.agentCount" :min="1" :max="100000" :step="10" style="width: 100%" />
           </NFormItem>
-          <NFormItem label="模拟轮次">
+          <NFormItem :label="$t('simulation.timeSteps')">
             <NInputNumber v-model:value="form.timeSteps" :min="1" :max="1000" style="width: 100%" />
           </NFormItem>
-          <NFormItem label="初始内容">
-            <NInput v-model:value="form.seedContent" type="textarea" placeholder="可选：模拟的种子内容/话题（留空则由 Agent 自由互动）" :rows="3" />
+          <NFormItem :label="$t('simulation.seedContent')">
+            <NInput v-model:value="form.seedContent" type="textarea" :placeholder="$t('simulation.seedContentPlaceholder')" :rows="3" />
           </NFormItem>
         </NForm>
       </div>
 
       <!-- Step 3: Confirm -->
       <div v-if="currentStep === 3">
-        <h3 class="step-title">确认模拟配置</h3>
+        <h3 class="step-title">{{ $t('simulation.confirmConfig') }}</h3>
         <div class="confirm-grid">
           <div class="confirm-item">
-            <span class="confirm-label">业务类型</span>
+            <span class="confirm-label">{{ $t('simulation.businessType') }}</span>
             <span class="confirm-value">{{ getTypeName(form.type) }}</span>
           </div>
           <div class="confirm-item">
-            <span class="confirm-label">模拟名称</span>
+            <span class="confirm-label">{{ $t('simulation.name') }}</span>
             <span class="confirm-value">{{ form.name }}</span>
           </div>
           <div class="confirm-item">
-            <span class="confirm-label">平台</span>
+            <span class="confirm-label">{{ $t('common.platform') }}</span>
             <span class="confirm-value">{{ getPlatformName(form.platform) }}</span>
           </div>
           <div class="confirm-item">
-            <span class="confirm-label">Agent 数量</span>
+            <span class="confirm-label">{{ $t('simulation.agentCount') }}</span>
             <span class="confirm-value">{{ form.agentCount }}</span>
           </div>
           <div class="confirm-item">
-            <span class="confirm-label">模拟轮次</span>
+            <span class="confirm-label">{{ $t('simulation.timeSteps') }}</span>
             <span class="confirm-value">{{ form.timeSteps }}</span>
           </div>
           <div v-if="form.seedContent" class="confirm-item">
-            <span class="confirm-label">初始内容</span>
+            <span class="confirm-label">{{ $t('simulation.seedContent') }}</span>
             <span class="confirm-value">{{ form.seedContent }}</span>
           </div>
         </div>
@@ -82,7 +82,7 @@
 
       <!-- Navigation -->
       <div class="wizard-nav">
-        <NButton v-if="currentStep > 1" @click="currentStep--">上一步</NButton>
+        <NButton v-if="currentStep > 1" @click="currentStep--">{{ $t('common.previous') }}</NButton>
         <div class="wizard-nav-spacer" />
         <NButton
           v-if="currentStep < 3"
@@ -90,7 +90,7 @@
           :disabled="!canProceed"
           @click="currentStep++"
         >
-          下一步
+          {{ $t('common.next') }}
         </NButton>
         <NButton
           v-if="currentStep === 3"
@@ -98,7 +98,7 @@
           :loading="submitting"
           @click="handleSubmit"
         >
-          提交模拟
+          {{ $t('simulation.submit') }}
         </NButton>
       </div>
     </NCard>
@@ -115,6 +115,7 @@ import { useSimulationsStore } from '~/stores/simulations'
 const store = useSimulationsStore()
 const message = useMessage()
 const router = useRouter()
+const { $t } = useI18n()
 
 const currentStep = ref(1)
 const submitting = ref(false)
@@ -128,24 +129,24 @@ const form = reactive({
   seedContent: '',
 })
 
-const businessTypes = [
-  { value: 'marketing_sim', label: '社交营销模拟', icon: 'carbon:bullhorn', desc: '品牌投放前预演策略效果' },
-  { value: 'sentiment_predict', label: '舆情预测预警', icon: 'carbon:warning-alt', desc: '模拟危机事件传播与公关响应' },
-  { value: 'recsys_test', label: '推荐算法测试', icon: 'carbon:recommend', desc: '测试推荐策略对用户行为影响' },
-  { value: 'research', label: '社会科学研究', icon: 'carbon:research--bloch-sphere', desc: '学术研究模拟社会现象' },
-  { value: 'digital_twin', label: '数字孪生社区', icon: 'carbon:ibm-cloud-direct-link-2-dedicated', desc: '创建目标社区的数字镜像' },
-  { value: 'synthetic_data', label: '合成数据工厂', icon: 'carbon:data-base', desc: '批量生成高质量训练数据' },
-]
+const businessTypes = computed(() => [
+  { value: 'marketing_sim', label: $t('simulation.types.marketing_sim'), icon: 'carbon:bullhorn', desc: $t('simulation.typeDesc.marketing_sim') },
+  { value: 'sentiment_predict', label: $t('simulation.types.sentiment_predict'), icon: 'carbon:warning-alt', desc: $t('simulation.typeDesc.sentiment_predict') },
+  { value: 'recsys_test', label: $t('simulation.types.recsys_test'), icon: 'carbon:recommend', desc: $t('simulation.typeDesc.recsys_test') },
+  { value: 'research', label: $t('simulation.types.research'), icon: 'carbon:research--bloch-sphere', desc: $t('simulation.typeDesc.research') },
+  { value: 'digital_twin', label: $t('simulation.types.digital_twin'), icon: 'carbon:ibm-cloud-direct-link-2-dedicated', desc: $t('simulation.typeDesc.digital_twin') },
+  { value: 'synthetic_data', label: $t('simulation.types.synthetic_data'), icon: 'carbon:data-base', desc: $t('simulation.typeDesc.synthetic_data') },
+])
 
 const platformOptions = [
   { label: 'Twitter', value: 'twitter' },
   { label: 'Reddit', value: 'reddit' },
-  { label: '微博', value: 'weibo' },
-  { label: '小红书', value: 'xiaohongshu' },
-  { label: '抖音', value: 'douyin' },
-  { label: '快手', value: 'kuaishou' },
-  { label: 'B站', value: 'bilibili' },
-  { label: '微信视频号', value: 'wechat_video' },
+  { label: $t('common.platforms.weibo'), value: 'weibo' },
+  { label: $t('common.platforms.xiaohongshu'), value: 'xiaohongshu' },
+  { label: $t('common.platforms.douyin'), value: 'douyin' },
+  { label: $t('common.platforms.kuaishou'), value: 'kuaishou' },
+  { label: $t('common.platforms.bilibili'), value: 'bilibili' },
+  { label: $t('common.platforms.wechat_video'), value: 'wechat_video' },
 ]
 
 const canProceed = computed(() => {
@@ -155,7 +156,7 @@ const canProceed = computed(() => {
 })
 
 function getTypeName(type: string) {
-  return businessTypes.find(t => t.value === type)?.label || type
+  return businessTypes.value.find(t => t.value === type)?.label || type
 }
 
 function getPlatformName(platform: string) {
@@ -174,13 +175,13 @@ async function handleSubmit() {
       seedContent: form.seedContent || undefined,
     })
     if (res.code === 0) {
-      message.success('模拟任务已提交')
+      message.success($t('simulation.submitSuccess'))
       await router.push(`/simulations/${res.data.id}`)
     } else {
       message.error(res.message)
     }
   } catch {
-    message.error('提交失败，请稍后重试')
+    message.error($t('common.submitFailed'))
   } finally {
     submitting.value = false
   }

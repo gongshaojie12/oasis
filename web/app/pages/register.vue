@@ -1,31 +1,31 @@
 <template>
   <div>
     <NCard class="auth-card">
-      <h2 class="auth-title">企业注册</h2>
+      <h2 class="auth-title">{{ $t('auth.register') }}</h2>
 
       <NForm ref="formRef" :model="form" :rules="rules">
-        <NFormItem path="enterpriseName" label="企业名称">
-          <NInput v-model:value="form.enterpriseName" placeholder="请输入企业名称" />
+        <NFormItem path="enterpriseName" :label="$t('auth.enterpriseName')">
+          <NInput v-model:value="form.enterpriseName" :placeholder="$t('auth.enterpriseNamePlaceholder')" />
         </NFormItem>
 
-        <NFormItem path="userName" label="您的姓名">
-          <NInput v-model:value="form.userName" placeholder="请输入姓名" />
+        <NFormItem path="userName" :label="$t('auth.userName')">
+          <NInput v-model:value="form.userName" :placeholder="$t('auth.userNamePlaceholder')" />
         </NFormItem>
 
-        <NFormItem path="phone" label="手机号">
-          <NInput v-model:value="form.phone" placeholder="请输入手机号" maxlength="11" />
+        <NFormItem path="phone" :label="$t('auth.phone')">
+          <NInput v-model:value="form.phone" :placeholder="$t('auth.phonePlaceholder')" maxlength="11" />
         </NFormItem>
 
-        <NFormItem path="code" label="验证码">
+        <NFormItem path="code" :label="$t('auth.code')">
           <div class="code-row">
-            <NInput v-model:value="form.code" placeholder="请输入验证码" maxlength="6" />
+            <NInput v-model:value="form.code" :placeholder="$t('auth.codePlaceholder')" maxlength="6" />
             <NButton
               :disabled="countdown > 0 || !isPhoneValid"
               :loading="sendingCode"
               @click="sendCode"
               class="code-btn"
             >
-              {{ countdown > 0 ? `${countdown}s` : '获取验证码' }}
+              {{ countdown > 0 ? `${countdown}s` : $t('auth.getCode') }}
             </NButton>
           </div>
         </NFormItem>
@@ -37,12 +37,12 @@
           @click="handleRegister"
           class="submit-btn"
         >
-          注册并登录
+          {{ $t('auth.registerAndLogin') }}
         </NButton>
       </NForm>
 
       <div class="auth-footer">
-        已有账号？<NuxtLink to="/login" class="auth-link">去登录</NuxtLink>
+        {{ $t('auth.hasAccount') }}<NuxtLink to="/login" class="auth-link">{{ $t('auth.goLogin') }}</NuxtLink>
       </div>
     </NCard>
   </div>
@@ -56,6 +56,7 @@ definePageMeta({ layout: 'guest' })
 const authStore = useAuthStore()
 const router = useRouter()
 const message = useMessage()
+const { $t } = useI18n()
 
 const form = reactive({
   enterpriseName: '',
@@ -69,12 +70,12 @@ const countdown = ref(0)
 
 const isPhoneValid = computed(() => /^1[3-9]\d{9}$/.test(form.phone))
 
-const rules = {
-  enterpriseName: { required: true, message: '请输入企业名称', trigger: 'blur' },
-  userName: { required: true, message: '请输入姓名', trigger: 'blur' },
-  phone: { required: true, message: '请输入手机号', trigger: 'blur' },
-  code: { required: true, message: '请输入验证码', trigger: 'blur' },
-}
+const rules = computed(() => ({
+  enterpriseName: { required: true, message: $t('auth.enterpriseNameRequired'), trigger: 'blur' },
+  userName: { required: true, message: $t('auth.userNameRequired'), trigger: 'blur' },
+  phone: { required: true, message: $t('auth.phoneRequired'), trigger: 'blur' },
+  code: { required: true, message: $t('auth.codeRequired'), trigger: 'blur' },
+}))
 
 async function sendCode() {
   if (!isPhoneValid.value) return
@@ -85,7 +86,7 @@ async function sendCode() {
       body: { phone: form.phone },
     })
     if ((res as any).code === 0) {
-      message.success('验证码已发送')
+      message.success($t('auth.codeSent'))
       countdown.value = 60
       const timer = setInterval(() => {
         countdown.value--
@@ -95,7 +96,7 @@ async function sendCode() {
       message.error((res as any).message)
     }
   } catch {
-    message.error('发送失败，请稍后重试')
+    message.error($t('auth.sendFailed'))
   } finally {
     sendingCode.value = false
   }
@@ -112,13 +113,13 @@ async function handleRegister() {
     const data = res as any
     if (data.code === 0) {
       authStore.setAuth(data.data)
-      message.success('注册成功')
+      message.success($t('auth.registerSuccess'))
       await router.push('/dashboard')
     } else {
       message.error(data.message)
     }
   } catch {
-    message.error('注册失败，请稍后重试')
+    message.error($t('auth.registerFailed'))
   } finally {
     submitting.value = false
   }

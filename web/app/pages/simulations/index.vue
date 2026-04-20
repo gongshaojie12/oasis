@@ -1,10 +1,10 @@
 <template>
   <div class="simulations-page">
-    <CommonPageHeader title="模拟任务">
+    <CommonPageHeader :title="$t('simulation.title')">
       <template #actions>
         <NButton type="primary" @click="navigateTo('/simulations/create')">
           <template #icon><Icon name="carbon:add" /></template>
-          新建模拟
+          {{ $t('simulation.create') }}
         </NButton>
       </template>
     </CommonPageHeader>
@@ -13,7 +13,7 @@
     <div class="filters">
       <NSelect
         v-model:value="filters.status"
-        placeholder="状态筛选"
+        :placeholder="$t('simulation.filters.status')"
         clearable
         :options="statusOptions"
         style="width: 140px"
@@ -21,7 +21,7 @@
       />
       <NSelect
         v-model:value="filters.platform"
-        placeholder="平台筛选"
+        :placeholder="$t('simulation.filters.platform')"
         clearable
         :options="platformOptions"
         style="width: 140px"
@@ -29,7 +29,7 @@
       />
       <NSelect
         v-model:value="filters.type"
-        placeholder="类型筛选"
+        :placeholder="$t('simulation.filters.type')"
         clearable
         :options="typeOptions"
         style="width: 160px"
@@ -59,10 +59,10 @@
 
     <!-- Empty state -->
     <div v-if="!store.loading && store.items.length === 0" class="empty-state">
-      <NEmpty description="暂无模拟任务">
+      <NEmpty :description="$t('simulation.noData')">
         <template #extra>
           <NButton type="primary" size="small" @click="navigateTo('/simulations/create')">
-            创建第一个模拟
+            {{ $t('simulation.createFirst') }}
           </NButton>
         </template>
       </NEmpty>
@@ -88,95 +88,97 @@ const filters = reactive({
   type: null as string | null,
 })
 
-const statusOptions = [
-  { label: '等待中', value: 'pending' },
-  { label: '运行中', value: 'running' },
-  { label: '已完成', value: 'completed' },
-  { label: '失败', value: 'failed' },
-  { label: '已取消', value: 'cancelled' },
-]
+const { $t } = useI18n()
+
+const statusOptions = computed(() => [
+  { label: $t('simulation.status.pending'), value: 'pending' },
+  { label: $t('simulation.status.running'), value: 'running' },
+  { label: $t('simulation.status.completed'), value: 'completed' },
+  { label: $t('simulation.status.failed'), value: 'failed' },
+  { label: $t('simulation.status.cancelled'), value: 'cancelled' },
+])
 
 const platformOptions = [
   { label: 'Twitter', value: 'twitter' },
   { label: 'Reddit', value: 'reddit' },
-  { label: '微博', value: 'weibo' },
-  { label: '小红书', value: 'xiaohongshu' },
-  { label: '抖音', value: 'douyin' },
-  { label: '快手', value: 'kuaishou' },
-  { label: 'B站', value: 'bilibili' },
-  { label: '视频号', value: 'wechat_video' },
+  { label: $t('common.platforms.weibo'), value: 'weibo' },
+  { label: $t('common.platforms.xiaohongshu'), value: 'xiaohongshu' },
+  { label: $t('common.platforms.douyin'), value: 'douyin' },
+  { label: $t('common.platforms.kuaishou'), value: 'kuaishou' },
+  { label: $t('common.platforms.bilibili'), value: 'bilibili' },
+  { label: $t('common.platforms.wechat_video'), value: 'wechat_video' },
 ]
 
-const typeOptions = [
-  { label: '社交营销模拟', value: 'marketing_sim' },
-  { label: '舆情预测', value: 'sentiment_predict' },
-  { label: '推荐算法测试', value: 'recsys_test' },
-  { label: '社会科学研究', value: 'research' },
-  { label: '数字孪生', value: 'digital_twin' },
-  { label: '合成数据', value: 'synthetic_data' },
-]
+const typeOptions = computed(() => [
+  { label: $t('simulation.types.marketing_sim'), value: 'marketing_sim' },
+  { label: $t('simulation.types.sentiment_predict'), value: 'sentiment_predict' },
+  { label: $t('simulation.types.recsys_test'), value: 'recsys_test' },
+  { label: $t('simulation.types.research'), value: 'research' },
+  { label: $t('simulation.types.digital_twin'), value: 'digital_twin' },
+  { label: $t('simulation.types.synthetic_data'), value: 'synthetic_data' },
+])
 
-const typeNameMap: Record<string, string> = {
-  marketing_sim: '社交营销',
-  sentiment_predict: '舆情预测',
-  recsys_test: '推荐算法',
-  research: '社会研究',
-  digital_twin: '数字孪生',
-  synthetic_data: '合成数据',
-}
+const typeNameMap = computed<Record<string, string>>(() => ({
+  marketing_sim: $t('simulation.types.marketing_sim'),
+  sentiment_predict: $t('simulation.types.sentiment_predict'),
+  recsys_test: $t('simulation.types.recsys_test'),
+  research: $t('simulation.types.research'),
+  digital_twin: $t('simulation.types.digital_twin'),
+  synthetic_data: $t('simulation.types.synthetic_data'),
+}))
 
-const platformNameMap: Record<string, string> = {
-  twitter: 'Twitter', reddit: 'Reddit', weibo: '微博',
-  xiaohongshu: '小红书', douyin: '抖音', kuaishou: '快手',
-  bilibili: 'B站', wechat_video: '视频号',
-}
+const platformNameMap = computed<Record<string, string>>(() => ({
+  twitter: 'Twitter', reddit: 'Reddit', weibo: $t('common.platforms.weibo'),
+  xiaohongshu: $t('common.platforms.xiaohongshu'), douyin: $t('common.platforms.douyin'), kuaishou: $t('common.platforms.kuaishou'),
+  bilibili: $t('common.platforms.bilibili'), wechat_video: $t('common.platforms.wechat_video'),
+}))
 
-const columns: DataTableColumns = [
-  { title: '名称', key: 'name', ellipsis: { tooltip: true }, width: 200,
+const columns = computed<DataTableColumns>(() => [
+  { title: $t('common.name'), key: 'name', ellipsis: { tooltip: true }, width: 200,
     render: (row: any) => h('a', {
       style: 'color: #4f6ef7; cursor: pointer; text-decoration: none; font-weight: 500;',
       onClick: () => router.push(`/simulations/${row.id}`),
     }, row.name),
   },
-  { title: '类型', key: 'type', width: 100,
-    render: (row: any) => typeNameMap[row.type] || row.type,
+  { title: $t('common.type'), key: 'type', width: 100,
+    render: (row: any) => typeNameMap.value[row.type] || row.type,
   },
-  { title: '平台', key: 'platform', width: 80,
-    render: (row: any) => platformNameMap[row.platform] || row.platform,
+  { title: $t('common.platform'), key: 'platform', width: 80,
+    render: (row: any) => platformNameMap.value[row.platform] || row.platform,
   },
-  { title: '状态', key: 'status', width: 90,
+  { title: $t('common.status'), key: 'status', width: 90,
     render: (row: any) => h(resolveComponent('CommonStatusTag'), { status: row.status }),
   },
-  { title: '进度', key: 'progress', width: 80,
+  { title: $t('simulation.progress'), key: 'progress', width: 80,
     render: (row: any) => `${row.progress}%`,
   },
-  { title: 'Agent数', key: 'agentCount', width: 80 },
-  { title: '创建时间', key: 'createdAt', width: 160,
+  { title: $t('simulation.agentCount'), key: 'agentCount', width: 80 },
+  { title: $t('common.createdAt'), key: 'createdAt', width: 160,
     render: (row: any) => row.createdAt ? new Date(row.createdAt).toLocaleString('zh-CN') : '-',
   },
-  { title: '操作', key: 'actions', width: 140,
+  { title: $t('common.actions'), key: 'actions', width: 140,
     render: (row: any) => h(NSpace, { size: 'small' }, () => {
       const buttons = []
       if (row.status === 'pending' || row.status === 'running') {
         buttons.push(h(NButton, {
           size: 'tiny', quaternary: true, type: 'warning',
           onClick: () => handleCancel(row.id),
-        }, () => '取消'))
+        }, () => $t('common.cancel')))
       }
       if (row.status === 'failed' || row.status === 'cancelled') {
         buttons.push(h(NButton, {
           size: 'tiny', quaternary: true, type: 'info',
           onClick: () => handleRetry(row.id),
-        }, () => '重试'))
+        }, () => $t('common.retry')))
       }
       buttons.push(h(NButton, {
         size: 'tiny', quaternary: true,
         onClick: () => router.push(`/simulations/${row.id}`),
-      }, () => '详情'))
+      }, () => $t('common.details')))
       return buttons
     }),
   },
-]
+])
 
 async function loadData() {
   await store.fetchList({
@@ -199,7 +201,7 @@ async function handlePageChange(page: number) {
 async function handleCancel(id: string) {
   const res = await store.cancel(id)
   if (res.code === 0) {
-    message.success('已取消')
+    message.success($t('common.cancelSuccess'))
     await loadData()
   } else {
     message.error(res.message)
@@ -209,7 +211,7 @@ async function handleCancel(id: string) {
 async function handleRetry(id: string) {
   const res = await store.retry(id)
   if (res.code === 0) {
-    message.success('已重新提交')
+    message.success($t('common.retrySuccess'))
     await loadData()
   } else {
     message.error(res.message)

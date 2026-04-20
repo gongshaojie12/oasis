@@ -1,8 +1,8 @@
 <template>
   <div>
-    <CommonPageHeader title="深度分析报告" :subtitle="report?.status === 'completed' ? '分析完成' : '分析中...'">
+    <CommonPageHeader :title="$t('analysis.reportTitle')" :subtitle="report?.status === 'completed' ? $t('analysis.completed') : $t('analysis.analyzing')">
       <template #actions>
-        <n-button v-if="report?.status === 'analyzing'" :loading="true" disabled>分析进行中</n-button>
+        <n-button v-if="report?.status === 'analyzing'" :loading="true" disabled>{{ $t('analysis.analyzing') }}</n-button>
       </template>
     </CommonPageHeader>
 
@@ -10,27 +10,27 @@
       <n-card>
         <n-space vertical align="center">
           <n-spin size="large" />
-          <n-text>正在进行多视角分析和辩论...</n-text>
+          <n-text>{{ $t('analysis.analyzingMessage') }}</n-text>
           <n-progress type="line" :percentage="progress" style="width: 400px" />
         </n-space>
       </n-card>
     </div>
 
     <div v-if="report?.status === 'completed' && report.finalReport">
-      <n-card title="执行摘要" style="margin-bottom: 16px">
+      <n-card :title="$t('analysis.executiveSummary')" style="margin-bottom: 16px">
         <n-text>{{ report.finalReport.executive_summary }}</n-text>
       </n-card>
 
       <n-grid :cols="2" :x-gap="16" style="margin-bottom: 16px">
         <n-gi>
-          <n-card title="共识结论">
+          <n-card :title="$t('analysis.consensus')">
             <n-ul>
               <n-li v-for="(c, i) in report.finalReport.consensus" :key="i">{{ c }}</n-li>
             </n-ul>
           </n-card>
         </n-gi>
         <n-gi>
-          <n-card title="分歧观点">
+          <n-card :title="$t('analysis.disagreements')">
             <div v-for="(d, i) in report.finalReport.disagreements" :key="i" style="margin-bottom: 8px">
               <n-tag type="warning" size="small">{{ d.topic }}</n-tag>
               <div v-for="(view, role) in d.sides" :key="role" style="margin-left: 16px; margin-top: 4px">
@@ -46,7 +46,7 @@
 
       <AnalysisDashboard :data="report.chartData" style="margin-bottom: 16px" />
 
-      <n-card title="各分析师报告" style="margin-bottom: 16px">
+      <n-card :title="$t('analysis.analystReports')" style="margin-bottom: 16px">
         <n-tabs type="line">
           <n-tab-pane
             v-for="(ar, role) in report.analystReports"
@@ -54,15 +54,15 @@
             :name="role"
             :tab="roleLabel(role)"
           >
-            <n-h4>核心发现</n-h4>
+            <n-h4>{{ $t('analysis.findings') }}</n-h4>
             <n-ul>
               <n-li v-for="(f, i) in ar.findings" :key="i">{{ f }}</n-li>
             </n-ul>
-            <n-h4>关键洞察</n-h4>
+            <n-h4>{{ $t('analysis.keyInsights') }}</n-h4>
             <n-ul>
               <n-li v-for="(ins, i) in ar.key_insights" :key="i">{{ ins }}</n-li>
             </n-ul>
-            <n-h4>分析叙述</n-h4>
+            <n-h4>{{ $t('analysis.narrative') }}</n-h4>
             <n-text>{{ ar.narrative }}</n-text>
           </n-tab-pane>
         </n-tabs>
@@ -70,7 +70,7 @@
 
       <DebateLog :messages="report.debateLog || []" />
 
-      <n-card title="待探索问题" v-if="report.finalReport.open_questions?.length" style="margin-top: 16px">
+      <n-card :title="$t('analysis.openQuestions')" v-if="report.finalReport.open_questions?.length" style="margin-top: 16px">
         <n-ul>
           <n-li v-for="(q, i) in report.finalReport.open_questions" :key="i">{{ q }}</n-li>
         </n-ul>
@@ -86,19 +86,20 @@ import { useAnalysisStore } from '~/stores/analysis'
 
 const route = useRoute()
 const store = useAnalysisStore()
+const { $t } = useI18n()
 
 const report = ref<any>(null)
 const progress = ref(0)
 let pollTimer: any = null
 
-const roleLabels: Record<string, string> = {
-  data_analyst: '数据分析师',
-  sociologist: '社会学家',
-  psychologist: '心理学家',
-  devils_advocate: '魔鬼代言人',
-}
+const roleLabels = computed<Record<string, string>>(() => ({
+  data_analyst: $t('analysis.roles.data_analyst'),
+  sociologist: $t('analysis.roles.sociologist'),
+  psychologist: $t('analysis.roles.psychologist'),
+  devils_advocate: $t('analysis.roles.devils_advocate'),
+}))
 
-function roleLabel(role: string) { return roleLabels[role] || role }
+function roleLabel(role: string) { return roleLabels.value[role] || role }
 
 async function loadReport() {
   const res = await store.fetchOne(route.params.id as string)
