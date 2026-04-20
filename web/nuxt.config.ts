@@ -8,7 +8,23 @@ export default defineNuxtConfig({
     '@vueuse/nuxt',
     '@nuxt/icon',
     'pinia-plugin-persistedstate/nuxt',
+    '@nuxtjs/i18n',
   ],
+
+  i18n: {
+    locales: [
+      { code: 'zh-CN', name: '中文', file: 'zh-CN.json' },
+      { code: 'en-US', name: 'English', file: 'en-US.json' },
+    ],
+    defaultLocale: 'zh-CN',
+    langDir: 'locales',
+    strategy: 'no_prefix',
+    detectBrowserLanguage: {
+      useCookie: true,
+      cookieKey: 'i18n_locale',
+      fallbackLocale: 'zh-CN',
+    },
+  },
 
   build: {
     transpile: ['naive-ui', '@css-render/vue3-ssr', '@juggle/resize-observer'],
