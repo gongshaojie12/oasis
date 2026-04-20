@@ -36,6 +36,15 @@
           </div>
         </NCard>
 
+        <!-- Live Control Panel (for running sims) -->
+        <template v-if="displayStatus === 'running'">
+          <LiveControlPanel :ws="wsControl" />
+          <div class="live-grid">
+            <PostStream :posts="wsControl.posts.value" />
+            <EventInjector :on-inject="wsControl.inject" />
+          </div>
+        </template>
+
         <!-- Details Grid -->
         <div class="info-grid">
           <NCard class="info-card">
@@ -69,6 +78,10 @@ import { NCard, NProgress, NButton, NSpace, NSpin } from 'naive-ui'
 import { useSimulationsStore } from '~/stores/simulations'
 import { useAnalysisStore } from '~/stores/analysis'
 import { useSSE } from '~/composables/useSSE'
+import { useWebSocket } from '~/composables/useWebSocket'
+import LiveControlPanel from '~/components/live/LiveControlPanel.vue'
+import PostStream from '~/components/live/PostStream.vue'
+import EventInjector from '~/components/live/EventInjector.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -84,6 +97,7 @@ const retrying = ref(false)
 const sim = computed(() => store.currentSimulation)
 
 const sse = useSSE(id)
+const wsControl = useWebSocket(id)
 
 const typeNameMap: Record<string, string> = {
   marketing_sim: '社交营销', sentiment_predict: '舆情预测', recsys_test: '推荐算法',
@@ -156,6 +170,7 @@ onMounted(async () => {
   // Connect SSE for active simulations
   if (sim.value && ['pending', 'running'].includes(sim.value.status)) {
     sse.connect()
+    wsControl.connect()
   }
 })
 </script>
@@ -239,5 +254,11 @@ onMounted(async () => {
 
 .detail-row .label {
   color: var(--text-secondary);
+}
+
+.live-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 18px;
 }
 </style>
