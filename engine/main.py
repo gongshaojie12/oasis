@@ -9,6 +9,8 @@ from pydantic import BaseModel, Field
 
 from engine.callback import CallbackClient
 from engine.config import Settings, get_settings
+from engine.genome.breeder import GenomeBreeder
+from engine.genome.schema import BreedStrategy, GenomeData
 from engine.queue import TaskInfo, TaskQueueManager, TaskStatus
 from engine.reporter import ProgressReporter
 from engine.runner import SimulationRunner
@@ -60,6 +62,19 @@ class HealthResponse(BaseModel):
     service: str
     pending_tasks: int
     running_tasks: int
+
+
+class GenomeExtractRequest(BaseModel):
+    source_type: str = Field(default="natural_language")
+    content: str = Field(default="")
+    structured_data: Optional[dict[str, Any]] = None
+
+
+class GenomeBreedRequest(BaseModel):
+    seeds: list[dict[str, Any]]
+    target_count: int = Field(default=10, ge=1, le=10000)
+    mutation_rate: float = Field(default=0.15, ge=0.0, le=1.0)
+    strategy: str = Field(default="crossover")
 
 
 # --- Auth dependency ---
@@ -178,3 +193,57 @@ async def cancel_task(task_id: str, request: Request):
         task_id=task_id,
         cancelled=cancelled,
     )
+
+
+@app.post(
+    "/engine/genomes/extract",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def extract_genome(body: GenomeExtractRequest, request: Request):
+    settings = request.app.state.settings
+
+    async def llm_call(prompt: str) -> str:
+        from engine.llm.provider import LLMProviderRegistry, create_model
+
+        registry = LLMProviderRegistry()
+        provider = settings.default_llm_provider or "qwen"
+        model_id = settings.default_llm_model or "qwen-plus"
+        model = create_model(provider, model_id, settings, registry)
+        from camel.messages import BaseMessage
+
+        user_msg = BaseMessage.make_user_message(role_name="user", content=prompt)
+        response = model.run([user_msg])
+        return response.msgs[0].content
+
+    from engine.genome.extractor import GenomeExtractor
+
+    extractor = GenomeExtractor(llm_call=llm_call)
+
+    if body.structured_data:
+        genome = await extractor.extract_from_structured(body.structured_data)
+    else:
+        genome = await extractor.extract_from_text(body.content)
+
+    return {"genome": genome.model_dump()}
+
+
+@app.post(
+    "/engine/genomes/breed",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def breed_genomes(body: GenomeBreedRequest):
+    seeds = [GenomeData.model_validate(s) for s in body.seeds]
+    strategy = BreedStrategy(body.strategy)
+    breeder = GenomeBreeder(
+        seeds=seeds,
+        target_count=body.target_count,
+        mutation_rate=body.mutation_rate,
+        strategy=strategy,
+    )
+    result = breeder.breed()
+    diversity = breeder.compute_diversity(result)
+    return {
+        "genomes": [g.model_dump() for g in result],
+        "diversity": round(diversity, 4),
+        "count": len(result),
+    }
