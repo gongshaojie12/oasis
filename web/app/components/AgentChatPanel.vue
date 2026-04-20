@@ -1,13 +1,13 @@
 <template>
   <n-drawer :show="!!agentId" :width="420" placement="right" @update:show="$emit('close')">
-    <n-drawer-content :title="`与 ${agentName} 对话 (第${roundContext}轮)`" closable>
+    <n-drawer-content :title="$t('timeMachine.chatWith', { name: agentName }) + ` (${$t('timeMachine.atRound', { round: roundContext })})`" closable>
       <div class="chat-messages" ref="messagesRef">
         <div
           v-for="(msg, idx) in messages"
           :key="idx"
           :class="['chat-bubble', msg.role === 'user' ? 'chat-user' : 'chat-agent']"
         >
-          <n-text depth="3" style="font-size: 11px">{{ msg.role === 'user' ? '你' : msg.agent_name || agentName }}</n-text>
+          <n-text depth="3" style="font-size: 11px">{{ msg.role === 'user' ? $t('timeMachine.you') : msg.agent_name || agentName }}</n-text>
           <n-text>{{ msg.content }}</n-text>
         </div>
         <div v-if="loading" style="text-align: center; padding: 12px">
@@ -19,12 +19,12 @@
         <n-input-group>
           <n-input
             v-model:value="inputText"
-            placeholder="输入消息..."
+            :placeholder="$t('timeMachine.inputMessage')"
             :disabled="loading"
             @keydown.enter.prevent="send"
           />
           <n-button type="primary" :loading="loading" :disabled="!inputText.trim()" @click="send">
-            发送
+            {{ $t('timeMachine.send') }}
           </n-button>
         </n-input-group>
       </template>

@@ -1,9 +1,9 @@
 <template>
-  <n-card title="情境重放" size="small" v-if="data">
+  <n-card :title="$t('timeMachine.replay')" size="small" v-if="data">
     <template #header-extra>
       <n-space>
         <n-button size="tiny" @click="togglePlay">
-          {{ playing ? '暂停' : '播放' }}
+          {{ playing ? $t('timeMachine.pause') : $t('timeMachine.play') }}
         </n-button>
         <n-select
           v-model:value="speed"
@@ -15,7 +15,7 @@
     </template>
 
     <n-text depth="3" style="font-size: 12px">
-      轮次 {{ currentRound }} / {{ data.totalRounds }} | {{ data.platform }} | {{ data.agentCount }} Agents
+      {{ $t('timeMachine.round') }} {{ currentRound }} / {{ data.totalRounds }} | {{ data.platform }} | {{ data.agentCount }} Agents
     </n-text>
 
     <n-progress
@@ -32,7 +32,7 @@
           <n-text>{{ p.content }}</n-text>
         </n-list-item>
       </n-list>
-      <n-empty v-if="!currentRoundData.posts?.length" description="本轮无新帖子" size="small" />
+      <n-empty v-if="!currentRoundData.posts?.length" :description="$t('timeMachine.noPostsThisRound')" size="small" />
     </div>
   </n-card>
 </template>

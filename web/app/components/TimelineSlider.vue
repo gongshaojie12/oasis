@@ -1,7 +1,7 @@
 <template>
   <n-card size="small">
     <div style="display: flex; align-items: center; gap: 16px">
-      <n-text strong style="white-space: nowrap">轮次 {{ modelValue }} / {{ max }}</n-text>
+      <n-text strong style="white-space: nowrap">{{ $t('timeMachine.round') }} {{ modelValue }} / {{ max }}</n-text>
       <n-slider
         :value="modelValue"
         :min="1"

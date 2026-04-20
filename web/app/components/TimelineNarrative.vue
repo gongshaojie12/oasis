@@ -1,5 +1,5 @@
 <template>
-  <n-card title="时间线叙事">
+  <n-card :title="$t('analysis.timelineNarrative')">
     <n-timeline>
       <n-timeline-item
         v-for="(item, index) in timeline"
@@ -7,10 +7,10 @@
         :type="significanceType(item.significance)"
         :title="item.title"
         :content="item.description"
-        :time="`第 ${item.step} 轮`"
+        :time="$t('analysis.roundLabel', { round: item.step })"
       />
     </n-timeline>
-    <n-empty v-if="!timeline.length" description="暂无时间线数据" />
+    <n-empty v-if="!timeline.length" :description="$t('analysis.noTimelineData')" />
   </n-card>
 </template>
 

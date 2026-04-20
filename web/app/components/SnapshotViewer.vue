@@ -1,16 +1,16 @@
 <template>
   <n-grid :cols="2" :x-gap="16" :y-gap="16" v-if="snapshot">
     <n-gi>
-      <n-card title="轮次指标" size="small">
+      <n-card :title="$t('timeMachine.roundMetrics')" size="small">
         <n-space vertical>
-          <n-text>总行为: {{ snapshot.metrics.total_actions }}</n-text>
-          <n-text>新帖子: {{ snapshot.metrics.total_posts_this_round }}</n-text>
+          <n-text>{{ $t('timeMachine.totalActions') }}: {{ snapshot.metrics.total_actions }}</n-text>
+          <n-text>{{ $t('timeMachine.newPosts') }}: {{ snapshot.metrics.total_posts_this_round }}</n-text>
         </n-space>
         <div ref="actionChartRef" style="height: 200px; margin-top: 12px" />
       </n-card>
     </n-gi>
     <n-gi>
-      <n-card title="活跃 Agent" size="small">
+      <n-card :title="$t('timeMachine.activeAgents')" size="small">
         <n-list :show-divider="false" style="max-height: 280px; overflow-y: auto">
           <n-list-item v-for="a in snapshot.agent_summaries" :key="a.agent_id">
             <n-space justify="space-between" align="center" style="width: 100%">
@@ -22,7 +22,7 @@
                 {{ a.user_name }}
               </n-button>
               <n-space>
-                <n-tag size="tiny" type="info">{{ a.action_count }} 次行为</n-tag>
+                <n-tag size="tiny" type="info">{{ $t('timeMachine.actionCount', { count: a.action_count }) }}</n-tag>
               </n-space>
             </n-space>
           </n-list-item>
@@ -30,7 +30,7 @@
       </n-card>
     </n-gi>
     <n-gi :span="2" v-if="snapshot.posts.length">
-      <n-card title="本轮帖子" size="small">
+      <n-card :title="$t('timeMachine.roundPosts')" size="small">
         <n-list :show-divider="false" style="max-height: 300px; overflow-y: auto">
           <n-list-item v-for="(p, idx) in snapshot.posts.slice(0, 20)" :key="idx">
             <n-text depth="3" style="font-size: 12px">Agent {{ p.user_id }}:</n-text>

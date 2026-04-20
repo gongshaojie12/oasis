@@ -1,18 +1,18 @@
 <template>
-  <n-card title="数据仪表盘">
+  <n-card :title="$t('analysis.dashboardTitle')">
     <n-grid :cols="2" :x-gap="16" :y-gap="16">
       <n-gi>
-        <n-card title="帖子数量趋势" size="small">
+        <n-card :title="$t('analysis.postsTrend')" size="small">
           <div ref="timelineChartRef" style="height: 250px" />
         </n-card>
       </n-gi>
       <n-gi>
-        <n-card title="行为类型分布" size="small">
+        <n-card :title="$t('analysis.actionDistribution')" size="small">
           <div ref="actionChartRef" style="height: 250px" />
         </n-card>
       </n-gi>
       <n-gi :span="2">
-        <n-card title="Agent 活跃度排行" size="small">
+        <n-card :title="$t('analysis.agentActivity')" size="small">
           <div ref="agentChartRef" style="height: 250px" />
         </n-card>
       </n-gi>
@@ -57,7 +57,7 @@ function render() {
     const chart = initChart(timelineChartRef.value)
     chart.setOption({
       tooltip: { trigger: 'axis' },
-      xAxis: { type: 'category', data: props.data.posts_timeline.map(d => `第${d.step}轮`) },
+      xAxis: { type: 'category', data: props.data.posts_timeline.map(d => `Round ${d.step}`) },
       yAxis: { type: 'value' },
       series: [{ type: 'line', data: props.data.posts_timeline.map(d => d.count), smooth: true, areaStyle: { opacity: 0.3 } }],
     })
