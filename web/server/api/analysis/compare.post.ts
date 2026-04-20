@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { inArray } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { useDB } from '~~/server/database'
 import { analysisReports, reportComparisons } from '~~/server/database/schema'
 import { generateId } from '~~/server/utils/id'
@@ -19,9 +19,12 @@ export default defineEventHandler(async (event) => {
   const db = useDB()
 
   const reports = await db.select().from(analysisReports)
-    .where(inArray(analysisReports.id, parsed.data.reportIds))
+    .where(and(
+      inArray(analysisReports.id, parsed.data.reportIds),
+      eq(analysisReports.enterpriseId, enterpriseId),
+    ))
 
-  if (reports.length < 2) return error(ErrorCodes.NOT_FOUND, '部分报告不存在')
+  if (reports.length !== parsed.data.reportIds.length) return error(ErrorCodes.NOT_FOUND, '部分报告不存在或无权访问')
 
   const comparisonData: any = { reports: [] }
   for (const r of reports) {

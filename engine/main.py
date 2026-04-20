@@ -265,65 +265,85 @@ async def breed_genomes(body: GenomeBreedRequest):
     dependencies=[Depends(verify_internal_key)],
 )
 async def run_analysis(body: AnalysisRequest, request: Request):
+    import asyncio
+    import uuid
+
     settings = request.app.state.settings
-    qm: TaskQueueManager = request.app.state.queue_manager
 
-    async def analysis_executor(task_info: TaskInfo, params: dict[str, Any]):
-        import sqlite3
+    task_id = str(uuid.uuid4())
+    if not hasattr(request.app.state, "analysis_tasks"):
+        request.app.state.analysis_tasks = {}
 
-        db_path = params["db_path"]
-        conn = sqlite3.connect(db_path)
-        conn.row_factory = sqlite3.Row
-        cursor = conn.cursor()
+    state = {"task_id": task_id, "status": "running", "progress": 0.0}
+    request.app.state.analysis_tasks[task_id] = state
 
-        trace_data = [dict(r) for r in cursor.execute("SELECT * FROM trace").fetchall()]
-        post_data = [dict(r) for r in cursor.execute("SELECT * FROM post").fetchall()]
-        user_data = [dict(r) for r in cursor.execute("SELECT * FROM user").fetchall()]
-
+    async def _run():
         try:
-            follow_data = [dict(r) for r in cursor.execute("SELECT * FROM follow").fetchall()]
-        except Exception:
-            follow_data = []
+            import sqlite3
 
-        conn.close()
+            conn = sqlite3.connect(body.db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
 
-        context = AnalysisContext(
-            simulation_id=params["simulation_id"],
-            platform=params["platform"],
-            num_agents=params["num_agents"],
-            num_steps=params["num_steps"],
-            trace_data=trace_data,
-            post_data=post_data,
-            user_data=user_data,
-            follow_data=follow_data,
-        )
+            trace_data = [dict(r) for r in cursor.execute("SELECT * FROM trace").fetchall()]
+            post_data = [dict(r) for r in cursor.execute("SELECT * FROM post").fetchall()]
+            user_data = [dict(r) for r in cursor.execute("SELECT * FROM user").fetchall()]
 
-        async def llm_call(prompt: str) -> str:
-            from engine.llm.provider import create_model, LLMProviderRegistry
-            registry = LLMProviderRegistry()
-            provider = settings.default_llm_provider or "qwen"
-            model_id = settings.default_llm_model or "qwen-plus"
-            model = create_model(provider, model_id, settings, registry)
-            from camel.messages import BaseMessage
-            user_msg = BaseMessage.make_user_message(role_name="user", content=prompt)
-            response = model.run([user_msg])
-            return response.msgs[0].content
+            try:
+                follow_data = [dict(r) for r in cursor.execute("SELECT * FROM follow").fetchall()]
+            except Exception:
+                follow_data = []
 
-        async def on_progress(phase: str, progress: float) -> None:
-            pass
+            conn.close()
 
-        engine = DebateEngine(
-            llm_call=llm_call,
-            debate_rounds=params.get("debate_rounds", 2),
-            on_progress=on_progress,
-        )
-        report = await engine.run(context)
-        return report.model_dump()
+            context = AnalysisContext(
+                simulation_id=body.simulation_id,
+                platform=body.platform,
+                num_agents=body.num_agents,
+                num_steps=body.num_steps,
+                trace_data=trace_data,
+                post_data=post_data,
+                user_data=user_data,
+                follow_data=follow_data,
+            )
 
-    params = body.model_dump()
-    task_info = await qm.submit(params)
+            async def llm_call(prompt: str) -> str:
+                from engine.llm.provider import create_model, LLMProviderRegistry
+                registry = LLMProviderRegistry()
+                provider = settings.default_llm_provider or "qwen"
+                model_id = settings.default_llm_model or "qwen-plus"
+                model = create_model(provider, model_id, settings, registry)
+                from camel.messages import BaseMessage
+                user_msg = BaseMessage.make_user_message(role_name="user", content=prompt)
+                response = model.run([user_msg])
+                return response.msgs[0].content
 
-    original_executor = qm._executor
-    qm.set_executor(analysis_executor)
+            async def on_progress(phase: str, progress: float) -> None:
+                state["progress"] = progress
 
-    return {"task_id": task_info.task_id, "status": task_info.status.value}
+            engine = DebateEngine(
+                llm_call=llm_call,
+                debate_rounds=body.debate_rounds,
+                on_progress=on_progress,
+            )
+            report = await engine.run(context)
+            state["status"] = "completed"
+            state["result"] = report.model_dump()
+        except Exception as e:
+            logger.error("Analysis failed: %s", e)
+            state["status"] = "failed"
+            state["error"] = str(e)
+
+    asyncio.create_task(_run())
+    return {"task_id": task_id, "status": "running"}
+
+
+@app.get(
+    "/engine/analysis/{task_id}",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def get_analysis_status(task_id: str, request: Request):
+    tasks = getattr(request.app.state, "analysis_tasks", {})
+    if task_id not in tasks:
+        raise HTTPException(status_code=404, detail="Analysis task not found")
+    return tasks[task_id]

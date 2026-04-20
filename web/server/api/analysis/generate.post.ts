@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { eq } from 'drizzle-orm'
+import { eq, and } from 'drizzle-orm'
 import { useDB } from '~~/server/database'
 import { simulations, analysisReports, operationLogs } from '~~/server/database/schema'
 import { generateId } from '~~/server/utils/id'
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   const db = useDB()
   const config = useRuntimeConfig()
 
-  const sim = await db.select().from(simulations).where(eq(simulations.id, parsed.data.simulationId)).limit(1)
+  const sim = await db.select().from(simulations).where(and(eq(simulations.id, parsed.data.simulationId), eq(simulations.enterpriseId, enterpriseId))).limit(1)
   if (sim.length === 0) return error(ErrorCodes.NOT_FOUND, '仿真不存在')
   if (sim[0].status !== 'completed') return error(ErrorCodes.VALIDATION_ERROR, '仿真尚未完成')
 

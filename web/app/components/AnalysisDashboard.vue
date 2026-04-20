@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, nextTick, watch } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import * as echarts from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
 import { LineChart, PieChart, BarChart } from 'echarts/charts'
@@ -40,12 +40,21 @@ const props = defineProps<{ data: ChartData | null }>()
 const timelineChartRef = ref<HTMLElement>()
 const actionChartRef = ref<HTMLElement>()
 const agentChartRef = ref<HTMLElement>()
+const chartInstances: echarts.ECharts[] = []
+
+function initChart(el: HTMLElement): echarts.ECharts {
+  const existing = echarts.getInstanceByDom(el)
+  if (existing) return existing
+  const instance = echarts.init(el)
+  chartInstances.push(instance)
+  return instance
+}
 
 function render() {
   if (!props.data) return
 
   if (timelineChartRef.value) {
-    const chart = echarts.init(timelineChartRef.value)
+    const chart = initChart(timelineChartRef.value)
     chart.setOption({
       tooltip: { trigger: 'axis' },
       xAxis: { type: 'category', data: props.data.posts_timeline.map(d => `第${d.step}轮`) },
@@ -55,7 +64,7 @@ function render() {
   }
 
   if (actionChartRef.value) {
-    const chart = echarts.init(actionChartRef.value)
+    const chart = initChart(actionChartRef.value)
     chart.setOption({
       tooltip: { trigger: 'item' },
       series: [{
@@ -66,7 +75,7 @@ function render() {
   }
 
   if (agentChartRef.value) {
-    const chart = echarts.init(agentChartRef.value)
+    const chart = initChart(agentChartRef.value)
     chart.setOption({
       tooltip: {},
       xAxis: { type: 'category', data: props.data.top_agents.map(d => `Agent ${d.agent_id}`) },
@@ -77,5 +86,6 @@ function render() {
 }
 
 onMounted(() => nextTick(render))
+onUnmounted(() => chartInstances.forEach(c => c.dispose()))
 watch(() => props.data, () => nextTick(render), { deep: true })
 </script>

@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   let engineStatus = null
   if (items[0].engineTaskId) {
     try {
-      engineStatus = await $fetch(`${config.engineUrl}/engine/tasks/${items[0].engineTaskId}`, {
+      engineStatus = await $fetch(`${config.engineUrl}/engine/analysis/${items[0].engineTaskId}`, {
         headers: { 'X-Internal-Key': config.internalApiKey },
       })
     } catch {}
