@@ -24,4 +24,5 @@ export {
   genomeBatches,
   analysisReports,
   reportComparisons,
+  knowledgeGraphs,
 } from './sqlite'

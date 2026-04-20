@@ -182,3 +182,16 @@ export const reportComparisons = pgTable('report_comparisons', {
   comparisonData: text('comparison_data'),
   createdAt: text('created_at').notNull(),
 })
+
+export const knowledgeGraphs = pgTable('knowledge_graphs', {
+  id: text('id').primaryKey(),
+  enterpriseId: text('enterprise_id').notNull().references(() => enterprises.id),
+  name: text('name').notNull(),
+  description: text('description'),
+  graphData: text('graph_data').notNull(),
+  nodeCount: integer('node_count').default(0).notNull(),
+  edgeCount: integer('edge_count').default(0).notNull(),
+  metadata: text('metadata'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+})
