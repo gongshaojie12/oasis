@@ -15,9 +15,12 @@ export default defineEventHandler(async (event) => {
   if (items.length === 0) return error(ErrorCodes.NOT_FOUND, '图谱不存在')
 
   const item = items[0]
-  return success({
-    ...item,
-    graphData: JSON.parse(item.graphData),
-    metadata: item.metadata ? JSON.parse(item.metadata) : null,
-  })
+  let graphData, metadata
+  try {
+    graphData = JSON.parse(item.graphData)
+    metadata = item.metadata ? JSON.parse(item.metadata) : null
+  } catch {
+    return error(ErrorCodes.SERVER_ERROR, '图谱数据损坏')
+  }
+  return success({ ...item, graphData, metadata })
 })

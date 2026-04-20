@@ -15,7 +15,12 @@ export default defineEventHandler(async (event) => {
 
   if (items.length === 0) return error(ErrorCodes.NOT_FOUND, '图谱不存在')
 
-  const graphData = JSON.parse(items[0].graphData)
+  let graphData
+  try {
+    graphData = JSON.parse(items[0].graphData)
+  } catch {
+    return error(ErrorCodes.SERVER_ERROR, '图谱数据损坏')
+  }
 
   try {
     const result = await $fetch(`${config.engineUrl}/engine/graph/to-simulation`, {

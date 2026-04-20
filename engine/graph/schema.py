@@ -61,6 +61,8 @@ class GraphData(BaseModel):
         self.edges = [e for e in self.edges if e.source != node_id and e.target != node_id]
 
     def add_edge(self, edge: GraphEdge) -> None:
+        if self.get_node(edge.source) is None or self.get_node(edge.target) is None:
+            raise ValueError(f"Edge references non-existent node: {edge.source} -> {edge.target}")
         self.edges.append(edge)
 
     def remove_edge(self, edge_id: str) -> None:
