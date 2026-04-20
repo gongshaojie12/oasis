@@ -159,3 +159,26 @@ export const genomeBatches = sqliteTable('genome_batches', {
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 })
+
+export const analysisReports = sqliteTable('analysis_reports', {
+  id: text('id').primaryKey(),
+  simulationId: text('simulation_id').notNull().references(() => simulations.id),
+  enterpriseId: text('enterprise_id').notNull().references(() => enterprises.id),
+  status: text('status').default('pending').notNull(),
+  analystReports: text('analyst_reports'),
+  debateLog: text('debate_log'),
+  finalReport: text('final_report'),
+  chartData: text('chart_data'),
+  timelineData: text('timeline_data'),
+  engineTaskId: text('engine_task_id'),
+  createdAt: text('created_at').notNull(),
+  completedAt: text('completed_at'),
+})
+
+export const reportComparisons = sqliteTable('report_comparisons', {
+  id: text('id').primaryKey(),
+  enterpriseId: text('enterprise_id').notNull().references(() => enterprises.id),
+  reportIds: text('report_ids').notNull(),
+  comparisonData: text('comparison_data'),
+  createdAt: text('created_at').notNull(),
+})

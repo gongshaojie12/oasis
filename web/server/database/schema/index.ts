@@ -22,4 +22,6 @@ export {
   operationLogs,
   personaGenomes,
   genomeBatches,
+  analysisReports,
+  reportComparisons,
 } from './sqlite'
