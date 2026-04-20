@@ -1,7 +1,18 @@
 <template>
   <div class="dashboard">
-    <h1 class="page-title">{{ $t('dashboard.title') }}</h1>
+    <h1 class="page-title">{{ $t('missionControl.title') }}</h1>
 
+    <!-- Lifecycle Stages -->
+    <div class="lifecycle-bar">
+      <NSteps :current="stageIndex" size="small" class="lifecycle-steps">
+        <NStep :title="$t('missionControl.prepare')" />
+        <NStep :title="$t('missionControl.launch')" />
+        <NStep :title="$t('missionControl.monitor')" />
+        <NStep :title="$t('missionControl.analyze')" />
+      </NSteps>
+    </div>
+
+    <!-- Stats Grid -->
     <div class="stats-grid">
       <CommonStatCard
         icon="carbon:play-outline"
@@ -30,26 +41,25 @@
     </div>
 
     <div class="dashboard-sections">
+      <!-- Health Indicator (when monitoring) -->
+      <div v-if="runningSim && healthData" class="section">
+        <div class="section-header">
+          <h2>{{ $t('missionControl.healthScore') }} — {{ runningSim.name }}</h2>
+        </div>
+        <NCard class="health-card">
+          <HealthIndicator :health="healthData" />
+        </NCard>
+      </div>
+
+      <!-- Quick Actions -->
       <div class="section">
         <div class="section-header">
           <h2>{{ $t('dashboard.quickStart') }}</h2>
         </div>
-        <div class="quick-actions">
-          <NuxtLink to="/simulations/create" class="action-card">
-            <Icon name="carbon:add-alt" size="24" />
-            <span>{{ $t('simulation.create') }}</span>
-          </NuxtLink>
-          <NuxtLink to="/reports" class="action-card">
-            <Icon name="carbon:report" size="24" />
-            <span>{{ $t('report.view') }}</span>
-          </NuxtLink>
-          <NuxtLink to="/templates" class="action-card">
-            <Icon name="carbon:template" size="24" />
-            <span>{{ $t('template.manage') }}</span>
-          </NuxtLink>
-        </div>
+        <QuickActions :stage="currentStage" :active-sim="runningSim || latestCompleted" />
       </div>
 
+      <!-- Recent Simulations -->
       <div class="section">
         <div class="section-header">
           <h2>{{ $t('dashboard.recentTasks') }}</h2>
@@ -82,13 +92,16 @@
 </template>
 
 <script setup lang="ts">
-import { NButton } from 'naive-ui'
+import { NButton, NSteps, NStep, NCard } from 'naive-ui'
+import HealthIndicator from '~/components/mission/HealthIndicator.vue'
+import QuickActions from '~/components/mission/QuickActions.vue'
 
 const authStore = useAuthStore()
 const { $api } = useApi()
 
 const usageStats = ref<any>(null)
 const recentSims = ref<any[]>([])
+const healthData = ref<any>(null)
 const loading = ref(true)
 
 const stats = computed(() => ({
@@ -98,6 +111,30 @@ const stats = computed(() => ({
   totalReports: usageStats.value?.reports ?? 0,
 }))
 
+const runningSim = computed(() => recentSims.value.find(s => s.status === 'running') || null)
+const pendingSim = computed(() => recentSims.value.find(s => s.status === 'pending') || null)
+const latestCompleted = computed(() => recentSims.value.find(s => s.status === 'completed') || null)
+
+const currentStage = computed<'prepare' | 'launch' | 'monitor' | 'analyze' | 'idle'>(() => {
+  if (runningSim.value) return 'monitor'
+  if (pendingSim.value) return 'launch'
+  if (latestCompleted.value) return 'analyze'
+  return 'idle'
+})
+
+const stageIndex = computed(() => {
+  const map: Record<string, number> = { prepare: 1, launch: 2, monitor: 3, analyze: 4, idle: 1 }
+  return map[currentStage.value] || 1
+})
+
+async function fetchHealth() {
+  if (!runningSim.value) return
+  try {
+    const res = await $api<any>(`/api/simulations/${runningSim.value.id}/health`)
+    if (res.code === 0) healthData.value = res.data
+  } catch {}
+}
+
 onMounted(async () => {
   try {
     const [usageRes, simsRes] = await Promise.all([
@@ -106,6 +143,8 @@ onMounted(async () => {
     ])
     if (usageRes.code === 0) usageStats.value = usageRes.data
     if (simsRes.code === 0) recentSims.value = simsRes.data.items
+
+    await fetchHealth()
   } finally {
     loading.value = false
   }
@@ -120,8 +159,17 @@ onMounted(async () => {
 .page-title {
   font-size: 22px;
   font-weight: 700;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   color: var(--text-primary);
+}
+
+.lifecycle-bar {
+  margin-bottom: 28px;
+  padding: 16px 20px;
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
 }
 
 .stats-grid {
@@ -161,34 +209,11 @@ onMounted(async () => {
   text-decoration: underline;
 }
 
-.quick-actions {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-}
-
-.action-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 28px;
-  background: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: 14px;
-  color: var(--text-secondary);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
-  cursor: pointer;
+.health-card {
+  background: #ffffff !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 14px !important;
   box-shadow: var(--shadow-sm);
-}
-
-.action-card:hover {
-  box-shadow: var(--shadow-md);
-  color: var(--accent-blue);
-  transform: translateY(-2px);
 }
 
 .empty-state {
