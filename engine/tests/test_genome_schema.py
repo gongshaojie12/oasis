@@ -1,5 +1,5 @@
 # engine/tests/test_genome_schema.py
-from genome.schema import GenomeData, BigFiveTraits, BreedStrategy, SourceType
+from engine.genome.schema import GenomeData, BigFiveTraits, BreedStrategy, SourceType
 
 
 def test_genome_data_defaults():

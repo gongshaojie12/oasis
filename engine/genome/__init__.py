@@ -1,4 +1,5 @@
 # engine/genome/__init__.py
+from .breeder import GenomeBreeder
 from .schema import (
     BigFiveTraits,
     BehavioralPatterns,
@@ -15,6 +16,7 @@ __all__ = [
     "BehavioralPatterns",
     "BreedStrategy",
     "Demographics",
+    "GenomeBreeder",
     "GenomeData",
     "OpinionSpectrum",
     "SocialBehavior",
