@@ -5,6 +5,7 @@
         <NSpace>
           <NButton v-if="canCancel" type="warning" @click="handleCancel" :loading="cancelling">取消</NButton>
           <NButton v-if="canRetry" type="info" @click="handleRetry" :loading="retrying">重试</NButton>
+          <NButton v-if="sim?.status === 'completed'" type="primary" @click="generateAnalysis">生成深度分析报告</NButton>
           <NButton @click="router.push('/simulations')">返回列表</NButton>
         </NSpace>
       </template>
@@ -65,6 +66,7 @@
 <script setup lang="ts">
 import { NCard, NProgress, NButton, NSpace, NSpin } from 'naive-ui'
 import { useSimulationsStore } from '~/stores/simulations'
+import { useAnalysisStore } from '~/stores/analysis'
 import { useSSE } from '~/composables/useSSE'
 
 const route = useRoute()
@@ -108,6 +110,16 @@ const progressStatus = computed(() => {
 function formatTime(t: string | null | undefined) {
   if (!t) return '-'
   return new Date(t).toLocaleString('zh-CN')
+}
+
+async function generateAnalysis() {
+  const analysisStore = useAnalysisStore()
+  const res = await analysisStore.generate(id)
+  if (res.code === 0) {
+    router.push(`/analysis/${res.data.id}`)
+  } else {
+    message.error(res.message)
+  }
 }
 
 async function handleCancel() {

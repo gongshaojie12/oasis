@@ -38,6 +38,7 @@ const menuItems = [
   { path: '/genomes', icon: 'carbon:dna', label: '基因组列表' },
   { path: '/genomes/create', icon: 'carbon:add', label: '新建基因组' },
   { path: '/genomes/breed', icon: 'carbon:network-4', label: '群体繁殖' },
+  { path: '/analysis', icon: 'carbon:data-vis-4', label: '深度分析' },
   { path: '/reports', icon: 'carbon:report', label: '报告中心' },
   { path: '/templates', icon: 'carbon:template', label: '模板管理' },
   { path: '/settings', icon: 'carbon:settings', label: '企业设置' },
