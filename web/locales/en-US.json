@@ -343,5 +343,25 @@
     "estimatedTime": "Estimated Time Left",
     "configReady": "Config Ready",
     "resourceReady": "Resource Ready"
+  },
+  "liveControl": {
+    "title": "Live Control Panel",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "pause": "Pause",
+    "resume": "Resume",
+    "speed": "Speed",
+    "step": "Step",
+    "postStream": "Live Post Stream",
+    "noPosts": "No posts yet",
+    "injectEvent": "Inject Event",
+    "injectPlaceholder": "Enter event content to inject...",
+    "injectBtn": "Inject",
+    "injectSuccess": "Event injected",
+    "speedLabel": "Simulation Speed",
+    "currentRound": "Current Round",
+    "controlPanel": "Control Panel",
+    "dataStream": "Data Stream",
+    "eventHistory": "Event History"
   }
 }

@@ -343,5 +343,25 @@
     "estimatedTime": "预估剩余时间",
     "configReady": "配置就绪",
     "resourceReady": "资源就绪"
+  },
+  "liveControl": {
+    "title": "直播控制台",
+    "connected": "已连接",
+    "disconnected": "未连接",
+    "pause": "暂停",
+    "resume": "恢复",
+    "speed": "速度",
+    "step": "单步执行",
+    "postStream": "实时帖子流",
+    "noPosts": "暂无帖子",
+    "injectEvent": "注入事件",
+    "injectPlaceholder": "输入要注入的事件内容...",
+    "injectBtn": "注入",
+    "injectSuccess": "事件注入成功",
+    "speedLabel": "仿真速度",
+    "currentRound": "当前轮次",
+    "controlPanel": "控制面板",
+    "dataStream": "数据流",
+    "eventHistory": "事件历史"
   }
 }
