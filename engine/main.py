@@ -135,6 +135,13 @@ class ComposerEstimateRequest(BaseModel):
     config: dict[str, Any]
 
 
+class SimHealthRequest(BaseModel):
+    db_path: str
+    num_agents: int = 10
+    num_steps: int = 5
+    current_step: int = 0
+
+
 # --- Auth dependency ---
 
 def verify_internal_key(
@@ -605,3 +612,52 @@ async def composer_estimate(body: ComposerEstimateRequest):
     estimator = ResourceEstimator()
     result = estimator.estimate(config)
     return result.model_dump()
+
+
+@app.post(
+    "/engine/simulations/health",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def simulation_health(body: SimHealthRequest):
+    import sqlite3
+
+    try:
+        conn = sqlite3.connect(body.db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+
+        total_agents = body.num_agents
+        traces = cursor.execute("SELECT DISTINCT agent_id FROM trace").fetchall()
+        active_agents = len(traces)
+        agent_activity = round(active_agents / max(total_agents, 1), 2)
+
+        actions = cursor.execute("SELECT action FROM trace").fetchall()
+        action_types = set(a["action"] for a in actions)
+        action_diversity = round(min(len(action_types) / 5.0, 1.0), 2)
+
+        errors = cursor.execute("SELECT COUNT(*) as cnt FROM trace WHERE action = 'ERROR'").fetchone()
+        total_traces = cursor.execute("SELECT COUNT(*) as cnt FROM trace").fetchone()
+        error_count = errors["cnt"] if errors else 0
+        total_count = total_traces["cnt"] if total_traces else 1
+        error_rate = round(error_count / max(total_count, 1), 4)
+
+        conn.close()
+
+        system_load = round(min(body.current_step / max(body.num_steps, 1), 1.0), 2)
+        response_quality = round(max(1.0 - error_rate * 10, 0.0), 2)
+
+        indicators = {
+            "agent_activity": agent_activity,
+            "response_quality": response_quality,
+            "action_diversity": action_diversity,
+            "system_load": system_load,
+            "error_rate": error_rate,
+        }
+
+        weights = [0.3, 0.25, 0.2, 0.15, 0.1]
+        values = [agent_activity, response_quality, action_diversity, 1.0 - system_load, 1.0 - error_rate]
+        health_score = round(sum(w * v for w, v in zip(weights, values)), 2)
+
+        return {"health_score": health_score, "indicators": indicators}
+    except Exception as e:
+        return {"health_score": 0.0, "indicators": {}, "error": str(e)}
