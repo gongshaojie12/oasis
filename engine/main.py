@@ -121,6 +121,20 @@ class RoundtableRequest(BaseModel):
     num_rounds: int = Field(default=3, ge=1, le=5)
 
 
+class ComposerParseRequest(BaseModel):
+    description: str = Field(min_length=1, max_length=5000)
+
+
+class ComposerMixRequest(BaseModel):
+    dna_a: dict[str, Any]
+    dna_b: dict[str, Any]
+    weight_a: float = Field(default=0.5, ge=0.0, le=1.0)
+
+
+class ComposerEstimateRequest(BaseModel):
+    config: dict[str, Any]
+
+
 # --- Auth dependency ---
 
 def verify_internal_key(
@@ -483,3 +497,111 @@ async def roundtable(body: RoundtableRequest, request: Request):
         num_rounds=body.num_rounds,
     )
     return {"messages": [m.model_dump() for m in messages]}
+
+
+@app.post(
+    "/engine/composer/parse",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def composer_parse(body: ComposerParseRequest, request: Request):
+    from engine.composer.parser import ScenarioParser
+
+    settings = request.app.state.settings
+
+    async def llm_call(prompt: str) -> str:
+        from engine.llm.provider import LLMProviderRegistry, create_model
+        from camel.messages import BaseMessage
+        registry = LLMProviderRegistry()
+        provider = settings.default_llm_provider or "qwen"
+        model_id = settings.default_llm_model or "qwen-plus"
+        model = create_model(provider, model_id, settings, registry)
+        user_msg = BaseMessage.make_user_message(role_name="user", content=prompt)
+        response = model.run([user_msg])
+        return response.msgs[0].content
+
+    parser = ScenarioParser(llm_call=llm_call)
+    config = await parser.parse(body.description)
+    return config.model_dump()
+
+
+@app.post(
+    "/engine/composer/mix",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def composer_mix(body: ComposerMixRequest, request: Request):
+    from engine.composer.mixer import DNAMixer
+    from engine.composer.schema import ScenarioDNA
+
+    settings = request.app.state.settings
+
+    async def llm_call(prompt: str) -> str:
+        from engine.llm.provider import LLMProviderRegistry, create_model
+        from camel.messages import BaseMessage
+        registry = LLMProviderRegistry()
+        provider = settings.default_llm_provider or "qwen"
+        model_id = settings.default_llm_model or "qwen-plus"
+        model = create_model(provider, model_id, settings, registry)
+        user_msg = BaseMessage.make_user_message(role_name="user", content=prompt)
+        response = model.run([user_msg])
+        return response.msgs[0].content
+
+    dna_a = ScenarioDNA.model_validate(body.dna_a)
+    dna_b = ScenarioDNA.model_validate(body.dna_b)
+    mixer = DNAMixer(llm_call=llm_call)
+    config = await mixer.mix_to_config(dna_a, dna_b, body.weight_a)
+    return config.model_dump()
+
+
+@app.get(
+    "/engine/composer/recommend",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def composer_recommend(platform: Optional[str] = None):
+    from engine.composer.schema import ScenarioDNA, ScenarioConfig
+
+    templates = [
+        ScenarioConfig(
+            platform="weibo", num_agents=500, num_steps=72,
+            seed_content="重磅！新政策即将实施...",
+            description="舆论危机仿真 — 政策争议引发两派激辩",
+            dna=ScenarioDNA(conflict_level=0.8, information_density=0.6, viral_potential=0.7, sentiment_polarity=0.9, temporal_dynamics="escalation", agent_diversity=0.7, platform_fit=["weibo", "twitter"]),
+        ),
+        ScenarioConfig(
+            platform="xiaohongshu", num_agents=200, num_steps=48,
+            seed_content="今天发现了一款超好用的产品...",
+            description="品牌营销仿真 — 新品种草与口碑传播",
+            dna=ScenarioDNA(conflict_level=0.2, information_density=0.7, viral_potential=0.8, sentiment_polarity=0.3, temporal_dynamics="wave", agent_diversity=0.5, platform_fit=["xiaohongshu", "douyin"]),
+        ),
+        ScenarioConfig(
+            platform="twitter", num_agents=1000, num_steps=100,
+            seed_content="Breaking: Major announcement from...",
+            description="信息传播研究 — 假新闻在社交网络中的扩散",
+            dna=ScenarioDNA(conflict_level=0.6, information_density=0.8, viral_potential=0.9, sentiment_polarity=0.7, temporal_dynamics="escalation", agent_diversity=0.8, platform_fit=["twitter", "reddit"]),
+        ),
+        ScenarioConfig(
+            platform="reddit", num_agents=300, num_steps=50,
+            seed_content="I just tried this new product and...",
+            description="产品评测仿真 — 用户对新产品的真实反馈",
+            dna=ScenarioDNA(conflict_level=0.4, information_density=0.9, viral_potential=0.4, sentiment_polarity=0.5, temporal_dynamics="stable", agent_diversity=0.6, platform_fit=["reddit"]),
+        ),
+    ]
+
+    filtered = templates
+    if platform:
+        filtered = [t for t in filtered if platform in (t.dna.platform_fit if t.dna else []) or t.platform == platform]
+
+    return {"templates": [t.model_dump() for t in filtered]}
+
+
+@app.post(
+    "/engine/composer/estimate",
+    dependencies=[Depends(verify_internal_key)],
+)
+async def composer_estimate(body: ComposerEstimateRequest):
+    from engine.composer.estimator import ResourceEstimator
+    from engine.composer.schema import ScenarioConfig
+
+    config = ScenarioConfig.model_validate(body.config)
+    estimator = ResourceEstimator()
+    result = estimator.estimate(config)
+    return result.model_dump()
