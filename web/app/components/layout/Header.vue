@@ -6,7 +6,11 @@
     <div class="header-right">
       <div class="quota-badge" v-if="quota !== null">
         <Icon name="carbon:cube" size="15" />
-        <span>{{ quota }} 次配额</span>
+        <span>{{ quota }} {{ $t('common.quotaUnit') }}</span>
+      </div>
+      <div class="lang-switch" @click="toggleLocale">
+        <Icon name="carbon:translate" size="16" />
+        <span>{{ currentLocaleName }}</span>
       </div>
       <div class="header-divider" />
       <div class="user-menu" @click="handleLogout">
@@ -30,6 +34,18 @@ const props = defineProps<{
 const emit = defineEmits<{
   logout: []
 }>()
+
+const { locale, locales, setLocale } = useI18n()
+
+const currentLocaleName = computed(() => {
+  const loc = locales.value.find((l: any) => (typeof l === 'string' ? l : l.code) === locale.value)
+  return loc && typeof loc !== 'string' ? loc.name : locale.value
+})
+
+function toggleLocale() {
+  const next = locale.value === 'zh-CN' ? 'en-US' : 'zh-CN'
+  setLocale(next)
+}
 
 function handleLogout() {
   emit('logout')
@@ -110,5 +126,22 @@ function handleLogout() {
 
 .chevron-icon {
   color: var(--text-secondary);
+}
+
+.lang-switch {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 5px 10px;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.lang-switch:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 </style>
