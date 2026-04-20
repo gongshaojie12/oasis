@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
     .where(and(eq(personaGenomes.id, id), eq(personaGenomes.enterpriseId, enterpriseId)))
     .limit(1)
 
-  if (existing.length === 0) return error(ErrorCodes.FORBIDDEN, '只能删除自己的基因组')
+  if (existing.length === 0) return error(ErrorCodes.NOT_FOUND, '基因组不存在')
 
   await db.delete(personaGenomes).where(eq(personaGenomes.id, id))
   return success({ id })

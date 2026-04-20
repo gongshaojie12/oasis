@@ -13,6 +13,7 @@ class SourceType(str, Enum):
     CSV = "csv"
     MANUAL = "manual"
     NATURAL_LANGUAGE = "natural_language"
+    BREED = "breed"
 
 
 class BigFiveTraits(BaseModel):
