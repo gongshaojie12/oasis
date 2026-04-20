@@ -25,4 +25,6 @@ export {
   analysisReports,
   reportComparisons,
   knowledgeGraphs,
+  simulationSnapshots,
+  agentConversations,
 } from './sqlite'

@@ -195,3 +195,24 @@ export const knowledgeGraphs = pgTable('knowledge_graphs', {
   createdAt: text('created_at').notNull(),
   updatedAt: text('updated_at').notNull(),
 })
+
+export const simulationSnapshots = pgTable('simulation_snapshots', {
+  id: text('id').primaryKey(),
+  simulationId: text('simulation_id').notNull().references(() => simulations.id),
+  enterpriseId: text('enterprise_id').notNull().references(() => enterprises.id),
+  roundNumber: integer('round_number').notNull(),
+  snapshotData: text('snapshot_data').notNull(),
+  createdAt: text('created_at').notNull(),
+})
+
+export const agentConversations = pgTable('agent_conversations', {
+  id: text('id').primaryKey(),
+  simulationId: text('simulation_id').notNull().references(() => simulations.id),
+  enterpriseId: text('enterprise_id').notNull().references(() => enterprises.id),
+  roundContext: integer('round_context').notNull(),
+  conversationType: text('conversation_type').notNull(),
+  participants: text('participants').notNull(),
+  messages: text('messages').notNull(),
+  topic: text('topic'),
+  createdAt: text('created_at').notNull(),
+})
