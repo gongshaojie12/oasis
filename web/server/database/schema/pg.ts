@@ -133,3 +133,29 @@ export const operationLogs = pgTable('operation_logs', {
   details: text('details'),
   createdAt: text('created_at').notNull(),
 })
+
+export const personaGenomes = pgTable('persona_genomes', {
+  id: text('id').primaryKey(),
+  enterpriseId: text('enterprise_id').notNull().references(() => enterprises.id),
+  name: text('name').notNull(),
+  sourceType: text('source_type').notNull(),
+  genomeData: text('genome_data').notNull(),
+  tags: text('tags'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+})
+
+export const genomeBatches = pgTable('genome_batches', {
+  id: text('id').primaryKey(),
+  enterpriseId: text('enterprise_id').notNull().references(() => enterprises.id),
+  name: text('name').notNull(),
+  seedGenomeIds: text('seed_genome_ids').notNull(),
+  targetCount: integer('target_count').notNull(),
+  mutationRate: real('mutation_rate').default(0.15).notNull(),
+  strategy: text('strategy').default('crossover').notNull(),
+  status: text('status').default('pending').notNull(),
+  resultGenomeIds: text('result_genome_ids'),
+  diversity: real('diversity'),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+})

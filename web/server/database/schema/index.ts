@@ -20,4 +20,6 @@ export {
   llmUsage,
   llmKeys,
   operationLogs,
+  personaGenomes,
+  genomeBatches,
 } from './sqlite'
