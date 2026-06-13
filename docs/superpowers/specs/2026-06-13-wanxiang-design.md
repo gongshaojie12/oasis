@@ -336,7 +336,7 @@ SimulationConfig (场景+人群+模式+模型)
 一台 2-4 核 8G 云服务器 (阿里云/腾讯云轻量, ~¥100/月)
 └─ 一个 Python 进程:
    ├─ FastAPI (API + 托管 chat.html 静态资源)
-   ├─ import engine/ (OASIS 内核作为库)
+   ├─ import engine/ (项目内的内核层, 由 OASIS fork 重构而来, 被上层模块 import)
    ├─ 进程内任务队列 (asyncio, 不上 Redis)
    └─ SQLite (沙盒/用户/结果, 单文件)
 LLM: DeepSeek API (按量, 不自建 GPU)
