@@ -2,8 +2,12 @@
 """FastAPI 应用工厂。"""
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
 
@@ -35,6 +39,22 @@ def create_app() -> FastAPI:
     @app.get("/healthz")
     def healthz():
         return {"status": "ok", "version": app.version}
+
+    # M3-4：挂载 docs/prototype 静态资源，让 chat.html 与 /v1/simulate 同源。
+    _PROTOTYPE_DIR = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", "..", "docs",
+                     "prototype"))
+    if os.path.isdir(_PROTOTYPE_DIR):
+        chat_html = os.path.join(_PROTOTYPE_DIR, "chat.html")
+        if os.path.isfile(chat_html):
+
+            @app.get("/", include_in_schema=False)
+            def root():
+                return FileResponse(chat_html, media_type="text/html")
+
+        app.mount("/prototype",
+                  StaticFiles(directory=_PROTOTYPE_DIR, html=True),
+                  name="prototype")
 
     # simulate 路由由 Task 3 挂载；若 routes.simulate 未存在则跳过，
     # 这样 Task 2 完成而 Task 3 未做时 app 仍可启动。
