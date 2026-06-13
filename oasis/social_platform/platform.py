@@ -22,6 +22,7 @@ import sys
 from datetime import datetime, timedelta
 from typing import Any
 
+from engine.orchestrator import dispatch_action
 from oasis.clock.clock import Clock
 from oasis.social_platform.channel import Channel
 from oasis.social_platform.database import (create_db,
@@ -144,33 +145,10 @@ class Platform:
                 self.db.close()
                 break
 
-            # Retrieve the corresponding function using getattr
-            action_function = getattr(self, action.value, None)
-            if action_function:
-                # Get the names of the parameters of the function
-                func_code = action_function.__code__
-                param_names = func_code.co_varnames[:func_code.co_argcount]
-
-                len_param_names = len(param_names)
-                if len_param_names > 3:
-                    raise ValueError(
-                        f"Functions with {len_param_names} parameters are not "
-                        f"supported.")
-                # Build a dictionary of parameters
-                params = {}
-                if len_param_names >= 2:
-                    params["agent_id"] = agent_id
-                if len_param_names == 3:
-                    # Assuming the second element in param_names is the name
-                    # of the second parameter you want to add
-                    second_param_name = param_names[2]
-                    params[second_param_name] = message
-
-                # Call the function with the parameters
-                result = await action_function(**params)
-                await self.channel.send_to((message_id, agent_id, result))
-            else:
-                raise ValueError(f"Action {action} is not supported")
+            # Dispatch via the engine orchestration mechanism
+            result = await dispatch_action(self, action.value, agent_id,
+                                           message)
+            await self.channel.send_to((message_id, agent_id, result))
 
     def run(self):
         asyncio.run(self.running())

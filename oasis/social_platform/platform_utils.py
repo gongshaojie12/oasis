@@ -14,6 +14,7 @@
 import json
 from datetime import datetime
 
+from engine.trace import build_trace_insert
 from oasis.social_platform.typing import RecsysType
 
 
@@ -206,15 +207,10 @@ class PlatformUtils:
         else:
             current_time = self.sandbox_clock.get_time_step()
 
-        trace_insert_query = (
-            "INSERT INTO trace (user_id, created_at, action, info) "
-            "VALUES (?, ?, ?, ?)")
-        action_info_str = json.dumps(action_info)
-        self._execute_db_command(
-            trace_insert_query,
-            (user_id, current_time, action_type, action_info_str),
-            commit=True,
-        )
+        trace_insert_query, trace_params = build_trace_insert(
+            user_id, current_time, action_type, action_info)
+        self._execute_db_command(trace_insert_query, trace_params,
+                                 commit=True)
 
     def _check_self_post_rating(self, post_id, user_id):
         self_like_check_query = "SELECT user_id FROM post WHERE post_id = ?"
