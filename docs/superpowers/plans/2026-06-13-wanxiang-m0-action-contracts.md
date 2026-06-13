@@ -814,12 +814,12 @@ disabled_actions: []
 - [ ] **Step 4: 运行确认通过**
 
 Run: `poetry run pytest test/wanxiang/test_dialect_all_platforms.py -v`
-Expected: PASS（9 passed：4 参数化 + 5 具体断言）
+Expected: PASS（8 passed：4 参数化 load + 4 具体断言函数）
 
 - [ ] **Step 5: 全量回归**
 
 Run: `poetry run pytest test/wanxiang/ -v`
-Expected: 全部 PASS（layers 7 + l1 5 + l2 5 + dialect 8 + all_platforms 9 = 34 passed）
+Expected: 全部 PASS（layers 7 + l1 5 + l2 5 + dialect 8 + all_platforms 8 = 33 passed）
 
 - [ ] **Step 6: Commit**
 
