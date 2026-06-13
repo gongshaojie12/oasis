@@ -1,0 +1,19 @@
+# WANXIANG 单机部署（spec §M3-5 deployment basics）
+# 用法：cp .env.example .env && 编辑 .env && docker compose up -d
+services:
+  api:
+    build: .
+    image: wanxiang/api:0.0.1
+    container_name: wanxiang-api
+    restart: unless-stopped
+    ports:
+      - "${WANXIANG_PORT:-8000}:8000"
+    environment:
+      - WANXIANG_HOST=0.0.0.0
+      - WANXIANG_PORT=8000
+      - WANXIANG_LOG_LEVEL=${WANXIANG_LOG_LEVEL:-info}
+      - WANXIANG_WORKERS=${WANXIANG_WORKERS:-1}
+      - WANXIANG_DEEPSEEK_API_KEY=${WANXIANG_DEEPSEEK_API_KEY:-}
+    volumes:
+      # 把分布文件挂出来方便外部更新
+      - ./wanxiang/datasources/distributions:/app/wanxiang/datasources/distributions:ro
