@@ -6,5 +6,10 @@
 """
 from engine.channel import Channel, AsyncSafeDict
 from engine.clock import Clock
+from engine.orchestrator import dispatch_action
+from engine.trace import build_trace_insert
 
-__all__ = ["Channel", "AsyncSafeDict", "Clock"]
+__all__ = [
+    "Channel", "AsyncSafeDict", "Clock",
+    "dispatch_action", "build_trace_insert",
+]
