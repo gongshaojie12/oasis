@@ -1,0 +1,14 @@
+# 小红书平台方言（spec §5.4）
+name: xiaohongshu
+display_name: 小红书
+relationship: weak          # 关系语义：weak | none | strong
+feed_algorithm: recommend   # 信息流：recommend | following | hotscore
+supported_actions:
+  publish:  {alias: 发笔记}
+  like:     {alias: 点赞}
+  collect:  {alias: 收藏, extra: {合集: true}}
+  comment:  {alias: 评论, extra: {追评: true}}
+  follow:   {alias: 关注}
+  repost:   {alias: 转发}
+disabled_actions:
+  - dislike   # 小红书没有"踩"
