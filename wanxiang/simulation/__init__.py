@@ -5,9 +5,11 @@ from wanxiang.simulation.decision import (DecisionResult, DecisionRunner,
                                           ModelCall)
 from wanxiang.simulation.batch import BatchRunner
 from wanxiang.simulation.aggregate import AggregateReport, aggregate
+from wanxiang.simulation.social import SocialRoundsRunner, format_peer_signal
 
 __all__ = [
     "DecisionKind", "ScenarioConfig",
     "DecisionResult", "DecisionRunner", "ModelCall",
     "BatchRunner", "AggregateReport", "aggregate",
+    "SocialRoundsRunner", "format_peer_signal",
 ]
