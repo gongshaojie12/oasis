@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>万象 WANXIANG · 人群模拟预测平台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EEF1F6; --surface:#FFFFFF; --surface-2:#F7F9FC;
+  --ink:#0E1726; --ink-2:#46556B; --ink-3:#8A97AB;
+  --line:#E2E7EF; --line-2:#EDF1F6;
+  --primary:#1B4DFF; --primary-soft:#E8EDFF; --cyan:#00B8D4; --cyan-soft:#E0F7FB;
+  --coral:#FF6B3D; --coral-soft:#FFEDE6; --amber:#F5A623; --green:#10B981; --violet:#7C5CFC;
+  --shadow:0 1px 2px rgba(16,23,38,.04),0 8px 24px -12px rgba(16,23,38,.12);
+  --shadow-lg:0 24px 60px -24px rgba(27,77,255,.28);
+  --r:14px; --r-lg:20px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink);
+  -webkit-font-smoothing:antialiased;overflow:hidden;
+}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#C9D2DF;border-radius:10px;border:3px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:#A9B5C7;background-clip:content-box}
+.mono{font-family:'JetBrains Mono',monospace}
+.disp{font-family:'Sora',sans-serif}
+
+/* ---------- LAYOUT ---------- */
+.app{display:grid;grid-template-columns:248px 1fr;height:100vh}
+
+/* ---------- SIDEBAR ---------- */
+.side{
+  background:linear-gradient(180deg,#0E1726 0%,#16213B 100%);
+  color:#fff;display:flex;flex-direction:column;padding:22px 16px;position:relative;overflow:hidden;
+}
+.side::before{content:"";position:absolute;inset:0;background:
+  radial-gradient(420px 220px at 80% -5%,rgba(27,77,255,.45),transparent 60%),
+  radial-gradient(360px 240px at -10% 105%,rgba(0,184,212,.30),transparent 60%);pointer-events:none}
+.brand{display:flex;align-items:center;gap:11px;padding:6px 8px 22px;position:relative;z-index:1}
+.logo{width:38px;height:38px;border-radius:11px;background:conic-gradient(from 140deg,#1B4DFF,#00B8D4,#7C5CFC,#1B4DFF);
+  display:grid;place-items:center;box-shadow:0 6px 18px rgba(27,77,255,.5);position:relative}
+.logo::after{content:"";position:absolute;inset:3px;border-radius:8px;background:#0E1726}
+.logo span{position:relative;z-index:1;font-weight:800;font-family:'Sora';font-size:18px;
+  background:linear-gradient(135deg,#7DA2FF,#5BE8FB);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand-txt b{font-family:'Sora';font-weight:700;font-size:17px;letter-spacing:.5px;display:block;line-height:1}
+.brand-txt small{font-size:10.5px;color:#7F8DA8;letter-spacing:3px;font-weight:500}
+.nav{display:flex;flex-direction:column;gap:3px;position:relative;z-index:1;margin-top:6px}
+.nav-label{font-size:10px;color:#5C6B86;letter-spacing:2px;font-weight:700;padding:14px 12px 7px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:11px 12px;border-radius:11px;cursor:pointer;
+  color:#AEBBD2;font-size:14px;font-weight:500;transition:.18s;border:1px solid transparent;position:relative}
+.nav-item svg{width:19px;height:19px;flex-shrink:0;stroke-width:1.7}
+.nav-item:hover{background:rgba(255,255,255,.05);color:#fff}
+.nav-item.on{background:linear-gradient(100deg,rgba(27,77,255,.22),rgba(0,184,212,.10));color:#fff;
+  border-color:rgba(123,162,255,.3)}
+.nav-item.on::before{content:"";position:absolute;left:-16px;top:50%;transform:translateY(-50%);
+  width:4px;height:22px;border-radius:0 4px 4px 0;background:linear-gradient(#5BE8FB,#1B4DFF)}
+.nav-tag{margin-left:auto;font-size:9.5px;padding:2px 7px;border-radius:20px;font-weight:700;letter-spacing:.5px}
+.nav-tag.live{background:rgba(255,107,61,.18);color:#FF9E7D}
+.side-foot{margin-top:auto;position:relative;z-index:1;border-top:1px solid rgba(255,255,255,.08);padding-top:14px}
+.usr{display:flex;align-items:center;gap:11px;padding:8px;border-radius:11px;cursor:pointer;transition:.18s}
+.usr:hover{background:rgba(255,255,255,.05)}
+.usr-av{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#FF6B3D,#F5A623);
+  display:grid;place-items:center;font-weight:700;font-size:14px}
+.usr-txt b{font-size:13px;display:block;line-height:1.3}
+.usr-txt small{font-size:11px;color:#7F8DA8}
+
+/* ---------- MAIN ---------- */
+.main{overflow-y:auto;height:100vh;position:relative}
+.screen{display:none;animation:fade .5s cubic-bezier(.2,.7,.2,1)}
+.screen.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.topbar{position:sticky;top:0;z-index:30;background:rgba(238,241,246,.82);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);padding:18px 34px;display:flex;align-items:center;gap:18px}
+.crumb{font-size:12.5px;color:var(--ink-3);font-weight:500}
+.crumb b{color:var(--ink);font-weight:700}
+.h-title{font-family:'Sora';font-size:21px;font-weight:700;letter-spacing:-.3px}
+.h-sub{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+.spacer{flex:1}
+.searchbar{display:flex;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--line);
+  border-radius:11px;padding:9px 14px;width:280px;color:var(--ink-3);font-size:13px}
+.searchbar svg{width:16px;height:16px;stroke-width:2}
+.btn{display:inline-flex;align-items:center;gap:8px;border:none;cursor:pointer;font-family:inherit;
+  font-weight:600;font-size:13.5px;padding:11px 18px;border-radius:11px;transition:.18s;white-space:nowrap}
+.btn svg{width:17px;height:17px;stroke-width:2}
+.btn-pri{background:linear-gradient(135deg,#1B4DFF,#3D6BFF);color:#fff;box-shadow:0 8px 20px -8px rgba(27,77,255,.6)}
+.btn-pri:hover{transform:translateY(-1px);box-shadow:0 12px 26px -8px rgba(27,77,255,.7)}
+.btn-ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn-ghost:hover{border-color:#C3CDDC;background:#fff}
+.icon-btn{width:40px;height:40px;border-radius:11px;background:var(--surface);border:1px solid var(--line);
+  display:grid;place-items:center;cursor:pointer;color:var(--ink-2);transition:.18s;position:relative}
+.icon-btn:hover{border-color:#C3CDDC;color:var(--ink)}
+.icon-btn svg{width:18px;height:18px;stroke-width:1.8}
+.dot-badge{position:absolute;top:9px;right:10px;width:7px;height:7px;border-radius:50%;background:var(--coral);border:2px solid var(--surface)}
+
+.wrap{padding:28px 34px 60px}
+
+/* ---------- CARDS / GRID ---------- */
+.grid{display:grid;gap:18px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow)}
+.card-pad{padding:22px}
+.card-h{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.card-h h3{font-family:'Sora';font-size:15px;font-weight:600}
+.card-h .more{margin-left:auto;font-size:12.5px;color:var(--primary);font-weight:600;cursor:pointer}
+
+/* KPI */
+.kpi{position:relative;overflow:hidden}
+.kpi .glow{position:absolute;right:-30px;top:-30px;width:120px;height:120px;border-radius:50%;opacity:.5;filter:blur(20px)}
+.kpi-ico{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;margin-bottom:16px}
+.kpi-ico svg{width:21px;height:21px;stroke-width:1.9}
+.kpi-val{font-family:'Sora';font-size:32px;font-weight:800;letter-spacing:-1px;line-height:1}
+.kpi-lab{font-size:13px;color:var(--ink-2);margin-top:8px;font-weight:500}
+.kpi-trend{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;margin-top:12px;
+  padding:3px 9px;border-radius:20px}
+.up{background:var(--cyan-soft);color:#0292a8}.down{background:var(--coral-soft);color:#d64a1f}
+
+/* project rows */
+.proj{display:flex;align-items:center;gap:16px;padding:16px;border-radius:14px;cursor:pointer;transition:.16s;border:1px solid transparent}
+.proj:hover{background:var(--surface-2);border-color:var(--line)}
+.proj-ico{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;flex-shrink:0;font-size:20px}
+.proj-main{flex:1;min-width:0}
+.proj-main b{font-size:14.5px;font-weight:600;display:block}
+.proj-main small{font-size:12px;color:var(--ink-3);display:flex;gap:10px;margin-top:4px}
+.chip{font-size:11px;font-weight:700;padding:4px 11px;border-radius:20px;letter-spacing:.3px}
+.chip-run{background:var(--coral-soft);color:#d64a1f}
+.chip-done{background:var(--cyan-soft);color:#0292a8}
+.chip-draft{background:#EEF1F6;color:#6B7A91}
+.mini-prog{width:90px;height:6px;border-radius:6px;background:var(--line-2);overflow:hidden}
+.mini-prog i{display:block;height:100%;border-radius:6px;background:linear-gradient(90deg,#1B4DFF,#00B8D4)}
+.proj-meta{text-align:right;font-size:12px;color:var(--ink-3)}
+.proj-meta b{font-family:'JetBrains Mono';font-size:15px;color:var(--ink);display:block;font-weight:700}
+
+/* ---------- SCENARIO EDITOR ---------- */
+.steps{display:flex;gap:0;margin-bottom:26px;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;padding:6px;box-shadow:var(--shadow)}
+.step{flex:1;display:flex;align-items:center;gap:11px;padding:13px 16px;border-radius:10px;cursor:pointer;transition:.16s}
+.step.on{background:linear-gradient(120deg,var(--primary-soft),#fff)}
+.step-n{width:26px;height:26px;border-radius:8px;background:var(--line-2);color:var(--ink-3);display:grid;place-items:center;
+  font-family:'Sora';font-weight:700;font-size:13px;flex-shrink:0;transition:.16s}
+.step.on .step-n{background:var(--primary);color:#fff;box-shadow:0 4px 10px -2px rgba(27,77,255,.5)}
+.step.done .step-n{background:var(--cyan);color:#fff}
+.step b{font-size:13.5px;font-weight:600}.step small{font-size:11px;color:var(--ink-3);display:block}
+.editor-grid{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+.field{margin-bottom:22px}
+.field label{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;margin-bottom:10px}
+.field label .req{color:var(--coral)}
+.field .hint{font-size:11.5px;color:var(--ink-3);font-weight:400;margin-left:auto}
+.nl-box{background:linear-gradient(135deg,#F4F7FF,#FCFDFF);border:1.5px solid #D6E0FF;border-radius:14px;padding:18px;position:relative}
+.nl-box textarea{width:100%;border:none;background:transparent;resize:none;font-family:inherit;font-size:14.5px;
+  line-height:1.7;color:var(--ink);outline:none;min-height:84px}
+.nl-tag{position:absolute;top:14px;right:14px;display:flex;align-items:center;gap:6px;font-size:11px;font-weight:700;
+  color:var(--primary);background:#fff;padding:5px 11px;border-radius:20px;box-shadow:var(--shadow)}
+.nl-tag svg{width:13px;height:13px}
+.inp{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:13px 15px;font-family:inherit;
+  font-size:14px;color:var(--ink);outline:none;transition:.16s;background:var(--surface)}
+.inp:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-soft)}
+.opt-row{display:grid;grid-template-columns:repeat(3,1fr);gap:11px}
+.opt{border:1.5px solid var(--line);border-radius:12px;padding:15px;cursor:pointer;transition:.16s;text-align:center}
+.opt:hover{border-color:#C3CDDC}
+.opt.on{border-color:var(--primary);background:var(--primary-soft)}
+.opt .em{font-size:22px;display:block;margin-bottom:7px}
+.opt b{font-size:13px;font-weight:600}.opt small{font-size:11px;color:var(--ink-3);display:block;margin-top:2px}
+.var-card{display:flex;align-items:center;gap:13px;padding:14px;border:1.5px dashed var(--line);border-radius:12px;margin-bottom:11px;background:var(--surface-2)}
+.var-card .vi{width:38px;height:38px;border-radius:10px;background:#fff;border:1px solid var(--line);display:grid;place-items:center;font-size:17px}
+.var-card b{font-size:13.5px}.var-card small{font-size:11.5px;color:var(--ink-3);display:block}
+.var-card .vbadge{margin-left:auto;font-size:11px;font-weight:700;color:var(--violet);background:#F1ECFF;padding:5px 11px;border-radius:8px}
+.side-panel{background:linear-gradient(180deg,#0E1726,#1A2640);border-radius:var(--r-lg);padding:22px;color:#fff;position:sticky;top:100px;overflow:hidden}
+.side-panel::before{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,184,212,.4),transparent 70%);filter:blur(10px)}
+.sp-h{display:flex;align-items:center;gap:9px;font-family:'Sora';font-weight:600;font-size:14px;margin-bottom:18px;position:relative}
+.sp-stat{display:flex;justify-content:space-between;align-items:baseline;padding:13px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+.sp-stat span{font-size:12.5px;color:#9DAAC4}
+.sp-stat b{font-family:'JetBrains Mono';font-size:16px;font-weight:700}
+.sp-stat b.cy{color:#5BE8FB}
+.est{margin-top:18px;padding:15px;background:rgba(255,107,61,.12);border:1px solid rgba(255,107,61,.25);border-radius:12px}
+.est small{font-size:11.5px;color:#FFB89E}.est b{font-family:'Sora';font-size:24px;font-weight:800;color:#FF9E7D;display:block;margin-top:3px}
+
+/* ---------- POPULATION ---------- */
+.pop-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.pyramid{display:flex;flex-direction:column;gap:7px;margin-top:6px}
+.pyr-row{display:flex;align-items:center;gap:10px;font-size:11.5px}
+.pyr-row .lab{width:54px;color:var(--ink-2);font-family:'JetBrains Mono';text-align:right}
+.pyr-bars{flex:1;display:flex;gap:3px;justify-content:center}
+.pyr-bars .l,.pyr-bars .r{height:18px;border-radius:4px}
+.pyr-bars .l{background:linear-gradient(90deg,#1B4DFF,#5B82FF);margin-left:auto}
+.pyr-bars .r{background:linear-gradient(90deg,#FF6B3D,#FFA07D)}
+.legend{display:flex;gap:18px;justify-content:center;margin-top:14px;font-size:12px;color:var(--ink-2)}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.slider-row{margin-bottom:20px}
+.slider-row .sl-h{display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:11px}
+.slider-row .sl-h b{font-family:'JetBrains Mono';color:var(--primary)}
+.track{height:8px;border-radius:8px;background:var(--line-2);position:relative}
+.track .fill{position:absolute;height:100%;border-radius:8px;background:linear-gradient(90deg,#1B4DFF,#00B8D4);left:0}
+.track .knob{position:absolute;top:50%;width:20px;height:20px;border-radius:50%;background:#fff;border:3px solid var(--primary);
+  transform:translate(-50%,-50%);box-shadow:var(--shadow);cursor:grab}
+.trait-tags{display:flex;flex-wrap:wrap;gap:9px}
+.ttag{font-size:12.5px;font-weight:500;padding:8px 14px;border-radius:20px;background:var(--surface-2);border:1px solid var(--line);
+  display:flex;align-items:center;gap:7px;cursor:pointer;transition:.14s}
+.ttag.on{background:var(--primary-soft);border-color:#B9C9FF;color:var(--primary);font-weight:600}
+.ttag .x{font-size:14px;opacity:.5}
+.source-item{display:flex;align-items:center;gap:13px;padding:14px 0;border-bottom:1px solid var(--line-2)}
+.source-item:last-child{border:none}
+.src-ico{width:40px;height:40px;border-radius:11px;display:grid;place-items:center;font-size:18px;flex-shrink:0}
+.src-item b{font-size:13.5px}.src-item small{font-size:11.5px;color:var(--ink-3)}
+.compliance{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;color:var(--green);
+  background:#E7F9F1;padding:5px 11px;border-radius:20px}
+.compliance svg{width:13px;height:13px}
+.toggle{width:42px;height:24px;border-radius:20px;background:var(--primary);position:relative;cursor:pointer;flex-shrink:0}
+.toggle::after{content:"";position:absolute;top:3px;left:21px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.18s}
+.toggle.off{background:#CFD8E5}.toggle.off::after{left:3px}
+
+/* ---------- DARK COCKPIT ---------- */
+.cockpit{background:radial-gradient(1200px 700px at 70% -10%,#152347,#0A0E1A 60%);min-height:100vh;color:#E8EEFA;position:relative}
+.cockpit::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:1;
+  background-image:linear-gradient(rgba(91,232,251,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(91,232,251,.025) 1px,transparent 1px);
+  background-size:40px 40px;mask-image:radial-gradient(circle at 60% 30%,#000,transparent 80%)}
+.cp-top{display:flex;align-items:center;gap:18px;padding:22px 34px;border-bottom:1px solid rgba(91,232,251,.12);position:relative;z-index:2}
+.cp-back{display:flex;align-items:center;gap:8px;color:#9DAAC4;font-size:13px;cursor:pointer;font-weight:500}
+.cp-back:hover{color:#fff}
+.cp-title{font-family:'Sora';font-size:18px;font-weight:700}
+.cp-title small{display:block;font-size:11.5px;color:#7F8DA8;font-weight:400;letter-spacing:1px}
+.live-pill{display:flex;align-items:center;gap:8px;background:rgba(255,107,61,.15);border:1px solid rgba(255,107,61,.4);
+  color:#FF9E7D;padding:8px 15px;border-radius:30px;font-size:12.5px;font-weight:700;letter-spacing:.5px}
+.live-dot{width:8px;height:8px;border-radius:50%;background:#FF6B3D;box-shadow:0 0 0 0 rgba(255,107,61,.6);animation:pulse 1.6s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(255,107,61,.6)}70%{box-shadow:0 0 0 12px rgba(255,107,61,0)}100%{box-shadow:0 0 0 0 transparent}}
+.cp-body{display:grid;grid-template-columns:300px 1fr 330px;gap:20px;padding:24px 34px;position:relative;z-index:2}
+.glass{background:rgba(18,28,50,.55);border:1px solid rgba(91,232,251,.14);border-radius:18px;backdrop-filter:blur(12px)}
+.glass-pad{padding:20px}
+.glass-h{font-family:'Sora';font-size:13px;font-weight:600;color:#C4D2EC;letter-spacing:.5px;margin-bottom:16px;display:flex;align-items:center;gap:9px}
+.glass-h .gd{width:6px;height:6px;border-radius:50%;background:#5BE8FB;box-shadow:0 0 8px #5BE8FB}
+.cp-prog{margin-bottom:8px}
+.cp-prog .pn{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.cp-prog .pn b{font-family:'Sora';font-size:30px;font-weight:800;color:#5BE8FB}
+.cp-prog .pn span{font-size:12px;color:#7F8DA8}
+.cp-track{height:9px;border-radius:9px;background:rgba(91,232,251,.12);overflow:hidden}
+.cp-track i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#1B4DFF,#5BE8FB);box-shadow:0 0 12px rgba(91,232,251,.6);transition:width .5s}
+.stat-line{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+.stat-line span{color:#9DAAC4}.stat-line b{font-family:'JetBrains Mono';font-weight:700}
+.stat-line b.cy{color:#5BE8FB}.stat-line b.co{color:#FF9E7D}.stat-line b.gr{color:#3DDC97}
+.stage{position:relative;border-radius:18px;overflow:hidden;min-height:520px;
+  background:radial-gradient(800px 500px at 50% 40%,rgba(27,77,255,.10),transparent 70%);
+  border:1px solid rgba(91,232,251,.14)}
+#swarm{display:block;width:100%;height:520px}
+.stage-cap{position:absolute;left:20px;bottom:18px;z-index:3;font-size:12px;color:#9DAAC4;background:rgba(10,14,26,.6);
+  padding:9px 14px;border-radius:10px;border:1px solid rgba(91,232,251,.14);backdrop-filter:blur(6px)}
+.stage-cap b{color:#5BE8FB;font-family:'JetBrains Mono'}
+.stage-leg{position:absolute;right:20px;top:18px;z-index:3;display:flex;flex-direction:column;gap:9px;
+  background:rgba(10,14,26,.55);padding:13px 16px;border-radius:12px;border:1px solid rgba(91,232,251,.14);backdrop-filter:blur(6px)}
+.stage-leg div{display:flex;align-items:center;gap:9px;font-size:11.5px;color:#C4D2EC}
+.stage-leg i{width:10px;height:10px;border-radius:50%}
+.feed{display:flex;flex-direction:column;gap:0;max-height:300px;overflow:hidden;position:relative}
+.feed::after{content:"";position:absolute;bottom:0;left:0;right:0;height:50px;background:linear-gradient(transparent,rgba(18,28,50,.9))}
+.fitem{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06);animation:slideIn .5s}
+@keyframes slideIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
+.fav{width:30px;height:30px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;font-size:13px;font-weight:700}
+.ftext{font-size:12.5px;line-height:1.5;color:#C4D2EC}
+.ftext b{color:#fff}.ftext .act{color:#5BE8FB;font-weight:600}
+.ftext .neg{color:#FF9E7D;font-weight:600}.ftext .pos{color:#3DDC97;font-weight:600}
+.ftext small{display:block;color:#6B7A95;font-size:10.5px;margin-top:3px;font-family:'JetBrains Mono'}
+.spark{height:70px;display:flex;align-items:flex-end;gap:3px;margin-top:6px}
+.spark i{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(180deg,#5BE8FB,rgba(27,77,255,.3));transition:.4s}
+
+/* ---------- REPORT ---------- */
+.report-hero{background:linear-gradient(120deg,#0E1726,#1A2B52);border-radius:var(--r-lg);padding:32px;color:#fff;
+  position:relative;overflow:hidden;margin-bottom:22px}
+.report-hero::before{content:"";position:absolute;right:-60px;top:-60px;width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,184,212,.35),transparent 70%);filter:blur(20px)}
+.rh-tag{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;letter-spacing:1px;
+  background:rgba(91,232,251,.15);color:#5BE8FB;padding:6px 13px;border-radius:20px;margin-bottom:16px}
+.rh-title{font-family:'Sora';font-size:26px;font-weight:800;letter-spacing:-.5px;margin-bottom:10px;position:relative}
+.rh-sub{font-size:13.5px;color:#9DAAC4;position:relative;max-width:560px;line-height:1.6}
+.rh-stats{display:flex;gap:40px;margin-top:24px;position:relative}
+.rh-stat b{font-family:'Sora';font-size:30px;font-weight:800;display:block;line-height:1}
+.rh-stat b .u{font-size:15px;color:#9DAAC4}
+.rh-stat small{font-size:12px;color:#9DAAC4;margin-top:6px;display:block}
+.rh-stat .cy{color:#5BE8FB}.rh-stat .co{color:#FF9E7D}.rh-stat .gr{color:#3DDC97}
+.predict-bar{margin-bottom:18px}
+.pb-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;font-size:13.5px}
+.pb-h b{font-weight:600}.pb-h .v{font-family:'JetBrains Mono';font-weight:700;font-size:15px}
+.pb-track{height:30px;border-radius:9px;background:var(--surface-2);position:relative;overflow:hidden;border:1px solid var(--line-2)}
+.pb-fill{height:100%;border-radius:9px;display:flex;align-items:center;justify-content:flex-end;padding-right:11px;
+  font-family:'JetBrains Mono';font-size:12px;font-weight:700;color:#fff;position:relative}
+.ci{position:absolute;top:50%;transform:translateY(-50%);height:14px;border-left:2px solid rgba(14,23,38,.4);border-right:2px solid rgba(14,23,38,.4);
+  background:rgba(14,23,38,.08)}
+.why-card{padding:18px;border-radius:14px;background:var(--surface-2);border:1px solid var(--line);margin-bottom:13px;display:flex;gap:15px}
+.why-rank{width:30px;height:30px;border-radius:9px;background:var(--ink);color:#fff;display:grid;place-items:center;
+  font-family:'Sora';font-weight:700;font-size:14px;flex-shrink:0}
+.why-card b{font-size:14px}.why-card p{font-size:12.5px;color:var(--ink-2);line-height:1.6;margin-top:5px}
+.why-impact{margin-left:auto;text-align:right;flex-shrink:0}
+.why-impact b{font-family:'JetBrains Mono';font-size:18px;color:var(--coral)}
+.why-impact small{font-size:11px;color:var(--ink-3);display:block}
+.ab-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.ab-card{border-radius:16px;padding:22px;border:2px solid var(--line);position:relative}
+.ab-card.win{border-color:var(--cyan);background:linear-gradient(160deg,var(--cyan-soft),#fff)}
+.ab-badge{position:absolute;top:16px;right:16px;font-size:11px;font-weight:700;padding:5px 11px;border-radius:20px}
+.ab-card.win .ab-badge{background:var(--cyan);color:#fff}
+.ab-card h4{font-family:'Sora';font-size:16px;margin-bottom:5px}
+.ab-card .big{font-family:'Sora';font-size:36px;font-weight:800;letter-spacing:-1px;margin:14px 0 4px}
+.ab-card .big .u{font-size:17px;color:var(--ink-3)}
+.donut-wrap{display:flex;align-items:center;gap:24px}
+.donut{width:140px;height:140px;border-radius:50%;flex-shrink:0;position:relative;
+  background:conic-gradient(#1B4DFF 0 42%,#00B8D4 42% 68%,#FF6B3D 68% 86%,#F5A623 86% 100%)}
+.donut::after{content:"";position:absolute;inset:24px;border-radius:50%;background:var(--surface)}
+.donut-c{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.donut-c b{font-family:'Sora';font-size:24px;font-weight:800;line-height:1}.donut-c small{font-size:10.5px;color:var(--ink-3)}
+.dlist{flex:1}
+.dlist-item{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px}
+.dlist-item i{width:11px;height:11px;border-radius:3px}
+.dlist-item .pct{margin-left:auto;font-family:'JetBrains Mono';font-weight:700}
+
+@media(max-width:1200px){.cp-body{grid-template-columns:1fr}.editor-grid,.pop-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="side">
+    <div class="brand">
+      <div class="logo"><span>象</span></div>
+      <div class="brand-txt"><b>万象</b><small>WANXIANG</small></div>
+    </div>
+    <nav class="nav">
+      <div class="nav-label">工作空间</div>
+      <div class="nav-item on" data-s="dash">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+        工作台
+      </div>
+      <div class="nav-item" data-s="scenario">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+        场景编辑器
+      </div>
+      <div class="nav-item" data-s="pop">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="7" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="8" r="2.6"/><path d="M16 14.4a5.5 5.5 0 0 1 5.5 5.6"/></svg>
+        人群构建
+      </div>
+      <div class="nav-item" data-s="cockpit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4"/><circle cx="12" cy="12" r="2.5"/></svg>
+        模拟运行台
+        <span class="nav-tag live">LIVE</span>
+      </div>
+      <div class="nav-item" data-s="report">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19V5a2 2 0 0 1 2-2h9l5 5v11a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M14 3v6h6"/><path d="M8 13l2.5 2.5L16 10"/></svg>
+        洞察报告
+      </div>
+      <div class="nav-label">资源</div>
+      <div class="nav-item" data-s="dash">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.6 3.6 3 8 3s8-1.4 8-3V5"/><path d="M4 12c0 1.6 3.6 3 8 3s8-1.4 8-3"/></svg>
+        数据源管理
+      </div>
+      <div class="nav-item" data-s="dash">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2Z"/><path d="M12 6v6l4 2"/></svg>
+        校准中心
+      </div>
+    </nav>
+    <div class="side-foot">
+      <div class="usr">
+        <div class="usr-av">李</div>
+        <div class="usr-txt"><b>李研究</b><small>品牌洞察 · 增长团队</small></div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ MAIN ============ -->
+  <main class="main" id="main">
+
+    <!-- ========= DASHBOARD ========= -->
+    <section class="screen on" id="dash">
+      <div class="topbar">
+        <div>
+          <div class="crumb">工作空间 / <b>工作台</b></div>
+          <div class="h-title">下午好，李研究 👋</div>
+        </div>
+        <div class="spacer"></div>
+        <div class="searchbar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>搜索研究项目…</div>
+        <div class="icon-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg><span class="dot-badge"></span></div>
+        <button class="btn btn-pri" onclick="go('scenario')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>新建研究</button>
+      </div>
+      <div class="wrap">
+        <!-- KPIs -->
+        <div class="grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:22px">
+          <div class="card card-pad kpi">
+            <div class="glow" style="background:var(--primary)"></div>
+            <div class="kpi-ico" style="background:var(--primary-soft);color:var(--primary)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="m7 14 3-4 4 3 5-7"/></svg></div>
+            <div class="kpi-val mono">38</div>
+            <div class="kpi-lab">累计研究项目</div>
+            <span class="kpi-trend up">↑ 本月 +6</span>
+          </div>
+          <div class="card card-pad kpi">
+            <div class="glow" style="background:var(--cyan)"></div>
+            <div class="kpi-ico" style="background:var(--cyan-soft);color:#0292a8"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="7" r="3"/><path d="M2 20a7 7 0 0 1 14 0"/><path d="M16 3.2a3 3 0 0 1 0 5.8"/></svg></div>
+            <div class="kpi-val mono">1.24<span style="font-size:18px;color:var(--ink-3)">M</span></div>
+            <div class="kpi-lab">已模拟虚拟人次</div>
+            <span class="kpi-trend up">↑ 实时累计</span>
+          </div>
+          <div class="card card-pad kpi">
+            <div class="glow" style="background:var(--green)"></div>
+            <div class="kpi-ico" style="background:#E7F9F1;color:var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="M22 4 12 14l-3-3"/></svg></div>
+            <div class="kpi-val mono">91.3<span style="font-size:18px;color:var(--ink-3)">%</span></div>
+            <div class="kpi-lab">平均校准保真度</div>
+            <span class="kpi-trend up">↑ Spearman 中位</span>
+          </div>
+          <div class="card card-pad kpi">
+            <div class="glow" style="background:var(--coral)"></div>
+            <div class="kpi-ico" style="background:var(--coral-soft);color:#d64a1f"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8Z"/></svg></div>
+            <div class="kpi-val mono">2.1<span style="font-size:18px;color:var(--ink-3)">h</span></div>
+            <div class="kpi-lab">平均出报告耗时</div>
+            <span class="kpi-trend down">↓ 传统调研需 6 周</span>
+          </div>
+        </div>
+
+        <div class="grid" style="grid-template-columns:1.7fr 1fr">
+          <!-- projects -->
+          <div class="card card-pad">
+            <div class="card-h"><h3>进行中的研究</h3><span class="more" onclick="go('report')">查看全部 →</span></div>
+            <div class="proj" onclick="go('cockpit')">
+              <div class="proj-ico" style="background:var(--coral-soft)">🥤</div>
+              <div class="proj-main"><b>「轻气泡」新品上市 · 口味与定价测试</b>
+                <small><span>📍 一线城市 Z世代</span><span>·</span><span>50,000 虚拟人</span></small></div>
+              <div style="text-align:center"><div class="mini-prog"><i style="width:67%"></i></div><small style="font-size:11px;color:var(--ink-3);margin-top:5px;display:block">模拟中 67%</small></div>
+              <span class="chip chip-run">● 运行中</span>
+            </div>
+            <div class="proj" onclick="go('report')">
+              <div class="proj-ico" style="background:var(--primary-soft)">📱</div>
+              <div class="proj-main"><b>国产手机品牌 · 春节广告创意 A/B 测试</b>
+                <small><span>📍 全国下沉市场</span><span>·</span><span>120,000 虚拟人</span></small></div>
+              <div style="text-align:center"><div class="mini-prog"><i style="width:100%"></i></div><small style="font-size:11px;color:var(--ink-3);margin-top:5px;display:block">已完成</small></div>
+              <span class="chip chip-done">✓ 报告就绪</span>
+            </div>
+            <div class="proj" onclick="go('report')">
+              <div class="proj-ico" style="background:#F1ECFF">💄</div>
+              <div class="proj-main"><b>美妆国货 · 高端线价格敏感度模拟</b>
+                <small><span>📍 新一线女性 25-35</span><span>·</span><span>80,000 虚拟人</span></small></div>
+              <div style="text-align:center"><div class="mini-prog"><i style="width:100%"></i></div><small style="font-size:11px;color:var(--ink-3);margin-top:5px;display:block">已完成</small></div>
+              <span class="chip chip-done">✓ 报告就绪</span>
+            </div>
+            <div class="proj" onclick="go('scenario')">
+              <div class="proj-ico" style="background:#EEF1F6">🚗</div>
+              <div class="proj-main"><b>新能源车企 · 智驾功能宣传话术测试</b>
+                <small><span>📍 高收入男性车主</span><span>·</span><span>草稿未配置</span></small></div>
+              <div style="text-align:center"><div class="mini-prog"><i style="width:20%"></i></div><small style="font-size:11px;color:var(--ink-3);margin-top:5px;display:block">草稿 20%</small></div>
+              <span class="chip chip-draft">草稿</span>
+            </div>
+          </div>
+          <!-- quick start -->
+          <div class="card card-pad">
+            <div class="card-h"><h3>快速开始</h3></div>
+            <div class="opt-row" style="grid-template-columns:1fr">
+              <div class="var-card" style="border-style:solid;cursor:pointer" onclick="go('scenario')">
+                <div class="vi">🎯</div><div><b>新品概念测试</b><small>测口味/包装/卖点的人群接受度</small></div>
+                <div class="vbadge">模板</div>
+              </div>
+              <div class="var-card" style="border-style:solid;cursor:pointer" onclick="go('scenario')">
+                <div class="vi">💰</div><div><b>定价策略模拟</b><small>找到利润与份额的最优价格点</small></div>
+                <div class="vbadge">模板</div>
+              </div>
+              <div class="var-card" style="border-style:solid;cursor:pointer" onclick="go('scenario')">
+                <div class="vi">🎬</div><div><b>广告创意 A/B</b><small>多版创意的转化与情感反应对比</small></div>
+                <div class="vbadge">模板</div>
+              </div>
+              <div class="var-card" style="border-style:solid;cursor:pointer" onclick="go('pop')">
+                <div class="vi">👥</div><div><b>自定义人群</b><small>从零搭建目标人群数字孪生</small></div>
+                <div class="vbadge">高级</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========= SCENARIO EDITOR ========= -->
+    <section class="screen" id="scenario">
+      <div class="topbar">
+        <div><div class="crumb">研究 / <b>场景编辑器</b></div><div class="h-title">「轻气泡」新品上市测试</div></div>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost">保存草稿</button>
+        <button class="btn btn-pri" onclick="go('pop')">下一步：配置人群 →</button>
+      </div>
+      <div class="wrap">
+        <div class="steps">
+          <div class="step done"><div class="step-n">✓</div><div><b>研究目标</b><small>你想预测什么</small></div></div>
+          <div class="step on"><div class="step-n">2</div><div><b>投放材料</b><small>给虚拟人看什么</small></div></div>
+          <div class="step"><div class="step-n">3</div><div><b>干预变量</b><small>测试哪些组合</small></div></div>
+          <div class="step"><div class="step-n">4</div><div><b>目标人群</b><small>模拟谁</small></div></div>
+        </div>
+
+        <div class="editor-grid">
+          <div class="card card-pad">
+            <div class="field">
+              <label>研究目标 <span class="req">*</span><span class="hint">用自然语言描述，AI 自动结构化</span></label>
+              <div class="nl-box">
+                <div class="nl-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3 4 9v6l8 6 8-6V9l-8-6Z"/></svg>AI 已解析</div>
+                <textarea>我们要推出一款无糖气泡水「轻气泡」，主打0糖0卡。想知道一线城市 Z 世代对青提、海盐荔枝、白桃三种口味的偏好排序，以及定价在 5 元 / 6 元 / 8 元时的购买意愿差异，并找出影响他们决策的关键因素。</textarea>
+              </div>
+            </div>
+            <div class="field">
+              <label>投放材料 <span class="req">*</span><span class="hint">虚拟人会"看到"并产生反应</span></label>
+              <div class="var-card"><div class="vi">🖼️</div><div><b>产品主视觉 KV.jpg</b><small>三口味包装设计图 · 已上传</small></div><div class="vbadge" style="color:var(--green);background:#E7F9F1">已就绪</div></div>
+              <div class="var-card"><div class="vi">📝</div><div><b>卖点文案 · 3 版</b><small>「0糖0卡气泡感」「微醺级果味」「都市轻负担」</small></div><div class="vbadge" style="color:var(--green);background:#E7F9F1">已就绪</div></div>
+              <div class="var-card"><div class="vi">🎬</div><div><b>15s 竖版短视频</b><small>抖音 / 小红书 投放素材</small></div><div class="vbadge">可选</div></div>
+            </div>
+            <div class="field" style="margin-bottom:0">
+              <label>媒体环境模拟<span class="hint">虚拟人在什么信息流里看到你</span></label>
+              <div class="opt-row">
+                <div class="opt on"><span class="em">📕</span><b>小红书</b><small>种草信息流</small></div>
+                <div class="opt on"><span class="em">🎵</span><b>抖音</b><small>短视频推荐</small></div>
+                <div class="opt"><span class="em">🛒</span><b>电商详情页</b><small>转化场景</small></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- side estimate -->
+          <div class="side-panel">
+            <div class="sp-h"><svg viewBox="0 0 24 24" width="17" fill="none" stroke="#5BE8FB"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>本次模拟预估</div>
+            <div class="sp-stat"><span>虚拟人规模</span><b class="cy">50,000</b></div>
+            <div class="sp-stat"><span>变量组合数</span><b>3 口味 × 3 价格 = 9</b></div>
+            <div class="sp-stat"><span>模拟时间步</span><b>14 步 / 场景</b></div>
+            <div class="sp-stat"><span>预计耗时</span><b class="cy">≈ 2.4 小时</b></div>
+            <div class="sp-stat"><span>校准数据源</span><b>4 个 · 合规</b></div>
+            <div class="est">
+              <small>预估算力成本 · 含 LLM 推理</small>
+              <b>¥ 3,280</b>
+              <small style="margin-top:8px;display:block;color:#9DAAC4">同等规模传统调研 ≈ ¥18-25 万 / 6 周</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========= POPULATION ========= -->
+    <section class="screen" id="pop">
+      <div class="topbar">
+        <div><div class="crumb">研究 / <b>人群构建</b></div><div class="h-title">目标人群数字孪生</div><div class="h-sub">一线城市 Z 世代 · 合成人口校准自国家统计年鉴 + 合规面板数据</div></div>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost" onclick="go('scenario')">← 上一步</button>
+        <button class="btn btn-pri" onclick="go('cockpit')">▶ 开始模拟</button>
+      </div>
+      <div class="wrap">
+        <div class="pop-grid">
+          <!-- left: structure -->
+          <div class="card card-pad">
+            <div class="card-h"><h3>人口结构预览</h3><span class="chip chip-done" style="margin-left:auto">✓ 与普查分布对齐</span></div>
+            <div class="pyramid">
+              <div class="pyr-row"><span class="lab">28-30</span><div class="pyr-bars"><span class="l" style="width:22%"></span><span class="r" style="width:25%"></span></div></div>
+              <div class="pyr-row"><span class="lab">25-27</span><div class="pyr-bars"><span class="l" style="width:40%"></span><span class="r" style="width:44%"></span></div></div>
+              <div class="pyr-row"><span class="lab">22-24</span><div class="pyr-bars"><span class="l" style="width:58%"></span><span class="r" style="width:62%"></span></div></div>
+              <div class="pyr-row"><span class="lab">19-21</span><div class="pyr-bars"><span class="l" style="width:48%"></span><span class="r" style="width:52%"></span></div></div>
+              <div class="pyr-row"><span class="lab">16-18</span><div class="pyr-bars"><span class="l" style="width:30%"></span><span class="r" style="width:28%"></span></div></div>
+            </div>
+            <div class="legend"><span><i style="background:#1B4DFF"></i>男性 47%</span><span><i style="background:#FF6B3D"></i>女性 53%</span></div>
+            <div style="border-top:1px solid var(--line-2);margin:22px 0 18px"></div>
+            <div class="card-h"><h3 style="font-size:14px">城市与收入分布</h3></div>
+            <div class="slider-row"><div class="sl-h"><span>北京·上海·广州·深圳占比</span><b>64%</b></div><div class="track"><div class="fill" style="width:64%"></div><div class="knob" style="left:64%"></div></div></div>
+            <div class="slider-row"><div class="sl-h"><span>月可支配收入 ¥8K-20K</span><b>71%</b></div><div class="track"><div class="fill" style="width:71%"></div><div class="knob" style="left:71%"></div></div></div>
+            <div class="slider-row" style="margin-bottom:0"><div class="sl-h"><span>气泡水/无糖饮品消费习惯</span><b>58%</b></div><div class="track"><div class="fill" style="width:58%"></div><div class="knob" style="left:58%"></div></div></div>
+          </div>
+
+          <!-- right: traits + sources -->
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div class="card card-pad">
+              <div class="card-h"><h3>注入的人格与行为特质</h3><span class="more">+ 添加</span></div>
+              <p style="font-size:12.5px;color:var(--ink-3);margin-bottom:15px">每个虚拟人将被赋予 <b style="color:var(--ink)">220+</b> 维特质（人口标签 + 个性向量 + 媒体消费权重）</p>
+              <div class="trait-tags">
+                <span class="ttag on">价格敏感度 <span class="x">×</span></span>
+                <span class="ttag on">尝鲜意愿 <span class="x">×</span></span>
+                <span class="ttag on">健康意识 <span class="x">×</span></span>
+                <span class="ttag on">颜值党 <span class="x">×</span></span>
+                <span class="ttag on">从众倾向 <span class="x">×</span></span>
+                <span class="ttag on">国货偏好 <span class="x">×</span></span>
+                <span class="ttag">品牌忠诚度</span>
+                <span class="ttag">冲动消费</span>
+                <span class="ttag">社交分享欲</span>
+              </div>
+            </div>
+            <div class="card card-pad">
+              <div class="card-h"><h3>校准数据源</h3></div>
+              <div class="source-item"><div class="src-ico" style="background:var(--primary-soft)">📊</div><div class="src-item"><b>国家统计局人口普查年鉴</b><small>年龄/性别/城市/收入分布</small></div><span class="compliance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5Z"/><path d="m9 12 2 2 4-4"/></svg>公开数据</span></div>
+              <div class="source-item"><div class="src-ico" style="background:var(--cyan-soft)">🛒</div><div class="src-item"><b>合规消费面板（脱敏）</b><small>饮品品类购买行为 · 已授权采购</small></div><span class="compliance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5Z"/><path d="m9 12 2 2 4-4"/></svg>差分隐私</span></div>
+              <div class="source-item"><div class="src-ico" style="background:var(--coral-soft)">💬</div><div class="src-item"><b>社媒情感信号</b><small>无糖气泡水品类舆情 · 公开聚合</small></div><span class="compliance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2 4 5v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V5Z"/><path d="m9 12 2 2 4-4"/></svg>聚合脱敏</span></div>
+              <div class="source-item"><div class="src-ico" style="background:#F1ECFF">🧬</div><div class="src-item"><b>合成数据补缺</b><small>填补稀疏细分群体 · 概率生成</small></div><div class="toggle"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========= DARK COCKPIT ========= -->
+    <section class="screen" id="cockpit">
+      <div class="cockpit">
+        <div class="cp-top">
+          <div class="cp-back" onclick="go('dash')"><svg viewBox="0 0 24 24" width="17" fill="none" stroke="currentColor"><path d="m15 18-6-6 6-6"/></svg>返回</div>
+          <div class="cp-title">「轻气泡」新品上市测试<small>SIMULATION COCKPIT · 数字孪生实时推演</small></div>
+          <div class="spacer"></div>
+          <div class="live-pill"><span class="live-dot"></span>实时模拟中</div>
+          <button class="btn btn-pri" style="margin-left:14px" onclick="go('report')">查看实时报告 →</button>
+        </div>
+        <div class="cp-body">
+          <!-- left column -->
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <div class="glass glass-pad">
+              <div class="glass-h"><span class="gd"></span>模拟进度</div>
+              <div class="cp-prog">
+                <div class="pn"><b id="progNum">67%</b><span>时间步 9 / 14</span></div>
+                <div class="cp-track"><i id="progBar" style="width:67%"></i></div>
+              </div>
+              <div style="margin-top:18px">
+                <div class="stat-line"><span>活跃虚拟人</span><b class="cy" id="agentsLive">50,000</b></div>
+                <div class="stat-line"><span>已产生决策</span><b id="decisions">3,418,902</b></div>
+                <div class="stat-line"><span>当前场景</span><b class="co">青提 · ¥6</b></div>
+                <div class="stat-line"><span>群体情绪</span><b class="gr">偏正面 +0.41</b></div>
+              </div>
+            </div>
+            <div class="glass glass-pad">
+              <div class="glass-h"><span class="gd"></span>群体情绪演化</div>
+              <div class="spark" id="spark"></div>
+              <div style="display:flex;justify-content:space-between;font-size:10.5px;color:#6B7A95;margin-top:8px;font-family:'JetBrains Mono'">
+                <span>T1</span><span>T5</span><span>T9</span><span>T14</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- center stage: swarm -->
+          <div class="stage">
+            <canvas id="swarm"></canvas>
+            <div class="stage-leg">
+              <div><i style="background:#3DDC97"></i>倾向购买</div>
+              <div><i style="background:#5BE8FB"></i>犹豫/观望</div>
+              <div><i style="background:#FF6B3D"></i>价格劝退</div>
+              <div><i style="background:#7C5CFC"></i>被种草中</div>
+            </div>
+            <div class="stage-cap">实时观测 · 每个光点 = 1 个虚拟人 · 当前帧渲染 <b>2,000</b> / 50,000 抽样</div>
+          </div>
+
+          <!-- right: live feed -->
+          <div class="glass glass-pad">
+            <div class="glass-h"><span class="gd"></span>虚拟人活动流 <span style="margin-left:auto;font-size:10.5px;color:#6B7A95;font-family:'JetBrains Mono'">LIVE</span></div>
+            <div class="feed" id="feed"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========= REPORT ========= -->
+    <section class="screen" id="report">
+      <div class="topbar">
+        <div><div class="crumb">研究 / <b>洞察报告</b></div><div class="h-title">「轻气泡」新品上市测试 · 预测报告</div></div>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>导出 PDF</button>
+        <button class="btn btn-pri"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/></svg>分享</button>
+      </div>
+      <div class="wrap">
+        <div class="report-hero">
+          <div class="rh-tag"><svg viewBox="0 0 24 24" width="13" fill="none" stroke="currentColor"><path d="M22 11.1V12a10 10 0 1 1-5.9-9.1"/><path d="M22 4 12 14l-3-3"/></svg>校准保真度 91.3% · 置信度高</div>
+          <div class="rh-title">推荐：主推「青提」口味，定价 ¥6</div>
+          <div class="rh-sub">在 50,000 个一线 Z 世代虚拟人的 14 步推演中，青提 @ ¥6 在购买意愿与利润空间上达到最优平衡；白桃次之但对价格更敏感。</div>
+          <div class="rh-stats">
+            <div class="rh-stat"><b class="cy">34.2<span class="u">%</span></b><small>预测首单转化率</small></div>
+            <div class="rh-stat"><b class="co">¥6</b><small>最优价格点</small></div>
+            <div class="rh-stat"><b class="gr">2.4<span class="u">h</span></b><small>出报告耗时</small></div>
+            <div class="rh-stat"><b>±2.8<span class="u">%</span></b><small>95% 置信区间</small></div>
+          </div>
+        </div>
+
+        <div class="grid" style="grid-template-columns:1.3fr 1fr;margin-bottom:22px">
+          <!-- prediction bars -->
+          <div class="card card-pad">
+            <div class="card-h"><h3>口味 × 价格 · 购买意愿预测</h3><span class="chip chip-done" style="margin-left:auto">9 组合</span></div>
+            <div class="predict-bar"><div class="pb-h"><b>🍇 青提 · ¥6</b><span class="v" style="color:var(--cyan)">34.2%</span></div><div class="pb-track"><div class="pb-fill" style="width:68%;background:linear-gradient(90deg,#1B4DFF,#00B8D4)">最优<div class="ci" style="right:8px;width:18px"></div></div></div></div>
+            <div class="predict-bar"><div class="pb-h"><b>🍑 白桃 · ¥6</b><span class="v">29.7%</span></div><div class="pb-track"><div class="pb-fill" style="width:59%;background:linear-gradient(90deg,#1B4DFF,#5B82FF)"><div class="ci" style="right:8px;width:22px"></div></div></div></div>
+            <div class="predict-bar"><div class="pb-h"><b>🍇 青提 · ¥5</b><span class="v">31.0%</span></div><div class="pb-track"><div class="pb-fill" style="width:62%;background:linear-gradient(90deg,#7C5CFC,#9B82FF)"><div class="ci" style="right:8px;width:16px"></div></div></div></div>
+            <div class="predict-bar"><div class="pb-h"><b>🧂 海盐荔枝 · ¥6</b><span class="v">24.1%</span></div><div class="pb-track"><div class="pb-fill" style="width:48%;background:linear-gradient(90deg,#F5A623,#FFC25B)"><div class="ci" style="right:8px;width:20px"></div></div></div></div>
+            <div class="predict-bar" style="margin-bottom:0"><div class="pb-h"><b>🍇 青提 · ¥8</b><span class="v" style="color:var(--coral)">18.6%</span></div><div class="pb-track"><div class="pb-fill" style="width:37%;background:linear-gradient(90deg,#FF6B3D,#FFA07D)"><div class="ci" style="right:8px;width:24px"></div></div></div></div>
+            <p style="font-size:11.5px;color:var(--ink-3);margin-top:16px">▏阴影区为 95% 置信区间 · 涨价至 ¥8 时青提转化骤降 46%，价格弹性显著</p>
+          </div>
+          <!-- donut -->
+          <div class="card card-pad">
+            <div class="card-h"><h3>劝退原因构成</h3></div>
+            <div class="donut-wrap">
+              <div class="donut"><div class="donut-c"><b class="disp">65.8%</b><small>未转化</small></div></div>
+              <div class="dlist">
+                <div class="dlist-item"><i style="background:#1B4DFF"></i>价格超预算<span class="pct">42%</span></div>
+                <div class="dlist-item"><i style="background:#00B8D4"></i>口味不确定<span class="pct">26%</span></div>
+                <div class="dlist-item"><i style="background:#FF6B3D"></i>已有偏好品牌<span class="pct">18%</span></div>
+                <div class="dlist-item"><i style="background:#F5A623"></i>无消费场景<span class="pct">14%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- causal why -->
+        <div class="card card-pad" style="margin-bottom:22px">
+          <div class="card-h"><h3>🔍 因果归因 · 为什么他们这样选</h3><span class="more">反事实模拟 →</span></div>
+          <div class="why-card"><div class="why-rank">1</div><div><b>「0糖0卡」是决策第一驱动，但非价格越低越好</b><p>反事实模拟显示：移除健康卖点后转化率下降 31%；而价格从 ¥6 降到 ¥5 仅提升转化 2.1% 却牺牲毛利——说明该人群为健康溢价，低价反而削弱"轻负担"心智。</p></div><div class="why-impact"><b>+31%</b><small>卖点贡献</small></div></div>
+          <div class="why-card"><div class="why-rank">2</div><div><b>小红书种草环节显著改变态度（情感漂移 +0.38）</b><p>在小红书信息流中接触到 KOL 种草内容的虚拟人，购买意愿比仅看电商详情页的高 38%。短视频环节对"颜值党"特质人群影响最大。</p></div><div class="why-impact"><b>+38%</b><small>渠道增益</small></div></div>
+          <div class="why-card" style="margin-bottom:0"><div class="why-rank">3</div><div><b>青提"颜值"战胜海盐荔枝"猎奇"</b><p>海盐荔枝虽尝鲜意愿高，但"口味不确定"劝退了 26% 的保守型虚拟人；青提因包装色彩与认知熟悉度获得更稳的群体共识。</p></div><div class="why-impact"><b>+10%</b><small>共识度</small></div></div>
+        </div>
+
+        <!-- A/B -->
+        <div class="card card-pad">
+          <div class="card-h"><h3>⚖️ 方案对比 · 反事实推演</h3></div>
+          <div class="ab-grid">
+            <div class="ab-card win">
+              <div class="ab-badge">推荐方案</div>
+              <h4>方案 A · 青提主推 @ ¥6</h4>
+              <div style="font-size:12.5px;color:var(--ink-2)">健康卖点 + 小红书种草为主</div>
+              <div class="big disp" style="color:var(--cyan)">34.2<span class="u">%</span></div>
+              <div style="font-size:12.5px;color:var(--ink-3)">预测转化率 · 综合毛利指数 <b style="color:var(--ink)">8.7/10</b></div>
+            </div>
+            <div class="ab-card">
+              <div class="ab-badge" style="background:#EEF1F6;color:#6B7A91">对照方案</div>
+              <h4>方案 B · 三口味齐推 @ ¥5</h4>
+              <div style="font-size:12.5px;color:var(--ink-2)">低价走量 + 全渠道铺开</div>
+              <div class="big disp">28.9<span class="u">%</span></div>
+              <div style="font-size:12.5px;color:var(--ink-3)">预测转化率 · 综合毛利指数 <b style="color:var(--ink)">6.2/10</b></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+// ---------- navigation ----------
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('on',n.dataset.s===id));
+  document.getElementById('main').scrollTop=0;
+  if(id==='cockpit') startCockpit();
+}
+document.querySelectorAll('.nav-item').forEach(n=>n.addEventListener('click',()=>go(n.dataset.s)));
+
+// ---------- spark bars ----------
+(function(){
+  const s=document.getElementById('spark');
+  const vals=[30,38,34,46,52,48,60,58,67,72];
+  vals.forEach((v,i)=>{const b=document.createElement('i');b.style.height=v+'%';b.style.animationDelay=(i*60)+'ms';s.appendChild(b)});
+})();
+
+// ---------- cockpit swarm + feed ----------
+let cockpitStarted=false, rafId=null, feedTimer=null;
+function startCockpit(){
+  if(cockpitStarted) return; cockpitStarted=true;
+  const cv=document.getElementById('swarm'),ctx=cv.getContext('2d');
+  function size(){cv.width=cv.offsetWidth*devicePixelRatio;cv.height=cv.offsetHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}
+  size();window.addEventListener('resize',size);
+  const W=()=>cv.offsetWidth,H=()=>cv.offsetHeight;
+  const colors=['#3DDC97','#5BE8FB','#FF6B3D','#7C5CFC'];
+  // 4 attractor clusters
+  const clusters=[{x:.30,y:.34},{x:.66,y:.30},{x:.40,y:.70},{x:.72,y:.66}];
+  const N=2000, pts=[];
+  for(let i=0;i<N;i++){
+    const c=Math.floor(Math.random()*4);
+    pts.push({c,x:Math.random(),y:Math.random(),tx:clusters[c].x,ty:clusters[c].y,
+      vx:0,vy:0,r:Math.random()*1.4+0.7,ph:Math.random()*6.28});
+  }
+  let t=0;
+  function draw(){
+    ctx.clearRect(0,0,W(),H());
+    // cluster halos
+    clusters.forEach((cl,i)=>{
+      const g=ctx.createRadialGradient(cl.x*W(),cl.y*H(),0,cl.x*W(),cl.y*H(),120);
+      g.addColorStop(0,colors[i]+'22');g.addColorStop(1,'transparent');
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(cl.x*W(),cl.y*H(),120,0,6.28);ctx.fill();
+    });
+    t+=0.012;
+    for(const p of pts){
+      const dx=p.tx-p.x,dy=p.ty-p.y;
+      p.vx=(p.vx+dx*0.004)*0.92; p.vy=(p.vy+dy*0.004)*0.92;
+      p.x+=p.vx+Math.cos(t+p.ph)*0.0006; p.y+=p.vy+Math.sin(t+p.ph)*0.0006;
+      const px=p.x*W(),py=p.y*H();
+      ctx.beginPath();ctx.arc(px,py,p.r,0,6.28);
+      ctx.fillStyle=colors[p.c];ctx.globalAlpha=0.85;ctx.fill();
+      ctx.globalAlpha=0.18;ctx.beginPath();ctx.arc(px,py,p.r*2.6,0,6.28);ctx.fill();
+      ctx.globalAlpha=1;
+    }
+    // occasional migration (agents changing mind)
+    if(Math.random()<0.06){const p=pts[Math.floor(Math.random()*N)];const nc=Math.floor(Math.random()*4);p.c=nc;p.tx=clusters[nc].x+(Math.random()-.5)*.12;p.ty=clusters[nc].y+(Math.random()-.5)*.12}
+    rafId=requestAnimationFrame(draw);
+  }
+  draw();
+
+  // animated counters
+  const dEl=document.getElementById('decisions');
+  setInterval(()=>{let v=parseInt(dEl.textContent.replace(/,/g,''))+Math.floor(Math.random()*400+120);dEl.textContent=v.toLocaleString()},900);
+
+  // live feed
+  const names=['小K·22·北京','阿哲·25·上海','Luna·19·深圳','大伟·28·广州','番茄·23·杭州','果果·21·成都','三三·26·武汉','十七·24·南京'];
+  const avc=['#1B4DFF','#FF6B3D','#7C5CFC','#00B8D4','#F5A623','#10B981'];
+  const evts=[
+    n=>`<b>${n}</b> 刷到了 <span class="act">青提口味</span> 的小红书种草`,
+    n=>`<b>${n}</b> 看到 ¥8 定价，<span class="neg">觉得偏贵</span> 退出了`,
+    n=>`<b>${n}</b> 被"0糖0卡"打动，<span class="pos">加入购物车</span>`,
+    n=>`<b>${n}</b> 在白桃与青提间 <span class="act">反复犹豫</span>`,
+    n=>`<b>${n}</b> 看完 KOL 视频，购买意愿 <span class="pos">+0.4</span>`,
+    n=>`<b>${n}</b> 觉得海盐荔枝 <span class="neg">口味太猎奇</span>`,
+    n=>`<b>${n}</b> 完成 <span class="pos">首单购买</span> · ¥6 青提`,
+  ];
+  const feed=document.getElementById('feed');
+  function addFeed(){
+    const n=names[Math.floor(Math.random()*names.length)];
+    const e=evts[Math.floor(Math.random()*evts.length)](n);
+    const el=document.createElement('div');el.className='fitem';
+    const c=avc[Math.floor(Math.random()*avc.length)];
+    el.innerHTML=`<div class="fav" style="background:${c}22;color:${c}">${n[0]}</div><div class="ftext">${e}<small>${new Date().toLocaleTimeString('zh-CN')} · 时间步 ${9}</small></div>`;
+    feed.prepend(el);
+    while(feed.children.length>7)feed.removeChild(feed.lastChild);
+  }
+  for(let i=0;i<6;i++)addFeed();
+  feedTimer=setInterval(addFeed,1400);
+
+  // progress drift
+  const pb=document.getElementById('progBar'),pn=document.getElementById('progNum');
+  let prog=67;
+  setInterval(()=>{if(prog<99){prog+=0.3;pb.style.width=prog+'%';pn.textContent=Math.floor(prog)+'%'}},1200);
+}
+</script>
+</body>
+</html>

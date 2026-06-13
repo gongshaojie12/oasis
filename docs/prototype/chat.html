@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>万象 WANXIANG · AI首席模拟官</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F6FA; --surface:#FFFFFF; --surface-2:#F7F9FC;
+  --ink:#0E1726; --ink-2:#46556B; --ink-3:#8A97AB;
+  --line:#E5EAF1; --line-2:#EEF2F7;
+  --primary:#1B4DFF; --primary-soft:#E8EDFF; --cyan:#00B8D4; --cyan-soft:#E0F7FB;
+  --coral:#FF6B3D; --coral-soft:#FFEDE6; --amber:#F5A623; --green:#10B981; --violet:#7C5CFC;
+  --shadow:0 1px 2px rgba(16,23,38,.04),0 10px 28px -14px rgba(16,23,38,.16);
+  --r:14px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;overflow:hidden}
+::-webkit-scrollbar{width:9px}::-webkit-scrollbar-thumb{background:#C9D2DF;border-radius:9px;border:2.5px solid transparent;background-clip:content-box}
+.disp{font-family:'Sora'}.mono{font-family:'JetBrains Mono'}
+
+.app{display:grid;grid-template-columns:256px 1fr 380px;height:100vh;transition:grid-template-columns .35s cubic-bezier(.2,.7,.2,1)}
+.app.wide-chat{grid-template-columns:256px 1fr 0}
+
+/* ============ LEFT SIDEBAR ============ */
+.side{background:linear-gradient(180deg,#0E1726,#16213B);color:#fff;display:flex;flex-direction:column;padding:18px 14px;position:relative;overflow:hidden}
+.side::before{content:"";position:absolute;inset:0;background:radial-gradient(380px 200px at 80% -5%,rgba(27,77,255,.4),transparent 60%),radial-gradient(320px 220px at -10% 105%,rgba(0,184,212,.28),transparent 60%);pointer-events:none}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 8px 16px;position:relative;z-index:1}
+.logo{width:36px;height:36px;border-radius:10px;background:conic-gradient(from 140deg,#1B4DFF,#00B8D4,#7C5CFC,#1B4DFF);display:grid;place-items:center;box-shadow:0 6px 18px rgba(27,77,255,.5);position:relative}
+.logo::after{content:"";position:absolute;inset:3px;border-radius:7px;background:#0E1726}
+.logo span{position:relative;z-index:1;font-weight:800;font-family:'Sora';font-size:17px;background:linear-gradient(135deg,#7DA2FF,#5BE8FB);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand b{font-family:'Sora';font-weight:700;font-size:16px;letter-spacing:.5px;line-height:1}
+.brand small{font-size:9.5px;color:#7F8DA8;letter-spacing:2.5px}
+.new-btn{display:flex;align-items:center;gap:9px;justify-content:center;background:linear-gradient(135deg,#1B4DFF,#3D6BFF);color:#fff;border:none;cursor:pointer;font-family:inherit;font-weight:600;font-size:13.5px;padding:12px;border-radius:11px;margin:4px 4px 18px;position:relative;z-index:1;box-shadow:0 8px 18px -8px rgba(27,77,255,.7)}
+.new-btn svg{width:17px;height:17px;stroke-width:2.2}
+.sb-label{font-size:10px;color:#5C6B86;letter-spacing:2px;font-weight:700;padding:6px 12px 8px;position:relative;z-index:1}
+.sb-scroll{flex:1;overflow-y:auto;position:relative;z-index:1;margin:0 -4px;padding:0 4px}
+.sandbox{display:flex;gap:11px;padding:11px 12px;border-radius:11px;cursor:pointer;transition:.16s;border:1px solid transparent;margin-bottom:3px}
+.sandbox:hover{background:rgba(255,255,255,.05)}
+.sandbox.on{background:linear-gradient(100deg,rgba(27,77,255,.22),rgba(0,184,212,.08));border-color:rgba(123,162,255,.3)}
+.sb-emoji{width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.07);display:grid;place-items:center;font-size:15px;flex-shrink:0}
+.sb-txt{min-width:0;flex:1}
+.sb-txt b{font-size:13px;font-weight:500;color:#E8EEFA;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.sb-txt small{font-size:11px;color:#7F8DA8;display:flex;align-items:center;gap:5px;margin-top:3px}
+.sb-live{width:6px;height:6px;border-radius:50%;background:#FF6B3D;box-shadow:0 0 6px #FF6B3D;animation:bl 1.4s infinite}
+@keyframes bl{50%{opacity:.3}}
+.side-foot{position:relative;z-index:1;border-top:1px solid rgba(255,255,255,.08);padding-top:12px;margin-top:8px}
+.usr{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;cursor:pointer}
+.usr:hover{background:rgba(255,255,255,.05)}
+.usr-av{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#FF6B3D,#F5A623);display:grid;place-items:center;font-weight:700;font-size:13px}
+.usr b{font-size:12.5px;display:block;line-height:1.3}.usr small{font-size:10.5px;color:#7F8DA8}
+
+/* ============ CENTER CHAT ============ */
+.chat{display:flex;flex-direction:column;height:100vh;background:var(--bg);position:relative}
+.chat-top{height:60px;display:flex;align-items:center;gap:12px;padding:0 26px;border-bottom:1px solid var(--line);background:rgba(244,246,250,.85);backdrop-filter:blur(12px);z-index:5}
+.ct-ava{width:34px;height:34px;border-radius:10px;background:linear-gradient(135deg,#1B4DFF,#00B8D4);display:grid;place-items:center;color:#fff;font-size:16px;box-shadow:0 4px 12px -3px rgba(27,77,255,.5)}
+.ct-name b{font-size:14.5px;font-family:'Sora';font-weight:600;display:flex;align-items:center;gap:7px}
+.ct-name small{font-size:11.5px;color:var(--ink-3)}
+.ct-badge{font-size:10px;font-weight:700;color:var(--green);background:#E7F9F1;padding:3px 9px;border-radius:20px}
+.ct-spacer{flex:1}
+.ct-btn{width:36px;height:36px;border-radius:10px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;color:var(--ink-2)}
+.ct-btn svg{width:17px;height:17px;stroke-width:1.8}
+
+.msgs{flex:1;overflow-y:auto;padding:30px 0 20px}
+.msg-wrap{max-width:720px;margin:0 auto;padding:0 26px}
+.msg{display:flex;gap:14px;margin-bottom:28px;animation:rise .45s cubic-bezier(.2,.7,.2,1)}
+@keyframes rise{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.m-av{width:34px;height:34px;border-radius:10px;flex-shrink:0;display:grid;place-items:center;font-size:15px;font-weight:700}
+.m-av.ai{background:linear-gradient(135deg,#1B4DFF,#00B8D4);color:#fff}
+.m-av.u{background:linear-gradient(135deg,#FF6B3D,#F5A623);color:#fff}
+.m-body{flex:1;min-width:0;padding-top:4px}
+.m-name{font-size:12px;color:var(--ink-3);font-weight:600;margin-bottom:7px}
+.m-text{font-size:14.5px;line-height:1.75;color:var(--ink)}
+.m-text p{margin-bottom:10px}.m-text b{font-weight:700}
+.m-text .hl{background:linear-gradient(transparent 60%,var(--cyan-soft) 60%);font-weight:600}
+.u .m-text{background:var(--surface);border:1px solid var(--line);padding:14px 18px;border-radius:4px 16px 16px 16px;box-shadow:var(--shadow);display:inline-block}
+
+/* streaming status card */
+.sim-status{background:linear-gradient(135deg,#0E1726,#1A2B52);border-radius:16px;padding:18px;color:#fff;margin:4px 0 12px;position:relative;overflow:hidden}
+.sim-status::before{content:"";position:absolute;right:-30px;top:-30px;width:130px;height:130px;border-radius:50%;background:radial-gradient(circle,rgba(0,184,212,.35),transparent 70%);filter:blur(10px)}
+.ss-h{display:flex;align-items:center;gap:9px;font-size:12.5px;color:#9DAAC4;margin-bottom:14px;position:relative}
+.ss-spin{width:15px;height:15px;border:2px solid rgba(91,232,251,.3);border-top-color:#5BE8FB;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ss-steps{position:relative}
+.ss-step{display:flex;align-items:center;gap:10px;font-size:13px;padding:6px 0;color:#7F8DA8}
+.ss-step.done{color:#C4D2EC}.ss-step.active{color:#5BE8FB;font-weight:500}
+.ss-ic{width:18px;height:18px;border-radius:50%;border:1.5px solid currentColor;display:grid;place-items:center;font-size:10px;flex-shrink:0}
+.ss-step.done .ss-ic{background:#3DDC97;border-color:#3DDC97;color:#0E1726}
+
+/* artifact card in chat */
+.artifact{border:1px solid var(--line);border-radius:16px;overflow:hidden;margin:4px 0 6px;background:var(--surface);box-shadow:var(--shadow)}
+.art-head{display:flex;align-items:center;gap:11px;padding:14px 16px;background:linear-gradient(135deg,#0E1726,#1A2B52);color:#fff}
+.art-ic{width:34px;height:34px;border-radius:9px;background:rgba(91,232,251,.16);display:grid;place-items:center;font-size:16px}
+.art-head b{font-size:13.5px;font-family:'Sora'}.art-head small{font-size:11px;color:#9DAAC4;display:block}
+.art-open{margin-left:auto;font-size:12px;font-weight:600;color:#0E1726;background:#5BE8FB;border:none;padding:8px 14px;border-radius:9px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.art-open svg{width:14px;height:14px;stroke-width:2.2}
+.art-body{padding:18px}
+.art-rec{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:var(--green);background:#E7F9F1;padding:5px 11px;border-radius:20px;width:fit-content;margin-bottom:13px}
+.art-title{font-family:'Sora';font-size:17px;font-weight:700;margin-bottom:14px}
+.art-bars .ab{margin-bottom:11px}
+.ab-h{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px}.ab-h .v{font-family:'JetBrains Mono';font-weight:700}
+.ab-tr{height:9px;border-radius:9px;background:var(--surface-2);overflow:hidden}
+.ab-tr i{display:block;height:100%;border-radius:9px}
+.art-stats{display:flex;gap:0;margin-top:16px;border-top:1px solid var(--line-2);padding-top:14px}
+.art-stat{flex:1;text-align:center;border-right:1px solid var(--line-2)}
+.art-stat:last-child{border:none}
+.art-stat b{font-family:'Sora';font-size:20px;font-weight:800;display:block}.art-stat small{font-size:11px;color:var(--ink-3)}
+
+.followups{display:flex;flex-wrap:wrap;gap:9px;margin-top:6px}
+.fu{font-size:12.5px;color:var(--primary);background:var(--primary-soft);border:1px solid #D6E0FF;padding:9px 14px;border-radius:20px;cursor:pointer;transition:.14s}
+.fu:hover{background:#fff;border-color:var(--primary)}
+
+/* composer */
+.composer{padding:14px 26px 22px;background:linear-gradient(transparent,var(--bg) 30%)}
+.comp-inner{max-width:720px;margin:0 auto}
+.comp-box{background:var(--surface);border:1.5px solid var(--line);border-radius:18px;padding:6px 6px 6px 18px;display:flex;align-items:flex-end;gap:10px;box-shadow:var(--shadow);transition:.16s}
+.comp-box:focus-within{border-color:var(--primary);box-shadow:0 0 0 4px var(--primary-soft)}
+.comp-box textarea{flex:1;border:none;outline:none;resize:none;font-family:inherit;font-size:14.5px;line-height:1.6;padding:11px 0;max-height:120px;background:transparent;color:var(--ink)}
+.comp-tools{display:flex;gap:4px;align-items:center}
+.comp-tool{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;cursor:pointer;color:var(--ink-3);transition:.14s}
+.comp-tool:hover{background:var(--surface-2);color:var(--ink)}
+.comp-tool svg{width:18px;height:18px;stroke-width:1.8}
+.comp-send{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#1B4DFF,#3D6BFF);border:none;display:grid;place-items:center;cursor:pointer;color:#fff;box-shadow:0 6px 14px -5px rgba(27,77,255,.7)}
+.comp-send svg{width:18px;height:18px;stroke-width:2.2}
+.comp-hint{text-align:center;font-size:11px;color:var(--ink-3);margin-top:10px}
+.comp-hint b{color:var(--ink-2)}
+
+/* ============ RIGHT DATA PANEL ============ */
+.panel{background:#0A0E1A;color:#E8EEFA;height:100vh;overflow-y:auto;position:relative;border-left:1px solid rgba(91,232,251,.1)}
+.panel::after{content:"";position:fixed;width:380px;inset-block:0;pointer-events:none;
+  background-image:linear-gradient(rgba(91,232,251,.022) 1px,transparent 1px),linear-gradient(90deg,rgba(91,232,251,.022) 1px,transparent 1px);background-size:34px 34px;
+  mask-image:radial-gradient(circle at 50% 20%,#000,transparent 75%)}
+.p-top{display:flex;align-items:center;gap:10px;padding:18px 20px;border-bottom:1px solid rgba(91,232,251,.1);position:sticky;top:0;background:rgba(10,14,26,.9);backdrop-filter:blur(10px);z-index:3}
+.p-top b{font-family:'Sora';font-size:13.5px;font-weight:600}
+.p-live{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:11px;font-weight:700;color:#FF9E7D;background:rgba(255,107,61,.14);padding:5px 11px;border-radius:20px}
+.p-live i{width:6px;height:6px;border-radius:50%;background:#FF6B3D;animation:bl 1.4s infinite}
+.p-sec{padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.05);position:relative;z-index:1}
+.p-sh{font-size:11px;color:#7F8DA8;letter-spacing:1.5px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.p-sh .gd{width:5px;height:5px;border-radius:50%;background:#5BE8FB;box-shadow:0 0 6px #5BE8FB}
+/* mini swarm */
+.mini-stage{height:180px;border-radius:14px;overflow:hidden;position:relative;background:radial-gradient(400px 300px at 50% 40%,rgba(27,77,255,.12),transparent 70%);border:1px solid rgba(91,232,251,.12)}
+#miniSwarm{display:block;width:100%;height:180px}
+.mini-cap{position:absolute;left:12px;bottom:10px;font-size:10px;color:#9DAAC4;font-family:'JetBrains Mono'}
+.mini-cap b{color:#5BE8FB}
+.p-prog .pn{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px}
+.p-prog .pn b{font-family:'Sora';font-size:26px;font-weight:800;color:#5BE8FB}.p-prog .pn span{font-size:11px;color:#7F8DA8}
+.p-track{height:8px;border-radius:8px;background:rgba(91,232,251,.12);overflow:hidden}
+.p-track i{display:block;height:100%;background:linear-gradient(90deg,#1B4DFF,#5BE8FB);box-shadow:0 0 10px rgba(91,232,251,.6);transition:width .5s}
+.p-stat{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12.5px}
+.p-stat:last-child{border:none}.p-stat span{color:#9DAAC4}.p-stat b{font-family:'JetBrains Mono';font-weight:700}
+.cy{color:#5BE8FB}.co{color:#FF9E7D}.gr{color:#3DDC97}
+.p-legend{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.p-legend div{display:flex;align-items:center;gap:8px;font-size:11.5px;color:#C4D2EC}.p-legend i{width:9px;height:9px;border-radius:50%}
+.p-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;padding:13px;border-radius:12px;border:none;cursor:pointer;font-family:inherit;font-weight:600;font-size:13.5px;margin-top:4px}
+.p-btn.primary{background:linear-gradient(135deg,#1B4DFF,#3D6BFF);color:#fff;box-shadow:0 8px 18px -8px rgba(27,77,255,.6)}
+.p-btn.ghost{background:rgba(255,255,255,.06);color:#E8EEFA;border:1px solid rgba(91,232,251,.16);margin-top:10px}
+.p-btn svg{width:16px;height:16px;stroke-width:2}
+
+/* ============ FULLSCREEN COCKPIT OVERLAY ============ */
+.overlay{position:fixed;inset:0;z-index:100;background:radial-gradient(1200px 700px at 70% -10%,#152347,#0A0E1A 60%);color:#E8EEFA;display:none;flex-direction:column;animation:fade .4s}
+.overlay.on{display:flex}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.ov-top{display:flex;align-items:center;gap:16px;padding:20px 30px;border-bottom:1px solid rgba(91,232,251,.12)}
+.ov-close{display:flex;align-items:center;gap:8px;color:#9DAAC4;cursor:pointer;font-size:13px;font-weight:500}
+.ov-close:hover{color:#fff}
+.ov-title{font-family:'Sora';font-size:17px;font-weight:700}.ov-title small{display:block;font-size:11px;color:#7F8DA8;letter-spacing:1px}
+.ov-body{flex:1;display:grid;grid-template-columns:280px 1fr 320px;gap:20px;padding:24px 30px;overflow:hidden}
+.glass{background:rgba(18,28,50,.5);border:1px solid rgba(91,232,251,.14);border-radius:16px;padding:18px;overflow-y:auto}
+.gh{font-family:'Sora';font-size:12.5px;font-weight:600;color:#C4D2EC;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.gh .gd{width:6px;height:6px;border-radius:50%;background:#5BE8FB;box-shadow:0 0 8px #5BE8FB}
+.ov-stage{border-radius:16px;overflow:hidden;position:relative;background:radial-gradient(700px 500px at 50% 40%,rgba(27,77,255,.1),transparent 70%);border:1px solid rgba(91,232,251,.14)}
+#bigSwarm{display:block;width:100%;height:100%}
+.ov-feed{display:flex;flex-direction:column}
+.ov-fi{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.06);animation:rise .5s}
+.ov-fav{width:28px;height:28px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;font-size:12px;font-weight:700}
+.ov-ft{font-size:12px;line-height:1.5;color:#C4D2EC}.ov-ft b{color:#fff}.ov-ft .pos{color:#3DDC97;font-weight:600}.ov-ft .neg{color:#FF9E7D;font-weight:600}.ov-ft .act{color:#5BE8FB;font-weight:600}
+.ov-ft small{display:block;color:#6B7A95;font-size:10px;margin-top:2px;font-family:'JetBrains Mono'}
+.big-stat{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13px}
+.big-stat span{color:#9DAAC4}.big-stat b{font-family:'JetBrains Mono';font-weight:700}
+
+@media(max-width:1180px){.app{grid-template-columns:240px 1fr 0}.ov-body{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <!-- ===== LEFT: SANDBOX MANAGER ===== -->
+  <aside class="side">
+    <div class="brand">
+      <div class="logo"><span>象</span></div>
+      <div><b>万象</b><br><small>WANXIANG</small></div>
+    </div>
+    <button class="new-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>新建模拟沙盒</button>
+    <div class="sb-label">沙盒 · 受众数字孪生</div>
+    <div class="sb-scroll">
+      <div class="sandbox on">
+        <div class="sb-emoji">🥤</div>
+        <div class="sb-txt"><b>一线 Z 世代 · 饮品消费</b><small><span class="sb-live"></span>模拟中 · 50,000 人</small></div>
+      </div>
+      <div class="sandbox">
+        <div class="sb-emoji">📱</div>
+        <div class="sb-txt"><b>下沉市场 · 手机用户</b><small>3 天前 · 120,000 人</small></div>
+      </div>
+      <div class="sandbox">
+        <div class="sb-emoji">💄</div>
+        <div class="sb-txt"><b>新一线女性 · 美妆国货</b><small>上周 · 80,000 人</small></div>
+      </div>
+      <div class="sandbox">
+        <div class="sb-emoji">🚗</div>
+        <div class="sb-txt"><b>高收入车主 · 新能源</b><small>上周 · 60,000 人</small></div>
+      </div>
+      <div class="sandbox">
+        <div class="sb-emoji">🏦</div>
+        <div class="sb-txt"><b>高净值人群 · 理财</b><small>2 周前 · 30,000 人</small></div>
+      </div>
+    </div>
+    <div class="side-foot">
+      <div class="usr"><div class="usr-av">李</div><div><b>李研究</b><br><small>品牌洞察 · 增长团队</small></div></div>
+    </div>
+  </aside>
+
+  <!-- ===== CENTER: CHAT ===== -->
+  <section class="chat">
+    <div class="chat-top">
+      <div class="ct-ava">🧠</div>
+      <div class="ct-name"><b>AI 首席模拟官 <span class="ct-badge">在线</span></b><small>当前沙盒：一线 Z 世代 · 饮品消费（50,000 虚拟人）</small></div>
+      <div class="ct-spacer"></div>
+      <div class="ct-btn" title="重置沙盒"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></div>
+      <div class="ct-btn" title="收起数据面板" onclick="document.getElementById('app').classList.toggle('wide-chat')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/></svg></div>
+    </div>
+
+    <div class="msgs" id="msgs">
+      <div class="msg-wrap">
+        <!-- user -->
+        <div class="msg"><div class="m-av u">李</div><div class="m-body"><div class="m-name">李研究</div>
+          <div class="m-text"><div style="display:inline-block">我们要推无糖气泡水「轻气泡」，主打0糖0卡，有青提、海盐荔枝、白桃三种口味。帮我模拟一下一线城市 Z 世代会更喜欢哪个口味，定价 5/6/8 元他们的购买意愿差多少？</div></div>
+        </div></div>
+
+        <!-- AI streaming status -->
+        <div class="msg"><div class="m-av ai">象</div><div class="m-body"><div class="m-name">AI 首席模拟官</div>
+          <div class="m-text">
+            <p>收到 👍 我已经为你在「一线 Z 世代」沙盒里调度 <b class="hl">50,000 个虚拟人</b>，按 3 口味 × 3 价格共 9 种组合并行推演。右侧数据面板可以实时看到他们的反应 →</p>
+          </div>
+          <div class="sim-status">
+            <div class="ss-h"><span class="ss-spin"></span>模拟进行中 · 时间步 9 / 14</div>
+            <div class="ss-steps">
+              <div class="ss-step done"><span class="ss-ic">✓</span>注入 220+ 维人格与行为特质</div>
+              <div class="ss-step done"><span class="ss-ic">✓</span>对齐人口普查 + 合规消费面板</div>
+              <div class="ss-step active"><span class="ss-ic">●</span>虚拟人在小红书/抖音信息流中决策…</div>
+              <div class="ss-step"><span class="ss-ic">○</span>校准保真度评估 + 生成报告</div>
+            </div>
+          </div>
+        </div></div>
+
+        <!-- AI result + artifact -->
+        <div class="msg"><div class="m-av ai">象</div><div class="m-body"><div class="m-name">AI 首席模拟官</div>
+          <div class="m-text">
+            <p>初步结论出来了：<b class="hl">青提 @ ¥6</b> 在购买意愿和利润空间上最优。有个关键发现——这群人为"健康"付费，价格从 ¥6 降到 ¥5 几乎不提升转化，但涨到 ¥8 会让青提转化骤降 46%。完整预测我整理成了报告卡片：</p>
+          </div>
+          <!-- artifact card -->
+          <div class="artifact">
+            <div class="art-head">
+              <div class="art-ic">📊</div>
+              <div><b>预测报告 · 口味×价格购买意愿</b><small>校准保真度 91.3% · 9 组合</small></div>
+              <button class="art-open" onclick="openCockpit('report')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 3h6v6M21 3l-9 9M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>展开全屏</button>
+            </div>
+            <div class="art-body">
+              <div class="art-rec">✓ 推荐：主推青提，定价 ¥6</div>
+              <div class="art-bars">
+                <div class="ab"><div class="ab-h"><b>🍇 青提 · ¥6</b><span class="v" style="color:var(--cyan)">34.2%</span></div><div class="ab-tr"><i style="width:68%;background:linear-gradient(90deg,#1B4DFF,#00B8D4)"></i></div></div>
+                <div class="ab"><div class="ab-h"><b>🍇 青提 · ¥5</b><span class="v">31.0%</span></div><div class="ab-tr"><i style="width:62%;background:linear-gradient(90deg,#7C5CFC,#9B82FF)"></i></div></div>
+                <div class="ab"><div class="ab-h"><b>🍑 白桃 · ¥6</b><span class="v">29.7%</span></div><div class="ab-tr"><i style="width:59%;background:linear-gradient(90deg,#1B4DFF,#5B82FF)"></i></div></div>
+                <div class="ab"><div class="ab-h"><b>🍇 青提 · ¥8</b><span class="v" style="color:var(--coral)">18.6%</span></div><div class="ab-tr"><i style="width:37%;background:linear-gradient(90deg,#FF6B3D,#FFA07D)"></i></div></div>
+              </div>
+              <div class="art-stats">
+                <div class="art-stat"><b class="disp" style="color:var(--cyan)">34.2%</b><small>首单转化</small></div>
+                <div class="art-stat"><b class="disp" style="color:var(--coral)">¥6</b><small>最优价</small></div>
+                <div class="art-stat"><b class="disp" style="color:var(--green)">±2.8%</b><small>置信区间</small></div>
+              </div>
+            </div>
+          </div>
+          <div class="followups">
+            <div class="fu">↳ 为什么青提赢了海盐荔枝？</div>
+            <div class="fu">↳ 如果加大小红书投放会怎样？</div>
+            <div class="fu">↳ 看实时模拟驾驶舱</div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <!-- composer -->
+    <div class="composer">
+      <div class="comp-inner">
+        <div class="comp-box">
+          <textarea rows="1" placeholder="继续追问，或描述一个新的模拟场景…  例如「把价格改成会员价 ¥4.9 再测一次」"></textarea>
+          <div class="comp-tools">
+            <div class="comp-tool" title="上传素材"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div>
+            <div class="comp-tool" title="选择人群"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="9" cy="7" r="3"/><path d="M2 20a7 7 0 0 1 14 0"/><path d="M16 3.2a3 3 0 0 1 0 5.8"/></svg></div>
+            <button class="comp-send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4Z"/></svg></button>
+          </div>
+        </div>
+        <div class="comp-hint">万象基于 <b>多智能体人群模拟引擎</b> · 结果为概率预测，建议结合业务判断使用</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== RIGHT: DATA PANEL ===== -->
+  <aside class="panel">
+    <div class="p-top"><svg viewBox="0 0 24 24" width="17" fill="none" stroke="#5BE8FB"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg><b>实时数据面板</b><span class="p-live"><i></i>LIVE</span></div>
+
+    <div class="p-sec">
+      <div class="p-sh"><span class="gd"></span>虚拟人群实时观测</div>
+      <div class="mini-stage">
+        <canvas id="miniSwarm"></canvas>
+        <div class="mini-cap">抽样渲染 <b>1,200</b> / 50,000</div>
+      </div>
+      <div class="p-legend">
+        <div><i style="background:#3DDC97"></i>倾向购买 38%</div>
+        <div><i style="background:#5BE8FB"></i>犹豫观望 29%</div>
+        <div><i style="background:#FF6B3D"></i>价格劝退 22%</div>
+        <div><i style="background:#7C5CFC"></i>被种草中 11%</div>
+      </div>
+    </div>
+
+    <div class="p-sec">
+      <div class="p-sh"><span class="gd"></span>模拟进度</div>
+      <div class="p-prog"><div class="pn"><b id="pNum">67%</b><span>时间步 9 / 14</span></div><div class="p-track"><i id="pBar" style="width:67%"></i></div></div>
+      <div style="margin-top:14px">
+        <div class="p-stat"><span>活跃虚拟人</span><b class="cy">50,000</b></div>
+        <div class="p-stat"><span>已产生决策</span><b id="pDec">3,418,902</b></div>
+        <div class="p-stat"><span>当前场景</span><b class="co">青提 · ¥6</b></div>
+        <div class="p-stat"><span>群体情绪</span><b class="gr">偏正面 +0.41</b></div>
+        <div class="p-stat"><span>校准保真度</span><b class="cy">91.3%</b></div>
+      </div>
+    </div>
+
+    <div class="p-sec">
+      <button class="p-btn primary" onclick="openCockpit('cockpit')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 3h6v6M21 3l-9 9M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg>展开全屏驾驶舱</button>
+      <button class="p-btn ghost"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg>导出 PDF 汇报</button>
+    </div>
+  </aside>
+</div>
+
+<!-- ===== FULLSCREEN COCKPIT OVERLAY ===== -->
+<div class="overlay" id="overlay">
+  <div class="ov-top">
+    <div class="ov-close" onclick="closeCockpit()"><svg viewBox="0 0 24 24" width="17" fill="none" stroke="currentColor"><path d="m15 18-6-6 6-6"/></svg>返回对话</div>
+    <div class="ov-title" id="ovTitle">模拟驾驶舱 · 数字孪生实时推演<small>SIMULATION COCKPIT</small></div>
+    <div style="flex:1"></div>
+    <span class="p-live"><i></i>实时模拟中</span>
+  </div>
+  <div class="ov-body">
+    <div class="glass">
+      <div class="gh"><span class="gd"></span>模拟进度</div>
+      <div class="p-prog"><div class="pn" style="margin-bottom:9px;display:flex;justify-content:space-between;align-items:baseline"><b style="font-family:'Sora';font-size:28px;font-weight:800;color:#5BE8FB" id="ovNum">67%</b><span style="font-size:11px;color:#7F8DA8">9 / 14</span></div><div class="p-track"><i id="ovBar" style="width:67%"></i></div></div>
+      <div style="margin-top:16px">
+        <div class="big-stat"><span>活跃虚拟人</span><b class="cy">50,000</b></div>
+        <div class="big-stat"><span>已产生决策</span><b id="ovDec">3,418,902</b></div>
+        <div class="big-stat"><span>当前场景</span><b class="co">青提 · ¥6</b></div>
+        <div class="big-stat"><span>群体情绪</span><b class="gr">+0.41</b></div>
+      </div>
+      <div class="gh" style="margin-top:24px"><span class="gd"></span>四象限分布</div>
+      <div class="p-legend">
+        <div><i style="background:#3DDC97"></i>倾向购买 38%</div>
+        <div><i style="background:#5BE8FB"></i>犹豫观望 29%</div>
+        <div><i style="background:#FF6B3D"></i>价格劝退 22%</div>
+        <div><i style="background:#7C5CFC"></i>被种草中 11%</div>
+      </div>
+    </div>
+    <div class="ov-stage"><canvas id="bigSwarm"></canvas></div>
+    <div class="glass">
+      <div class="gh"><span class="gd"></span>虚拟人活动流 · LIVE</div>
+      <div class="ov-feed" id="ovFeed"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== mini swarm (always running in right panel) =====
+function makeSwarm(canvasId,count){
+  const cv=document.getElementById(canvasId),ctx=cv.getContext('2d');
+  function size(){cv.width=cv.offsetWidth*devicePixelRatio;cv.height=cv.offsetHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}
+  size();window.addEventListener('resize',size);
+  const W=()=>cv.offsetWidth,H=()=>cv.offsetHeight;
+  const colors=['#3DDC97','#5BE8FB','#FF6B3D','#7C5CFC'];
+  const clusters=[{x:.30,y:.34},{x:.68,y:.30},{x:.38,y:.72},{x:.72,y:.68}];
+  const pts=[];
+  for(let i=0;i<count;i++){const c=Math.floor(Math.random()*4);pts.push({c,x:Math.random(),y:Math.random(),tx:clusters[c].x,ty:clusters[c].y,vx:0,vy:0,r:Math.random()*1.3+.6,ph:Math.random()*6.28})}
+  let t=0,raf;
+  function draw(){
+    ctx.clearRect(0,0,W(),H());
+    clusters.forEach((cl,i)=>{const g=ctx.createRadialGradient(cl.x*W(),cl.y*H(),0,cl.x*W(),cl.y*H(),W()*.18);g.addColorStop(0,colors[i]+'22');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.arc(cl.x*W(),cl.y*H(),W()*.18,0,6.28);ctx.fill()});
+    t+=.012;
+    for(const p of pts){
+      const dx=p.tx-p.x,dy=p.ty-p.y;
+      p.vx=(p.vx+dx*.004)*.92;p.vy=(p.vy+dy*.004)*.92;
+      p.x+=p.vx+Math.cos(t+p.ph)*.0006;p.y+=p.vy+Math.sin(t+p.ph)*.0006;
+      const px=p.x*W(),py=p.y*H();
+      ctx.globalAlpha=.85;ctx.fillStyle=colors[p.c];ctx.beginPath();ctx.arc(px,py,p.r,0,6.28);ctx.fill();
+      ctx.globalAlpha=.16;ctx.beginPath();ctx.arc(px,py,p.r*2.6,0,6.28);ctx.fill();ctx.globalAlpha=1;
+    }
+    if(Math.random()<.05){const p=pts[Math.floor(Math.random()*count)];const nc=Math.floor(Math.random()*4);p.c=nc;p.tx=clusters[nc].x+(Math.random()-.5)*.12;p.ty=clusters[nc].y+(Math.random()-.5)*.12}
+    raf=requestAnimationFrame(draw);
+  }
+  draw();
+  return ()=>cancelAnimationFrame(raf);
+}
+makeSwarm('miniSwarm',1200);
+
+// counters
+function tick(id){const el=document.getElementById(id);if(!el)return;setInterval(()=>{let v=parseInt(el.textContent.replace(/,/g,''))+Math.floor(Math.random()*400+120);el.textContent=v.toLocaleString()},900)}
+tick('pDec');
+// progress drift
+let prog=67;setInterval(()=>{if(prog<99){prog+=.25;['pBar','ovBar'].forEach(i=>{const e=document.getElementById(i);if(e)e.style.width=prog+'%'});['pNum','ovNum'].forEach(i=>{const e=document.getElementById(i);if(e)e.textContent=Math.floor(prog)+'%'})}},1300);
+
+// ===== fullscreen cockpit =====
+let bigStop=null,feedTimer=null;
+function openCockpit(mode){
+  const ov=document.getElementById('overlay');ov.classList.add('on');
+  document.getElementById('ovTitle').innerHTML = mode==='report'
+    ? '预测报告 · 全屏视图<small>FULL REPORT</small>'
+    : '模拟驾驶舱 · 数字孪生实时推演<small>SIMULATION COCKPIT</small>';
+  setTimeout(()=>{if(!bigStop)bigStop=makeSwarm('bigSwarm',2200)},60);
+  if(!feedTimer){
+    const ovDec=document.getElementById('ovDec');setInterval(()=>{let v=parseInt(ovDec.textContent.replace(/,/g,''))+Math.floor(Math.random()*400+120);ovDec.textContent=v.toLocaleString()},900);
+    const names=['小K·22·北京','阿哲·25·上海','Luna·19·深圳','大伟·28·广州','番茄·23·杭州','果果·21·成都','三三·26·武汉'];
+    const avc=['#1B4DFF','#FF6B3D','#7C5CFC','#00B8D4','#F5A623','#10B981'];
+    const evts=[n=>`<b>${n}</b> 刷到 <span class="act">青提</span> 小红书种草`,n=>`<b>${n}</b> 看到 ¥8，<span class="neg">觉得贵</span> 退出`,n=>`<b>${n}</b> 被"0糖0卡"打动，<span class="pos">加购</span>`,n=>`<b>${n}</b> 在白桃与青提间 <span class="act">犹豫</span>`,n=>`<b>${n}</b> 看完 KOL 视频意愿 <span class="pos">+0.4</span>`,n=>`<b>${n}</b> 完成 <span class="pos">首单</span> · ¥6 青提`];
+    const feed=document.getElementById('ovFeed');
+    function add(){const n=names[Math.floor(Math.random()*names.length)],c=avc[Math.floor(Math.random()*avc.length)];const el=document.createElement('div');el.className='ov-fi';el.innerHTML=`<div class="ov-fav" style="background:${c}22;color:${c}">${n[0]}</div><div class="ov-ft">${evts[Math.floor(Math.random()*evts.length)](n)}<small>${new Date().toLocaleTimeString('zh-CN')} · 时间步 9</small></div>`;feed.prepend(el);while(feed.children.length>9)feed.removeChild(feed.lastChild)}
+    for(let i=0;i<7;i++)add();feedTimer=setInterval(add,1300);
+  }
+}
+function closeCockpit(){document.getElementById('overlay').classList.remove('on')}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCockpit()});
+
+// followup chips → open cockpit demo
+document.querySelectorAll('.fu').forEach(f=>{if(f.textContent.includes('驾驶舱'))f.onclick=()=>openCockpit('cockpit')});
+</script>
+</body>
+</html>
