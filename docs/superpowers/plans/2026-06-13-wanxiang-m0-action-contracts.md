@@ -27,8 +27,8 @@
 - `wanxiang/actions/l3_dialects/xiaohongshu.yaml`
 - `wanxiang/actions/l3_dialects/douyin.yaml`
 - `wanxiang/actions/l3_dialects/wechat.yaml`
-- `test/wanxiang/__init__.py`
 - `test/wanxiang/conftest.py` — 把项目根加入 sys.path（沿用 `test/conftest.py` 模式）
+  - ⚠️ **不要**在 `test/wanxiang/` 下放 `__init__.py`：现有 oasis 测试目录均无 `__init__.py`；若加上，pytest 会把 `test/wanxiang` 当作顶层包 `wanxiang` 导入，**遮蔽真实源码包**导致 `ModuleNotFoundError: No module named 'wanxiang.actions'`。
 - `test/wanxiang/test_layers.py`
 - `test/wanxiang/test_l1_decision.py`
 - `test/wanxiang/test_l2_social.py`
@@ -71,7 +71,7 @@ from wanxiang.actions.dialect import PlatformDialect, DialectLoader
 __all__ = ["ActionLayer", "SimulationMode", "PlatformDialect", "DialectLoader"]
 ```
 
-`test/wanxiang/__init__.py`：空文件（内容为一行注释 `# wanxiang tests`）。
+（**不要**创建 `test/wanxiang/__init__.py` —— 见上方文件结构里的警告，它会遮蔽源码包。）
 
 - [ ] **Step 3: 创建测试 conftest（把项目根加入 sys.path）**
 
@@ -95,7 +95,7 @@ Expected: 打印 `0.0.1`。（注意：`wanxiang/actions/__init__.py` 此时 imp
 - [ ] **Step 5: Commit**
 
 ```bash
-git add wanxiang/__init__.py test/wanxiang/__init__.py test/wanxiang/conftest.py
+git add wanxiang/__init__.py test/wanxiang/conftest.py
 git commit -m "feat(wanxiang): scaffold package and test conftest"
 ```
 
