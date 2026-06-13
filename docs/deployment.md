@@ -51,6 +51,38 @@ curl -X POST http://localhost:8000/v1/simulate \
 | `WANXIANG_LOG_LEVEL` | `info` | `critical/error/warning/info/debug/trace` |
 | `WANXIANG_WORKERS` | `1` | uvicorn worker 进程数（>1 启用多 worker） |
 | `WANXIANG_DEEPSEEK_API_KEY` | _(空)_ | DeepSeek key；不填则客户端必须每次请求都传 `model.api_key` |
+| `WANXIANG_TENANTS_JSON` | _(空)_ | 多租户表 JSON 数组；不填则只内置一个 demo 租户（见下） |
+
+### 多租户与鉴权（M3-3）
+
+`/v1/*` 路径需要 `X-API-Key` 头。默认内置一个 demo 租户：
+
+| api_key | tenant_id | RPM 上限 |
+|---|---|---|
+| `demo-key` | `demo` | 60 |
+
+生产环境通过 `WANXIANG_TENANTS_JSON` 注入真实租户表（JSON 数组）：
+
+```bash
+WANXIANG_TENANTS_JSON='[
+  {"tenant_id":"acme","api_key":"sk-acme-2026","rpm_limit":120},
+  {"tenant_id":"beta","api_key":"sk-beta-xxxx","rpm_limit":60}
+]'
+```
+
+调用示例：
+
+```bash
+curl -X POST http://localhost:8000/v1/simulate \
+  -H "X-API-Key: demo-key" \
+  -H "Content-Type: application/json" \
+  -d '{...}'
+```
+
+超过 RPM 返回 `429` + `Retry-After` 头。响应头 `x-tenant-id` 为权威租户 ID
+（来自 API key），客户端自带的 `X-Tenant-Id` 在 `/v1/*` 路径会被忽略。
+
+`/healthz` 与 `/`（chat.html）不需要鉴权。
 
 ## 健康检查
 
@@ -65,6 +97,6 @@ curl -X POST http://localhost:8000/v1/simulate \
 ## 下一步（路线图）
 
 - M3-2 异步任务：长时间模拟改为 task_id + 轮询，避免 HTTP 超时
-- M3-3 多租户：API key 鉴权 + 配额（每租户 RPM 上限）
+- ~~M3-3 多租户：API key 鉴权 + 配额（每租户 RPM 上限）~~ ✓ 已完成
 - M3-4 chat.html 接入：前端从静态原型切到真实 API
 - 持久化：sqlite/postgres 存沙盒与历史

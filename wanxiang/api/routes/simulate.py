@@ -6,8 +6,10 @@ import time
 
 from fastapi import APIRouter, Depends, HTTPException
 
+from wanxiang.api.auth import require_tenant
 from wanxiang.api.deps import get_model_factory
 from wanxiang.api.schemas import SimulateRequest, SimulateResponse
+from wanxiang.api.tenancy import TenantInfo
 from wanxiang.datasources import load_distribution
 from wanxiang.personas import PersonaBuilder
 from wanxiang.reporting import build_report, render_markdown
@@ -21,6 +23,7 @@ router = APIRouter()
 async def simulate(
     req: SimulateRequest,
     model_factory=Depends(get_model_factory),
+    tenant: TenantInfo = Depends(require_tenant),
 ):
     started = time.monotonic()
 

@@ -10,15 +10,24 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from wanxiang.api.tenancy import TenantStore
+
 
 class TenantHeaderMiddleware(BaseHTTPMiddleware):
-    """把请求头 X-Tenant-Id 透传到响应；M3-1 只透传，M3-3 才做真隔离。"""
+    """把租户 ID 透传到响应头。
+
+    M3-3 起，request.state.tenant_id 由 require_tenant 鉴权依赖写入，是权威来源；
+    客户端自带的 X-Tenant-Id 不再被 /v1/* 信任。对于不需要鉴权的路径
+    （/healthz、/、/prototype/*）保留 M3-1 的 passthrough 行为以兼容旧客户端。
+    """
 
     async def dispatch(self, request: Request, call_next):
-        tenant = request.headers.get("x-tenant-id")
         response = await call_next(request)
-        if tenant:
-            response.headers["x-tenant-id"] = tenant
+        tenant_id = getattr(request.state, "tenant_id", None)
+        if tenant_id is not None:
+            response.headers["x-tenant-id"] = tenant_id
+        elif request.headers.get("x-tenant-id"):
+            response.headers["x-tenant-id"] = request.headers["x-tenant-id"]
         return response
 
 
@@ -26,6 +35,9 @@ def create_app() -> FastAPI:
     app = FastAPI(title="WANXIANG API",
                   description="万象人群模拟预测平台 API",
                   version="0.0.1")
+
+    # 启动时加载租户表（默认 demo 租户；生产由 WANXIANG_TENANTS_JSON 注入）
+    app.state.tenant_store = TenantStore.from_env()
 
     app.add_middleware(
         CORSMiddleware,

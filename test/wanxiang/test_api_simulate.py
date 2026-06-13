@@ -45,7 +45,10 @@ def client():
     # 把工厂自身替换：路由 Depends(get_model_factory) 收到的应是一个会被
     # 当成"工厂函数"调用的对象，调用结果是 ModelCall。
     app.dependency_overrides[get_model_factory] = lambda: _smart_stub_factory
-    return TestClient(app)
+    c = TestClient(app)
+    # M3-3: /v1/* 现在需要 X-API-Key；用默认 demo 租户跑测试
+    c.headers.update({"X-API-Key": "demo-key"})
+    return c
 
 
 def test_simulate_rate_returns_full_report(client):
