@@ -1,0 +1,14 @@
+# 抖音方言（弱关系，算法推荐为王）
+name: douyin
+display_name: 抖音
+relationship: weak
+feed_algorithm: recommend
+supported_actions:
+  publish:  {alias: 发视频}
+  repost:   {alias: 分享}
+  like:     {alias: 点赞}
+  comment:  {alias: 评论}
+  follow:   {alias: 关注}
+  collect:  {alias: 收藏}
+disabled_actions:
+  - dislike

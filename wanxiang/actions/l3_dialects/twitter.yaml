@@ -1,0 +1,14 @@
+# Twitter 方言（OASIS 参考实现，弱关系广播）
+name: twitter
+display_name: Twitter
+relationship: weak
+feed_algorithm: following
+supported_actions:
+  publish: {alias: tweet}
+  repost:  {alias: repost}
+  like:    {alias: like}
+  comment: {alias: reply}
+  follow:  {alias: follow}
+  collect: {alias: bookmark}
+  block:   {alias: mute}
+disabled_actions: []

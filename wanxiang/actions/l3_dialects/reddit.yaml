@@ -1,0 +1,13 @@
+# Reddit 方言（OASIS 参考实现，社区无关系，有踩）
+name: reddit
+display_name: Reddit
+relationship: none
+feed_algorithm: hotscore
+supported_actions:
+  publish: {alias: post}
+  repost:  {alias: crosspost}
+  like:    {alias: upvote}
+  dislike: {alias: downvote}
+  comment: {alias: comment}
+  collect: {alias: save}
+disabled_actions: []

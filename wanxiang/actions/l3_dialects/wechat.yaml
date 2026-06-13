@@ -1,0 +1,13 @@
+# 微信方言（强关系私域，仅好友可见；spec §5.4 第二批）
+name: wechat
+display_name: 微信
+relationship: strong
+feed_algorithm: following
+supported_actions:
+  publish:        {alias: 朋友圈, extra: {仅好友可见: true}}
+  repost:         {alias: 转发, extra: {仅好友可见: true}}
+  like:           {alias: 点赞}
+  comment:        {alias: 评论}
+  collect:        {alias: 收藏}
+  direct_message: {alias: 私信}
+disabled_actions: []
