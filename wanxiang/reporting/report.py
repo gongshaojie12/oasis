@@ -20,6 +20,17 @@ def _fidelity_label(score: float) -> str:
     return "低"
 
 
+def _fidelity_block(fidelity: FidelityReport) -> dict[str, Any]:
+    return {
+        "score": fidelity.fidelity_score,
+        "label": _fidelity_label(fidelity.fidelity_score),
+        "spearman": fidelity.spearman,
+        "rmse": fidelity.rmse,
+        "euclidean": fidelity.euclidean,
+        "notes": list(fidelity.notes),
+    }
+
+
 def build_report(
     *,
     scenario: ScenarioConfig,
@@ -29,6 +40,32 @@ def build_report(
 ) -> dict[str, Any]:
     if aggregate.n_total == 0:
         raise ValueError("cannot report on empty AggregateReport")
+
+    scenario_block = {
+        "material": scenario.material,
+        "question": scenario.question,
+        "decision_kind": scenario.decision_kind.value,
+        "options": list(scenario.options) if scenario.options else None,
+    }
+
+    # n_total > 0 但 n_valid == 0 的退化场景：仍然返回合法 dict，
+    # 标记 no_valid_samples=True，让前端/渲染器走兜底分支而非崩溃。
+    if aggregate.n_valid == 0:
+        out: dict[str, Any] = {
+            "scenario": scenario_block,
+            "persona_count": persona_count,
+            "n_total": aggregate.n_total,
+            "n_valid": aggregate.n_valid,
+            "error_count": aggregate.error_count,
+            "error_rate": aggregate.error_rate,
+            "recommendation": {},
+            "breakdown": [],
+            "fidelity": None,
+            "no_valid_samples": True,
+        }
+        if fidelity is not None:
+            out["fidelity"] = _fidelity_block(fidelity)
+        return out
 
     recommendation: dict[str, Any] = {}
     breakdown: list[dict[str, Any]] = []
@@ -48,13 +85,8 @@ def build_report(
         recommendation["confidence_band"] = (s.get("p25"), s.get("p75"))
         recommendation["range"] = (s.get("min"), s.get("max"))
 
-    out: dict[str, Any] = {
-        "scenario": {
-            "material": scenario.material,
-            "question": scenario.question,
-            "decision_kind": scenario.decision_kind.value,
-            "options": list(scenario.options) if scenario.options else None,
-        },
+    out = {
+        "scenario": scenario_block,
         "persona_count": persona_count,
         "n_total": aggregate.n_total,
         "n_valid": aggregate.n_valid,
@@ -65,14 +97,7 @@ def build_report(
         "fidelity": None,
     }
     if fidelity is not None:
-        out["fidelity"] = {
-            "score": fidelity.fidelity_score,
-            "label": _fidelity_label(fidelity.fidelity_score),
-            "spearman": fidelity.spearman,
-            "rmse": fidelity.rmse,
-            "euclidean": fidelity.euclidean,
-            "notes": list(fidelity.notes),
-        }
+        out["fidelity"] = _fidelity_block(fidelity)
     return out
 
 
@@ -88,6 +113,18 @@ def render_markdown(report: dict[str, Any]) -> str:
         f"**有效样本**：{report['n_valid']} / {report['n_total']}"
         f"（错误率 {report['error_rate']:.1%}，错误 {report['error_count']} 例）")
     lines.append("")
+
+    # 退化分支：所有样本失效，不要尝试格式化 None
+    if report.get("no_valid_samples"):
+        lines.append("## ⚠️ 无有效样本")
+        lines.append("")
+        lines.append(
+            "本次模拟未产生任何有效决策。可能原因：模型输出非合规 JSON、"
+            "全部样本触发解析错误、或场景配置不当。请检查模型连接与场景设置。")
+        lines.append("")
+        lines.append("---")
+        lines.append("*结果为概率预测，建议结合业务判断使用。*")
+        return "\n".join(lines)
 
     lines.append("## 推荐结论")
     rec = report["recommendation"]

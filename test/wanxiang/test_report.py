@@ -136,3 +136,62 @@ def test_render_markdown_without_fidelity_omits_section():
                        persona_count=1000)
     md = render_markdown(rep)
     assert "保真度" not in md
+
+
+# ---- zero-valid sample 容错（Bug 修复 TDD）----
+
+def _empty_rate_report():
+    return AggregateReport(kind=DecisionKind.RATE, n_total=10, n_valid=0,
+                            error_count=10, error_rate=1.0, stats={})
+
+
+def _empty_choose_report():
+    return AggregateReport(kind=DecisionKind.CHOOSE, n_total=10, n_valid=0,
+                            error_count=10, error_rate=1.0, stats={})
+
+
+def _scenario_rate_simple():
+    return ScenarioConfig(material="m", question="q",
+                          decision_kind=DecisionKind.RATE)
+
+
+def _scenario_choose_simple():
+    return ScenarioConfig(material="m", question="q",
+                          decision_kind=DecisionKind.CHOOSE,
+                          options=("A", "B"))
+
+
+def test_build_report_handles_zero_valid_samples_rate():
+    rep = build_report(scenario=_scenario_rate_simple(),
+                       aggregate=_empty_rate_report(),
+                       persona_count=10)
+    # 不抛；标记 no_valid
+    assert rep["n_valid"] == 0
+    assert rep.get("no_valid_samples") is True
+
+
+def test_build_report_handles_zero_valid_samples_choose():
+    rep = build_report(scenario=_scenario_choose_simple(),
+                       aggregate=_empty_choose_report(),
+                       persona_count=10)
+    assert rep["n_valid"] == 0
+    assert rep.get("no_valid_samples") is True
+
+
+def test_render_markdown_zero_valid_rate_does_not_crash():
+    rep = build_report(scenario=_scenario_rate_simple(),
+                       aggregate=_empty_rate_report(),
+                       persona_count=10)
+    md = render_markdown(rep)
+    assert isinstance(md, str)
+    # 应明确告知无有效样本
+    assert "无有效样本" in md or "0 / 10" in md
+
+
+def test_render_markdown_zero_valid_choose_does_not_crash():
+    rep = build_report(scenario=_scenario_choose_simple(),
+                       aggregate=_empty_choose_report(),
+                       persona_count=10)
+    md = render_markdown(rep)
+    assert isinstance(md, str)
+    assert "无有效样本" in md or "0 / 10" in md
