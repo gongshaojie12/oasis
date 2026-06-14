@@ -106,7 +106,8 @@ def test_moderate_blocks_unsafe_material():
     app.state.moderator = KeywordBlocklistModerator(["禁播"])
     app.dependency_overrides[get_model_factory] = lambda: _clean_factory
     c = TestClient(app)
-    c.headers.update({"X-API-Key": "demo-key"})
+    # i18n P1: ask for en so we can assert against English substrings
+    c.headers.update({"X-API-Key": "demo-key", "accept-language": "en"})
     body = _body(moderate=True)
     body["scenario"]["material"] = "这是禁播内容"
     r = c.post("/v1/simulate", json=body)

@@ -13,6 +13,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel
 
 from wanxiang.api.auth import require_tenant
+from wanxiang.api.i18n import get_request_locale, t
 from wanxiang.api.tasks import TaskStatus, TaskStore
 from wanxiang.api.tenancy import TenantInfo
 from wanxiang.reporting import render_pdf
@@ -35,34 +36,40 @@ def report_pdf(
     request: Request,
     tenant: TenantInfo = Depends(require_tenant),
 ):
+    loc = get_request_locale(request)
     md = body.markdown
     task_id = body.task_id
     if bool(md) == bool(task_id):
         raise HTTPException(
             status_code=400,
-            detail="provide exactly one of: markdown | task_id")
+            detail=t("report.bad_request_xor", locale=loc))
 
     if task_id:
         store = _store(request)
         task = store.get(tenant.tenant_id, task_id)
         if task is None:
-            raise HTTPException(status_code=404, detail="task not found")
+            raise HTTPException(
+                status_code=404,
+                detail=t("request.task_not_found", locale=loc))
         if task.status != TaskStatus.DONE:
             raise HTTPException(
                 status_code=409,
-                detail=f"task status is {task.status.value}, not done")
+                detail=t("report.task_not_done", locale=loc,
+                         status=task.status.value))
         result = task.result
         if result is None or not getattr(result, "markdown", None):
             raise HTTPException(
                 status_code=409,
-                detail="task has no markdown report")
+                detail=t("report.task_has_no_markdown", locale=loc))
         md = result.markdown
 
     try:
         pdf_bytes = render_pdf(md)
     except RuntimeError as e:
         # reportlab not installed in this deploy
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(
+            status_code=503,
+            detail=t("report.pdf_unavailable", locale=loc, reason=str(e)))
 
     return Response(
         content=pdf_bytes,

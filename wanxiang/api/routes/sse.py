@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 
 from wanxiang.api.auth import require_tenant
+from wanxiang.api.i18n import get_request_locale, t
 from wanxiang.api.tenancy import TenantInfo
 
 router = APIRouter()
@@ -26,7 +27,10 @@ async def simulation_events(
     task_store = request.app.state.task_store
     task = task_store.get(tenant.tenant_id, task_id)
     if task is None:
-        raise HTTPException(status_code=404, detail="task not found")
+        raise HTTPException(
+            status_code=404,
+            detail=t("request.task_not_found",
+                     locale=get_request_locale(request)))
 
     bus = request.app.state.event_bus
 

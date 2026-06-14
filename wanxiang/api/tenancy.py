@@ -20,6 +20,8 @@ class TenantInfo:
     # spec D3: 租户级默认模型配置；当请求未显式指定 model 时回落到此。
     # 形如 ``{"provider": "deepseek", "model": "deepseek-chat", ...}``。
     default_model_config: dict | None = None
+    # i18n P1: 租户级默认语言（请求未显式指定 locale 且 Accept-Language 未匹配时回落）。
+    default_locale: str = "zh"
 
     def __hash__(self) -> int:  # dict 不可哈希；用 api_key 即可保证唯一
         return hash(self.api_key)
@@ -125,6 +127,7 @@ class TenantStore:
                 rpm_limit=int(item.get("rpm_limit", 60)),
                 monthly_budget=int(item.get("monthly_budget", 0)),
                 default_model_config=item.get("default_model_config"),
+                default_locale=str(item.get("default_locale", "zh")),
             )
             for item in items
         ]

@@ -75,6 +75,10 @@ def create_app() -> FastAPI:
     # 路由的 response.status_code，再让 AccessLog/RequestId 包裹。
     from wanxiang.api.audit_middleware import AuditMiddleware
     app.add_middleware(AuditMiddleware)
+    # i18n P1：locale 中间件 — 在 auth 依赖之前已跑过，写 request.state.locale。
+    # 注册顺序：在 AccessLog 之前（更内层），这样 auth 依赖能读到它的输出。
+    from wanxiang.api.locale_middleware import RequestLocaleMiddleware
+    app.add_middleware(RequestLocaleMiddleware)
     # M3-7：先加 AccessLog（注册顺序 → AccessLog 在内层），
     # 再加 RequestId（在外层），这样 RequestIdMiddleware 先跑、
     # 把 request.state.request_id 准备好，AccessLog 读到。

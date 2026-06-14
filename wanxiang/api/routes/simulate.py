@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from wanxiang.api.auth import require_tenant
 from wanxiang.api.deps import get_model_factory
+from wanxiang.api.i18n import DEFAULT_LOCALE, get_request_locale, t
 from wanxiang.api.observability import metrics
 from wanxiang.api.schemas import SimulateRequest, SimulateResponse
 from wanxiang.api.tenancy import TenantInfo, resolve_effective_model
@@ -38,6 +39,7 @@ async def run_simulation_pipeline(
     model_factory,
     *,
     moderator=None,
+    locale: str = DEFAULT_LOCALE,
 ) -> SimulateResponse:
     """共享的端到端模拟流水线。
 
@@ -63,7 +65,8 @@ async def run_simulation_pipeline(
             cats = ",".join(verdict.categories) if verdict.categories else "unsafe"
             raise HTTPException(
                 status_code=400,
-                detail=f"material flagged by moderator: {cats}")
+                detail=t("sim.material_flagged_by_moderator",
+                         locale=locale, reason=cats))
 
     # 1. 分布加载（文件不存在 → FileNotFoundError）
     distribution = load_distribution(req.distribution_path)
@@ -99,7 +102,8 @@ async def run_simulation_pipeline(
         except FileNotFoundError:
             raise HTTPException(
                 status_code=400,
-                detail=f"unknown platform: {req.platform}")
+                detail=t("sim.unknown_platform", locale=locale,
+                         platform=req.platform))
 
     # 5. 跑模拟（按 rounds 选 decision_only 或 social）
     if req.rounds == 0:
@@ -199,9 +203,10 @@ async def simulate(
     if req.model is None:
         req = req.model_copy(update={
             "model": resolve_effective_model(None, tenant)})
+    loc = get_request_locale(request)
     try:
         resp = await run_simulation_pipeline(
-            req, model_factory, moderator=moderator)
+            req, model_factory, moderator=moderator, locale=loc)
         metrics.observe("simulate.elapsed_ms", resp.elapsed_ms,
                         {"kind": kind_label})
         # M3-10：成功的同步模拟也写计费事件
@@ -217,5 +222,7 @@ async def simulate(
                              "tenant_id": tenant.tenant_id})
         return resp
     except FileNotFoundError as e:
-        raise HTTPException(status_code=400,
-                            detail=f"distribution file not found: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=t("sim.distribution_file_not_found",
+                     locale=loc, path=str(e)))

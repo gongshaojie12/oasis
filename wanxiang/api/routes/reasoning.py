@@ -2,11 +2,12 @@
 """POST /v1/causal & /v1/counterfactual —— M6 收官端点。"""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from wanxiang.api.auth import require_tenant
 from wanxiang.api.deps import get_model_factory
+from wanxiang.api.i18n import DEFAULT_LOCALE, get_request_locale, t
 from wanxiang.api.schemas import SimulateRequest
 from wanxiang.api.tenancy import TenantInfo
 from wanxiang.datasources import load_distribution
@@ -44,12 +45,15 @@ class CounterfactualRequest(BaseModel):
     alternatives: list[AlternativePayload]
 
 
-def _build_scenario_and_personas(req: SimulateRequest):
+def _build_scenario_and_personas(req: SimulateRequest,
+                                   *, locale: str = DEFAULT_LOCALE):
     try:
         distribution = load_distribution(req.distribution_path)
     except FileNotFoundError as e:
-        raise HTTPException(status_code=400,
-                            detail=f"distribution file not found: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=t("sim.distribution_file_not_found",
+                     locale=locale, path=str(e)))
     pb = PersonaBuilder()
     personas = pb.sample(distribution, n=req.n, seed=req.seed)
     kind = DecisionKind(req.scenario.kind)
@@ -69,10 +73,12 @@ def _build_scenario_and_personas(req: SimulateRequest):
 @router.post("/causal")
 async def causal_endpoint(
     body: CausalRequest,
+    request: Request,
     model_factory=Depends(get_model_factory),
     tenant: TenantInfo = Depends(require_tenant),
 ):
-    scenario, personas = _build_scenario_and_personas(body.baseline)
+    scenario, personas = _build_scenario_and_personas(
+        body.baseline, locale=get_request_locale(request))
     model_call = model_factory(body.baseline.model)
     factors = [Factor(id=f.id, label=f.label, snippet=f.snippet)
                for f in body.factors]
@@ -93,10 +99,12 @@ async def causal_endpoint(
 @router.post("/counterfactual")
 async def counterfactual_endpoint(
     body: CounterfactualRequest,
+    request: Request,
     model_factory=Depends(get_model_factory),
     tenant: TenantInfo = Depends(require_tenant),
 ):
-    scenario, personas = _build_scenario_and_personas(body.baseline)
+    scenario, personas = _build_scenario_and_personas(
+        body.baseline, locale=get_request_locale(request))
     model_call = model_factory(body.baseline.model)
     alts = [Alternative(
         id=a.id, label=a.label,

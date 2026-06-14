@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from wanxiang.api.auth import require_tenant
 from wanxiang.api.deps import get_model_factory
+from wanxiang.api.i18n import get_request_locale, t
 from wanxiang.api.observability import metrics
 from wanxiang.api.routes.simulate import run_simulation_pipeline
 from wanxiang.api.schemas import (SimulateRequest, SweepCombo, SweepRequest,
@@ -149,10 +150,11 @@ async def sweep_simulations(
     combos_values = expand_grid(req.variable_grid)
     total = len(combos_values)
     if total > MAX_SWEEP_COMBOS:
+        loc = get_request_locale(request)
         raise HTTPException(
             status_code=400,
-            detail=(f"sweep would produce {total} combos, "
-                    f"exceeds limit of {MAX_SWEEP_COMBOS}"))
+            detail=t("sim.sweep_too_many_combos", locale=loc,
+                     n=total, limit=MAX_SWEEP_COMBOS))
 
     metrics.inc("simulate.requested",
                 {"kind": req.scenario.kind, "mode": "sweep"})
@@ -225,5 +227,8 @@ async def get_simulation_task(
     store = _store(request)
     task = store.get(tenant.tenant_id, task_id)
     if task is None:
-        raise HTTPException(status_code=404, detail="task not found")
+        raise HTTPException(
+            status_code=404,
+            detail=t("request.task_not_found",
+                     locale=get_request_locale(request)))
     return _serialize(task)

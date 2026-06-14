@@ -4,10 +4,11 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 
 from wanxiang.api.auth import require_tenant
+from wanxiang.api.i18n import get_request_locale, t
 from wanxiang.api.tenancy import TenantInfo
 from wanxiang.scenarios import (ScenarioTemplate, instantiate, list_templates,
                                   load_template)
@@ -45,27 +46,38 @@ def list_all(tenant: TenantInfo = Depends(require_tenant)) -> list[dict]:
 
 @router.get("/templates/{template_id}")
 def get_one(template_id: str,
+            request: Request,
             tenant: TenantInfo = Depends(require_tenant)) -> dict:
+    loc = get_request_locale(request)
     try:
-        t = load_template(template_id)
+        tpl = load_template(template_id)
     except FileNotFoundError:
-        raise HTTPException(status_code=404,
-                            detail=f"template not found: {template_id}")
-    return _full(t)
+        raise HTTPException(
+            status_code=404,
+            detail=t("request.template_not_found", locale=loc,
+                     template_id=template_id))
+    return _full(tpl)
 
 
 @router.post("/templates/{template_id}/instantiate")
 def post_instantiate(
     template_id: str,
     body: InstantiateRequest,
+    request: Request,
     tenant: TenantInfo = Depends(require_tenant),
 ) -> dict:
+    loc = get_request_locale(request)
     try:
-        t = load_template(template_id)
+        tpl = load_template(template_id)
     except FileNotFoundError:
-        raise HTTPException(status_code=404,
-                            detail=f"template not found: {template_id}")
+        raise HTTPException(
+            status_code=404,
+            detail=t("request.template_not_found", locale=loc,
+                     template_id=template_id))
     try:
-        return instantiate(t, body.values, options=body.options)
+        return instantiate(tpl, body.values, options=body.options)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(
+            status_code=400,
+            detail=t("request.template_instantiate_failed",
+                     locale=loc, error=str(e)))

@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from wanxiang.api.auth import require_tenant
+from wanxiang.api.i18n import get_request_locale, t
 from wanxiang.api.tenancy import TenantInfo
 
 router = APIRouter()
@@ -33,4 +34,7 @@ def usage_monthly(
     try:
         return _store(request).monthly(tenant.tenant_id, year, month)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(
+            status_code=400,
+            detail=t("request.invalid_usage_query",
+                     locale=get_request_locale(request), error=str(e)))

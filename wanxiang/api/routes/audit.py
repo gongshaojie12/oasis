@@ -8,6 +8,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from wanxiang.api.auth import require_tenant
+from wanxiang.api.i18n import get_request_locale, t
 from wanxiang.api.tenancy import TenantInfo
 
 router = APIRouter()
@@ -17,14 +18,15 @@ def _store(request: Request):
     return request.app.state.audit_store
 
 
-def _parse_iso(s: str | None) -> datetime | None:
+def _parse_iso(s: str | None, *, locale: str = "zh") -> datetime | None:
     if not s:
         return None
     try:
         d = datetime.fromisoformat(s)
         return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
     except ValueError:
-        raise HTTPException(400, f"invalid iso datetime: {s}")
+        raise HTTPException(
+            400, t("audit.invalid_iso_datetime", locale=locale, value=s))
 
 
 @router.get("/audit/events")
@@ -36,8 +38,10 @@ def audit_events(
     limit: int = Query(100, ge=1, le=1000),
     tenant: TenantInfo = Depends(require_tenant),
 ):
+    loc = get_request_locale(request)
     return _store(request).query(
         tenant.tenant_id,
-        start=_parse_iso(start), end=_parse_iso(end),
+        start=_parse_iso(start, locale=loc),
+        end=_parse_iso(end, locale=loc),
         action=action, limit=limit,
     )
