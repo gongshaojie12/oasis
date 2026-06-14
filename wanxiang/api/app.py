@@ -44,14 +44,9 @@ def create_app() -> FastAPI:
 
     # 启动时加载租户表（默认 demo 租户；生产由 WANXIANG_TENANTS_JSON 注入）
     app.state.tenant_store = TenantStore.from_env()
-    # M3-6：WANXIANG_TASKS_DB 设置则启用 SQLite 持久化，否则进程内内存 store。
-    db_path = os.environ.get("WANXIANG_TASKS_DB")
-    if db_path:
-        from wanxiang.api.task_store_sqlite import SqliteTaskStore
-        app.state.task_store = SqliteTaskStore(db_path)
-    else:
-        from wanxiang.api.tasks import TaskStore
-        app.state.task_store = TaskStore()
+    # M3-6 / M3-9：WANXIANG_TASKS_DB 接受 DSN（None/plain-path/sqlite:///.../postgresql://...）。
+    from wanxiang.api.tasks import make_task_store
+    app.state.task_store = make_task_store(os.environ.get("WANXIANG_TASKS_DB"))
 
     app.add_middleware(
         CORSMiddleware,

@@ -70,3 +70,50 @@ class TaskStore:
         # newest first
         items.sort(key=lambda t: t.created_at, reverse=True)
         return items[offset:offset + limit]
+
+
+from urllib.parse import urlparse
+
+
+def make_task_store(dsn: str | None, *, eager_init: bool = True):
+    """Dispatch by DSN scheme.
+
+    - None / "" → in-memory TaskStore
+    - sqlite:///abs.db, sqlite:rel.db, or plain path → SqliteTaskStore
+    - postgresql:// or postgres:// → PgTaskStore
+    - other schemes → ValueError
+
+    `eager_init` only matters for PG: when False, skip schema bootstrap
+    (used by tests that don't want to actually connect).
+    """
+    if not dsn:
+        return TaskStore()
+
+    parsed = urlparse(dsn)
+    scheme = (parsed.scheme or "").lower()
+
+    # Windows 裸路径 C:\foo\bar.db / C:/foo/bar.db 会被 urlparse 解析成
+    # scheme='c'；这是路径不是 DSN，按 backwards-compat 走 SQLite。
+    if len(scheme) == 1 and scheme.isalpha():
+        scheme = ""
+
+    if scheme in ("postgresql", "postgres"):
+        from wanxiang.api.task_store_pg import PgTaskStore
+        return PgTaskStore(dsn, eager_init=eager_init)
+
+    if scheme == "sqlite":
+        # sqlite:///abs → parsed.path = '/abs' (POSIX) or '/c:/...' (Windows)
+        # sqlite:rel  → parsed.path = '' and dsn[7:] is the rest
+        path = parsed.path or dsn[len("sqlite:"):]
+        # 处理 Windows 形态 /c:/foo → c:/foo
+        if path.startswith("/") and len(path) > 2 and path[2] == ":":
+            path = path[1:]
+        from wanxiang.api.task_store_sqlite import SqliteTaskStore
+        return SqliteTaskStore(path)
+
+    if not scheme:
+        # 裸路径：backwards-compat with WANXIANG_TASKS_DB=/data/x.db
+        from wanxiang.api.task_store_sqlite import SqliteTaskStore
+        return SqliteTaskStore(dsn)
+
+    raise ValueError(f"unsupported task store DSN scheme: {scheme!r}")

@@ -103,30 +103,40 @@ curl http://localhost:8000/v1/simulations/<task_id> \
 
 任务存储为进程内（重启丢失）；生产规模化需替换为 Redis-backed store。
 
-### 持久化（M3-6）
+### 持久化（M3-6 / M3-9 SQLite ↔ PostgreSQL 自由切换）
 
-设置 `WANXIANG_TASKS_DB=/data/wanxiang.db`（任何宿主可写路径）启用 SQLite 持久化：
+`WANXIANG_TASKS_DB` 接受 DSN，按 scheme 自动派发：
 
-- 任务/结果跨重启保留
-- 同一 tenant 可拉历史：`GET /v1/simulations?limit=20&offset=0`
-- 不设此环境变量时回退为内存 store（开发/演示用）
+| DSN | 后端 | 用途 |
+|---|---|---|
+| _(未设)_ | 内存 | 开发 / 演示 |
+| `/data/wanxiang.db` 或 `sqlite:///data/wanxiang.db` | SQLite | 单机生产、小规模 (<10 RPS) |
+| `postgresql://user:pass@host:port/dbname` | PostgreSQL | 多机 / 大规模 / 多副本 |
 
-Docker 用户在 `docker-compose.yml` 增加：
+切换零代码改动：换环境变量即可。表结构两边一致（`simulation_tasks` + tenant 索引），所有日期/JSON 字段均 TEXT 存储，便于跨库迁移。
 
+Docker compose（Postgres 版）：
 ```yaml
 services:
   api:
     environment:
-      - WANXIANG_TASKS_DB=/data/wanxiang.db
+      - WANXIANG_TASKS_DB=postgresql://wanxiang:secret@db:5432/wanxiang
+    depends_on: [db]
+  db:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=wanxiang
+      - POSTGRES_PASSWORD=secret
+      - POSTGRES_DB=wanxiang
     volumes:
-      - ./data:/data
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
 ```
 
 历史列表 API：
-
 ```bash
-curl http://localhost:8000/v1/simulations?limit=20 \
-  -H "X-API-Key: demo-key"
+curl http://localhost:8000/v1/simulations?limit=20 -H "X-API-Key: demo-key"
 ```
 
 ### 可观测性（M3-7）
