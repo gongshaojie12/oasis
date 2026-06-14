@@ -75,7 +75,7 @@ async def run_simulation_pipeline(
     pb = PersonaBuilder()
     personas = pb.sample(distribution, n=req.n, seed=req.seed)
 
-    # 3. 场景（含 M4 media_pool）
+    # 3. 场景（含 M4 media_pool；P4: locale 控制 LLM prompt 语言）
     kind = DecisionKind(req.scenario.kind)
     scenario = ScenarioConfig(
         material=req.scenario.material,
@@ -84,6 +84,7 @@ async def run_simulation_pipeline(
         options=tuple(req.scenario.options) if req.scenario.options else None,
         media_pool=_media_pool_from_payload(req.scenario),
         feed_k=req.scenario.feed_k,
+        locale=locale,
     )
 
     # 4. 模型

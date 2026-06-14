@@ -125,14 +125,22 @@ def select_feed(persona, pool: Sequence[MediaItem], k: int,
     return (ranker or KeywordRanker()).rank(persona, pool, k)
 
 
-def render_feed_prompt(feed: Sequence[MediaItem]) -> str:
+_FEED_HEADING = {
+    "zh": "【你最近在信息流看到的内容】",
+    "en": "[What you recently saw in your feed]",
+}
+
+
+def render_feed_prompt(feed: Sequence[MediaItem], locale: str = "zh") -> str:
     """把已选 feed 渲染为 system prompt 前缀文本。
 
     空 feed → 空字符串（调用方据此跳过注入，保证向后兼容）。
+    P4: locale 决定标题语言（zh 默认）。
     """
     if not feed:
         return ""
-    lines: list[str] = ["【你最近在信息流看到的内容】"]
+    heading = _FEED_HEADING.get(locale) or _FEED_HEADING["zh"]
+    lines: list[str] = [heading]
     for i, item in enumerate(feed, 1):
         channel_part = f"[{item.channel}] " if item.channel else ""
         lines.append(f"{i}. {channel_part}{item.title}")

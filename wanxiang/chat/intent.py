@@ -24,7 +24,7 @@ _CODE_FENCE_RE = re.compile(r"^```(?:json)?\s*|\s*```$",
                             re.IGNORECASE | re.MULTILINE)
 
 
-_SYSTEM_PROMPT = """你是「万象 WANXIANG」的 AI 首席模拟官。
+_SYSTEM_PROMPT_ZH = """你是「万象 WANXIANG」的 AI 首席模拟官。
 你的工作是把用户的自然语言研究需求映射为结构化模拟参数。
 
 支持的决策类型 (kind)：
@@ -53,6 +53,40 @@ _SYSTEM_PROMPT = """你是「万象 WANXIANG」的 AI 首席模拟官。
 不要在 JSON 之外输出任何文字、不要加 markdown 围栏。
 """
 
+_SYSTEM_PROMPT_EN = """You are the AI Chief Simulation Officer of WANXIANG.
+Your job is to map the user's natural-language research request into
+structured simulation parameters.
+
+Supported decision kinds:
+- rate: 0-10 rating (purchase intent, satisfaction, etc.)
+- choose: pick one of N options (flavor/packaging/plan comparison)
+- click_probability: 0-1 click probability
+- sentiment: -1 to +1 sentiment polarity
+- willingness_to_pay: willingness-to-pay price
+
+Reply with strict JSON only, in the schema:
+{
+  "intent": "simulate" | "unknown",
+  "fields": {
+    "material": <ad/creative copy text>,
+    "question": <the question to ask agents>,
+    "kind": <one of the five kinds above>,
+    "options": [<candidate options for choose>] or null,
+    "n": <number of agents, integer, default 50>,
+    "rounds": <number of social rounds, integer, default 0>
+  },
+  "missing": [<field names the user still needs to provide>],
+  "explanation": <one short English sentence>,
+  "confidence": <float 0-1>
+}
+If the user's intent is not about simulating a population prediction,
+set intent to "unknown".
+Do not output any text outside the JSON. Do not add markdown fences.
+"""
+
+# Backward-compat alias for any internal/test code still importing it.
+_SYSTEM_PROMPT = _SYSTEM_PROMPT_ZH
+
 
 # wanxiang/chat/intent.py -> 父目录 wanxiang/chat -> 再往上 wanxiang/
 _BUNDLED_DIST = os.path.join(
@@ -76,11 +110,14 @@ async def parse_intent(
     user_text: str,
     model_call: ModelCall,
     default_distribution_path: str | None = None,
+    *,
+    locale: str = "zh",
 ) -> IntentParseResult:
     distro = default_distribution_path or _BUNDLED_DIST
+    sys_prompt = _SYSTEM_PROMPT_EN if locale == "en" else _SYSTEM_PROMPT_ZH
 
     messages = [
-        {"role": "system", "content": _SYSTEM_PROMPT},
+        {"role": "system", "content": sys_prompt},
         {"role": "user", "content": user_text},
     ]
     try:

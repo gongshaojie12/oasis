@@ -49,10 +49,12 @@ class DecisionRunner:
         model_call: ModelCall,
     ) -> DecisionResult:
         # M4: 动态信息流前置注入（feed → persona → scenario）
-        system_text = persona.render_system_prompt()
+        # P4 i18n: persona prompt + feed heading 遵循 scenario.locale
+        locale = getattr(scenario, "locale", "zh")
+        system_text = persona.render_system_prompt(locale=locale)
         if scenario.media_pool and scenario.feed_k > 0:
             feed = select_feed(persona, scenario.media_pool, scenario.feed_k)
-            feed_prefix = render_feed_prompt(feed)
+            feed_prefix = render_feed_prompt(feed, locale=locale)
             if feed_prefix:
                 system_text = feed_prefix + "\n" + system_text
         messages = [
