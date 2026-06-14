@@ -178,3 +178,150 @@ curl -X POST http://localhost:8000/v1/templates/pricing_van_westendorp/instantia
 
 完整设计与未来场景路线图见 `docs/superpowers/specs/2026-06-13-wanxiang-design.md` §M3/§M4 章节。
 
+---
+
+## 运营成本与服务器扩容
+
+### 测算前提
+
+万象的服务端**只做两件事**：(1) 渲染 prompt → 发 HTTP 给 DeepSeek，(2) 收响应 → 写库。LLM 推理在 DeepSeek 远端，本地不吃 GPU。所以 LLM 是**主要变动成本**，服务器是**次要固定成本**。
+
+实测关键数据（基于实际 228 维 persona 渲染 + scenario 注入）：
+
+| 项目 | 值 |
+|---|---|
+| Persona system prompt | ~2,900 tokens（中文 228 维特质渲染） |
+| Scenario user message | ~300 tokens |
+| LLM 回复（JSON）| ~200 tokens |
+| **单次 LLM 调用 input** | **~3,200 tokens** |
+| **单次 LLM 调用 output** | **~200 tokens** |
+
+### DeepSeek 价格（V4 系列，单位 RMB / 1M tokens）
+
+| 模型 | 输入(缓存命中) | 输入(未命中) | 输出 |
+|---|---|---|---|
+| **deepseek-v4-flash** ⭐推荐 | ¥0.02 | ¥1 | ¥2 |
+| deepseek-v4-pro（高保真） | ¥0.025 | ¥3 | ¥6 |
+
+### 三档模式每 agent LLM 调用次数
+
+| 模式 | 单 agent 调用次数 | 说明 |
+|---|---:|---|
+| **decision_only**（L1）| 1 次 | 看完 material 直接决策 |
+| **social**（L1+L2, rounds=3）| 5 次 | 1 baseline + 3 social + 1 final（甲方案） |
+| **platform**（L1+L2+L3, rounds=3）| 5 次 + dialect 增量 | 每次 input +200 tok 方言上下文 |
+
+### Prompt Caching 的关键作用
+
+- **同一 agent 多次调用**（social/platform 模式）：第 2-5 次的 2,900 token persona 部分**命中缓存**（¥1 → ¥0.02，省 50 倍）
+- **跨 agent 不命中**：每个 agent persona 不同，无法跨 agent 缓存
+- `decision_only` 单次调用 → 缓存无收益
+
+### 成本估算（deepseek-v4-flash，含 caching 优化）
+
+| Agent 数 | decision_only | social(3 轮) | platform(3 轮) |
+|---:|---:|---:|---:|
+| 1,000 | ¥3.6 | ¥6.6 | ¥7.3 |
+| 5,000 | ¥18 | ¥33 | ¥36.5 |
+| 10,000 | ¥36 | ¥66 | ¥73 |
+| **100,000** | **¥360** | **¥660** | **¥730** |
+| 200,000 | ¥720 | ¥1,320 | ¥1,460 |
+| 500,000 | ¥1,800 | ¥3,300 | ¥3,650 |
+| **1,000,000** | **¥3,600** | **¥6,600** | **¥7,300** |
+
+### V4-Pro 高保真对比
+
+| Agent 数 | pro decision_only | pro social(3 轮) | pro platform(3 轮) |
+|---:|---:|---:|---:|
+| 1,000 | ¥10.8 | ¥19.8 | ¥21.9 |
+| 100,000 | ¥1,080 | ¥1,980 | ¥2,190 |
+| 1,000,000 | ¥10,800 | ¥19,800 | ¥21,900 |
+
+### 生产环境保守版（含重试 + 输出长尾）
+
+实际跑模拟时**加 ×1.1 重试 + ×1.2 输出长尾系数**（≈ ×1.32 修正）：
+
+| Agent 数 | flash 保守 social | pro 保守 social |
+|---:|---:|---:|
+| 1,000 | ¥9 | ¥27 |
+| 10,000 | ¥90 | ¥270 |
+| 100,000 | ¥900 | ¥2,700 |
+| 1,000,000 | ¥9,000 | ¥27,000 |
+
+> 额外项：`Sweep` 模式 ×N (变量组合数)；`Causal/Counterfactual` 各 ×3-5；`LLM 报告解读` +1 次调用/sim（可忽略）。
+
+### 商业定价反推（spec D9 三价位档）
+
+| 档位 | 100K agent 成本 (flash) | 建议定价 | 倍数 | 毛利率 |
+|---|---:|---:|---:|---:|
+| decision_only（基础）| ¥360 | ¥2,000-5,000 | 5-15× | ≥80% |
+| social（专业）| ¥660 | ¥8,000-15,000 | 12-25× | ≥90% |
+| platform（企业）| ¥730 | ¥20,000-50,000 | 30-70× | ≥95% |
+
+---
+
+## 服务器配置 — 不一定要随 agent 数升
+
+### 资源消耗模型
+
+| 维度 | 单 agent | 100 万 agent |
+|---|---|---|
+| 内存（in-flight）| ~17 KB | **不是 17 GB** — `asyncio.Semaphore` 并发上限把任意时刻在飞数控在 ~100 → **稳定 < 100 MB** |
+| CPU | 几 µs prompt 渲染 + JSON 解析 | 1 核撑几千 RPS（IO-bound, 瓶颈在 DeepSeek 不在你） |
+| 出网带宽 | ~6 KB 往返 | 100 万 × 6 KB ≈ 6 GB / sim 总流量 |
+| SQLite 写入 | ~1 KB trace | 1 GB / sim — SQLite ~1K/s 紧；PG ~10K/s 轻松 |
+
+**核心观察**：内存因 asyncio 并发上限而**与 N 解耦**；CPU 因任务 IO-bound 而**几乎不长**。
+
+### 真正的瓶颈不在服务器，在 DeepSeek RPM
+
+| Agent 数 | flash (2500 RPM) 最短墙钟 | 服务器是否需要升级 |
+|---:|---:|---|
+| 1,000 | ~25 秒 | ❌ 不需要 |
+| 5,000 | ~2 分钟 | ❌ |
+| 10,000 | ~4 分钟 | ❌ |
+| 100,000 | ~40 分钟 | ❌ |
+| 200,000 | ~80 分钟 | 🟡 SQLite 写吞吐开始紧 |
+| 500,000 | ~3.3 小时 | 🟡 建议切 PG |
+| 1,000,000 | ~6.7 小时 | 🟡 切 PG + 分 batch |
+
+> 你买更大服务器**不能让单次 100 万 agent 模拟跑得更快** — DeepSeek API 才是天花板。要快只能去申请企业版提升 RPM。
+
+### 推荐配置阶梯
+
+| 阶段 | 触发条件 | 服务器 | 数据库 | 队列 | 月成本 |
+|---|---|---|---|---|---:|
+| **Stage 0 MVP** | ≤ 100K agent/sim，≤ 5 并发 sim | 2C4G（云轻量）| SQLite 单文件 | 进程内 asyncio | **~¥100** |
+| **Stage 1 付费期** | ≤ 500K agent/sim，10-30 并发 sim | 4C8G | SQLite 或托管 PG | uvicorn workers=2 | ~¥300-500 |
+| **Stage 2 规模化** | ≥ 500K agent/sim 或 50+ 并发 sim | 8C16G | **PostgreSQL** RDS | **Redis + Celery** | ~¥1,500-3,000 |
+| **Stage 3 平台化** | > 100 万 agent/sim 常态化 | 多机 + 负载均衡 | PG 主从 | Redis Cluster + Celery 多 worker | ~¥5,000+ |
+
+### 真正"必须升配"的 3 个监控信号
+
+不是看 agent 数，看这 3 个指标：
+
+1. **uvicorn worker CPU 持续 > 70%** → 加 workers 或升核数
+2. **SQLite WAL 文件 > 200 MB / 写 latency > 100 ms** → 切 PG
+3. **asyncio.Semaphore wait time > LLM call time** → 升并发 cap + 升带宽 / OS fd limit
+
+### 不需要升配的常见误区
+
+- 单次 1 万 agent：默认 2C4G + DeepSeek 完全够，4 分钟出结果
+- 100 万 agent 但**一周跑一次**：MVP 配置 + 凌晨长跑即可
+- 5 万 agent × 30 并发租户：4C8G + PG 够，但要在 `wanxiang/api/tenancy.py` 加**租户级 RPM 配额**避免相互饿死
+
+### 扩容前优先做的 6 件事
+
+按 ROI 从高到低：
+
+1. **批分片**：单 sim 100 万 → 拆 100 个 batch × 10K，串行 / 小并发跑，平滑 RPM 占用 + 内存可控
+2. **租户级 DeepSeek RPM 配额**：避免单租户大 sim 把全平台 RPM 用完
+3. **DeepSeek 企业账户**：升 RPM 限额（2500 → 自定义）比升服务器有效
+4. **Prompt 前缀优化**：把 scenario 放到 system prefix 前面，跨 agent 共享前缀缓存（输入价省 50×）
+5. **Redis + Celery**（spec §7.2 阶段 1）：进程队列搬到 Redis，多 worker 并行
+6. 最后才是**升服务器规格**
+
+### 一句话总结
+
+> 对万象这套架构，**服务器扩容的重要性远低于 DeepSeek API 配额 + 任务调度软件层优化**。Stage 0 MVP（2C4G + SQLite + ¥100/月）就能撑到 10 万 agent/sim 级别；超过 50 万再切 4-8C/16GB + PG + Celery。"规模化"主要是**把任务调度做扎实**（分片、配额、重试、监控），而不是堆机器。
+
