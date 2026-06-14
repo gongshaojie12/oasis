@@ -17,7 +17,7 @@ from wanxiang.api.schemas import (SimulateRequest, SweepCombo, SweepRequest,
 from wanxiang.api.sweep import (MAX_SWEEP_COMBOS, apply_combo, combo_id,
                                  expand_grid)
 from wanxiang.api.tasks import SimulationTask, TaskStatus, TaskStore
-from wanxiang.api.tenancy import TenantInfo
+from wanxiang.api.tenancy import TenantInfo, resolve_effective_model
 
 router = APIRouter()
 
@@ -115,6 +115,10 @@ async def create_async_simulation(
     model_factory=Depends(get_model_factory),
     tenant: TenantInfo = Depends(require_tenant),
 ):
+    # spec D3：请求未指定 model 时回落到 tenant 默认 → stub
+    if req.model is None:
+        req = req.model_copy(update={
+            "model": resolve_effective_model(None, tenant)})
     store = _store(request)
     task = store.create(tenant.tenant_id, req)
     metrics.inc("simulate.requested",
@@ -153,11 +157,13 @@ async def sweep_simulations(
     metrics.inc("simulate.requested",
                 {"kind": req.scenario.kind, "mode": "sweep"})
 
+    # spec D3：sweep 同样支持租户默认模型回落
+    effective_model = resolve_effective_model(req.model, tenant)
     # 把 sweep 字段折成一个 base SimulateRequest，供每个 combo 复用
     base = SimulateRequest(
         distribution_path=req.distribution_path, n=req.n, seed=req.seed,
         scenario=req.scenario, rounds=req.rounds, platform=req.platform,
-        model=req.model,
+        model=effective_model,
     )
 
     usage_store = getattr(request.app.state, "usage_store", None)

@@ -10,7 +10,7 @@ from wanxiang.api.auth import require_tenant
 from wanxiang.api.deps import get_model_factory
 from wanxiang.api.observability import metrics
 from wanxiang.api.schemas import SimulateRequest, SimulateResponse
-from wanxiang.api.tenancy import TenantInfo
+from wanxiang.api.tenancy import TenantInfo, resolve_effective_model
 from wanxiang.datasources import load_distribution
 from wanxiang.media.environment import MediaItem
 from wanxiang.personas import PersonaBuilder
@@ -194,6 +194,11 @@ async def simulate(
     metrics.inc("simulate.requested",
                 {"kind": kind_label, "mode": "sync"})
     moderator = getattr(request.app.state, "moderator", None)
+    # spec D3：请求未指定 model 时，回落到 tenant.default_model_config，
+    # 再回落到 stub。pipeline 不感知 tenant，所以在这里把 req 改写一遍。
+    if req.model is None:
+        req = req.model_copy(update={
+            "model": resolve_effective_model(None, tenant)})
     try:
         resp = await run_simulation_pipeline(
             req, model_factory, moderator=moderator)

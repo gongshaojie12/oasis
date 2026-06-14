@@ -63,7 +63,8 @@ class SimulateRequest(BaseModel):
     scenario: ScenarioPayload
     rounds: int = Field(0, ge=0, le=10)
     concurrency: int = Field(16, ge=1, le=128)
-    model: ModelConfig
+    # spec D3: 请求未传 model 时回落到租户 default_model_config，再回落到 stub。
+    model: ModelConfig | None = None
     # L3 平台方言名（如 "wechat" / "douyin"），可选；仅在 rounds>0 生效
     platform: str | None = None
     # M3-12 合规策略（可选；不传 → 行为不变）
@@ -95,7 +96,8 @@ class SweepRequest(BaseModel):
     scenario: ScenarioPayload       # material/question 可含 {var} 占位符
     rounds: int = Field(0, ge=0, le=10)
     platform: str | None = None
-    model: ModelConfig
+    # spec D3: 同 SimulateRequest，未传时回落 tenant default → stub。
+    model: ModelConfig | None = None
     variable_grid: dict[str, list[str]] = Field(
         ..., description="变量轴 → 候选值列表；笛卡尔积展开"
     )

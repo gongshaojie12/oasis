@@ -17,6 +17,35 @@ class TenantInfo:
     api_key: str
     rpm_limit: int = 60
     monthly_budget: int = 0  # 0 = unlimited (informational only)
+    # spec D3: 租户级默认模型配置；当请求未显式指定 model 时回落到此。
+    # 形如 ``{"provider": "deepseek", "model": "deepseek-chat", ...}``。
+    default_model_config: dict | None = None
+
+    def __hash__(self) -> int:  # dict 不可哈希；用 api_key 即可保证唯一
+        return hash(self.api_key)
+
+
+def resolve_effective_model(req_model, tenant: "TenantInfo | None"):
+    """spec D3 模型解析策略（请求 > 租户默认 > stub 回落）。
+
+    Args:
+        req_model: 请求里携带的 ModelConfig（pydantic 模型）或 None。
+        tenant: 当前请求归属的 TenantInfo；None 表示无租户上下文。
+
+    Returns:
+        一个非空的 ModelConfig 实例。
+
+    优先级：
+        1. 请求显式带了 ``model`` → 直接用（请求 wins）。
+        2. 否则且 tenant.default_model_config 不空 → 用之构造 ModelConfig。
+        3. 否则 → 回落 ``ModelConfig(provider="stub")``。
+    """
+    from wanxiang.api.schemas import ModelConfig  # 局部导入避免循环
+    if req_model is not None:
+        return req_model
+    if tenant is not None and tenant.default_model_config:
+        return ModelConfig(**tenant.default_model_config)
+    return ModelConfig(provider="stub")
 
 
 class TokenBucket:
@@ -95,6 +124,7 @@ class TenantStore:
                 api_key=item["api_key"],
                 rpm_limit=int(item.get("rpm_limit", 60)),
                 monthly_budget=int(item.get("monthly_budget", 0)),
+                default_model_config=item.get("default_model_config"),
             )
             for item in items
         ]
