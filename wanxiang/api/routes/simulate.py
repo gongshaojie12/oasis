@@ -52,13 +52,29 @@ async def run_simulation_pipeline(
     # 4. 模型
     model_call = model_factory(req.model)
 
+    # 4b. L3 平台方言（可选，仅 rounds>0 生效；未知 platform → 400）
+    dialect = None
+    if req.platform and req.rounds > 0:
+        from wanxiang.actions.dialect import DialectLoader
+        import os as _os
+        dialect_dir = _os.path.join(
+            _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))),
+            "..", "actions", "l3_dialects")
+        try:
+            dialect = DialectLoader(dialect_dir).load(req.platform)
+        except FileNotFoundError:
+            raise HTTPException(
+                status_code=400,
+                detail=f"unknown platform: {req.platform}")
+
     # 5. 跑模拟（按 rounds 选 decision_only 或 social）
     if req.rounds == 0:
         runner = BatchRunner(decision_concurrency=req.concurrency)
         results = await runner.run_all(personas, scenario, model_call)
     else:
         social = SocialRoundsRunner(
-            rounds=req.rounds, decision_concurrency=req.concurrency)
+            rounds=req.rounds, decision_concurrency=req.concurrency,
+            dialect=dialect)
         results, _hist = await social.run(personas, scenario, model_call)
 
     # 6. 聚合 + 报告

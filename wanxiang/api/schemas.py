@@ -43,6 +43,8 @@ class SimulateRequest(BaseModel):
     rounds: int = Field(0, ge=0, le=10)
     concurrency: int = Field(16, ge=1, le=128)
     model: ModelConfig
+    # L3 平台方言名（如 "wechat" / "douyin"），可选；仅在 rounds>0 生效
+    platform: str | None = None
 
 
 class SimulateResponse(BaseModel):

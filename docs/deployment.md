@@ -209,6 +209,28 @@ curl -X POST http://localhost:8000/v1/chat/parse \
 
 若 `missing` 非空，UI 应向用户补问。chat.html 集成下一步：把按钮换为输入框，让 LLM 走这条管线。
 
+### L3 平台方言激活（M0-B-3 收官）
+
+`SimulateRequest.platform` 字段（可选）让社交模式按目标平台调整 peer signal 措辞：
+
+| platform | relationship | 措辞示例 |
+|---|---|---|
+| `wechat` | strong | "你的好友圈里 X 占 60%（强关系传播）" |
+| `reddit` | none | "社区热门 X，份额 60%" |
+| `twitter` | weak/following | "关注的人里 X 占 60%" |
+| `xiaohongshu` / `douyin` | weak/recommend | "算法推荐里 X 最受关注，份额 60%" |
+
+仅在 `rounds > 0`（社交模式）生效；decision_only 模式忽略 platform。
+
+```bash
+curl -X POST http://localhost:8000/v1/simulate \
+  -H "X-API-Key: demo-key" -H "Content-Type: application/json" \
+  -d '{"distribution_path":"...","n":100,"scenario":{...},
+       "rounds":2, "platform":"wechat", "model":{"provider":"stub"}}'
+```
+
+未知 platform 返 400。
+
 ## 下一步（路线图）
 
 - ~~M3-2 异步任务：长时间模拟改为 task_id + 轮询，避免 HTTP 超时~~ ✓ 已完成
