@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from wanxiang.api.auth import require_tenant
 from wanxiang.api.deps import get_model_factory
@@ -95,6 +95,7 @@ async def run_simulation_pipeline(
 @router.post("/simulate", response_model=SimulateResponse)
 async def simulate(
     req: SimulateRequest,
+    request: Request,
     model_factory=Depends(get_model_factory),
     tenant: TenantInfo = Depends(require_tenant),
 ):
@@ -105,6 +106,17 @@ async def simulate(
         resp = await run_simulation_pipeline(req, model_factory)
         metrics.observe("simulate.elapsed_ms", resp.elapsed_ms,
                         {"kind": kind_label})
+        # M3-10：成功的同步模拟也写计费事件
+        from wanxiang.api.usage import build_usage_event
+        usage_store = getattr(request.app.state, "usage_store", None)
+        if usage_store is not None:
+            evt = build_usage_event(
+                tenant_id=tenant.tenant_id, request=req,
+                response_kind=resp.decision_kind, status="done")
+            usage_store.record(evt)
+            metrics.observe("usage.cost_units", evt.cost_units,
+                            {"mode": evt.mode,
+                             "tenant_id": tenant.tenant_id})
         return resp
     except FileNotFoundError as e:
         raise HTTPException(status_code=400,

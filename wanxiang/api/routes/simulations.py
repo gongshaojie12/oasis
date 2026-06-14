@@ -36,9 +36,12 @@ def _serialize(task: SimulationTask) -> dict:
 
 
 async def _run_task(store: TaskStore, task_id: str, req: SimulateRequest,
-                    model_factory) -> None:
+                    model_factory, usage_store=None,
+                    tenant_id: str | None = None) -> None:
     started_at = datetime.now(timezone.utc)
     store.update(task_id, status=TaskStatus.RUNNING, started_at=started_at)
+    status_str = "failed"
+    kind = req.scenario.kind
     try:
         result = await run_simulation_pipeline(req, model_factory)
         finished_at = datetime.now(timezone.utc)
@@ -48,10 +51,25 @@ async def _run_task(store: TaskStore, task_id: str, req: SimulateRequest,
         metrics.observe(
             "simulate.elapsed_ms_async",
             (finished_at - started_at).total_seconds() * 1000)
+        status_str = "done"
+        kind = result.decision_kind
     except Exception as e:  # noqa: BLE001
         store.update(task_id, status=TaskStatus.FAILED, error=str(e),
                      finished_at=datetime.now(timezone.utc))
         metrics.inc("simulate.completed", {"status": "failed"})
+    # M3-10：无论成功/失败都写一条计费事件（cost 已经发生）
+    if usage_store is not None and tenant_id is not None:
+        try:
+            from wanxiang.api.usage import build_usage_event
+            evt = build_usage_event(
+                tenant_id=tenant_id, request=req,
+                response_kind=kind, status=status_str, task_id=task_id)
+            usage_store.record(evt)
+            metrics.observe("usage.cost_units", evt.cost_units,
+                            {"mode": evt.mode, "tenant_id": tenant_id})
+        except Exception:  # noqa: BLE001
+            # 计费失败不应影响任务结果
+            pass
 
 
 @router.post("/simulations/async", status_code=status.HTTP_202_ACCEPTED)
@@ -65,8 +83,11 @@ async def create_async_simulation(
     task = store.create(tenant.tenant_id, req)
     metrics.inc("simulate.requested",
                 {"kind": req.scenario.kind, "mode": "async"})
+    usage_store = getattr(request.app.state, "usage_store", None)
     # 后台跑；同步立即返
-    asyncio.create_task(_run_task(store, task.id, req, model_factory))
+    asyncio.create_task(_run_task(
+        store, task.id, req, model_factory,
+        usage_store=usage_store, tenant_id=tenant.tenant_id))
     return _serialize(task)
 
 

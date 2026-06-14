@@ -269,6 +269,27 @@ curl -X POST http://localhost:8000/v1/counterfactual -H "X-API-Key: demo-key" \
 
 返回结构带 `rank` / `delta` / `delta_vs_baseline`，可直接喂给 `build_report(... causal=..., counterfactual=...)` 生成完整 Markdown 报告（含"## 因果归因"与"## 反事实推演"两节）。
 
+### 真计费 / Usage（M3-10）
+
+每次模拟（同步或异步）都会自动写入 `usage_events` 表，按 mode 计 cost_units：
+
+| mode | 触发条件 | 计费公式 |
+|---|---|---|
+| `decision_only` | rounds=0 | `n` |
+| `social` | rounds>0 且无 platform | `n × (rounds + 1)` |
+| `platform` | rounds>0 且有 platform | `ceil(n × (rounds + 1) × 1.5)` |
+
+查询：
+```bash
+# 当前月
+curl http://localhost:8000/v1/usage/current -H "X-API-Key: demo-key"
+# 指定月
+curl "http://localhost:8000/v1/usage/monthly?year=2026&month=6" -H "X-API-Key: demo-key"
+```
+返回 `{period, total_cost_units, by_mode, by_status, events[…100]}`。租户严格隔离。
+
+数据存储沿用 `WANXIANG_TASKS_DB`（SQLite / PG / 内存）；同一 DSN 同时存 task 与 usage（两张独立表）。
+
 ## 下一步（路线图）
 
 - ~~M3-2 异步任务：长时间模拟改为 task_id + 轮询，避免 HTTP 超时~~ ✓ 已完成

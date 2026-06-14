@@ -47,6 +47,10 @@ def create_app() -> FastAPI:
     # M3-6 / M3-9：WANXIANG_TASKS_DB 接受 DSN（None/plain-path/sqlite:///.../postgresql://...）。
     from wanxiang.api.tasks import make_task_store
     app.state.task_store = make_task_store(os.environ.get("WANXIANG_TASKS_DB"))
+    # M3-10：真计费——usage store 与 task store 共享同一 DSN（两张独立表）。
+    from wanxiang.api.usage import make_usage_store
+    app.state.usage_store = make_usage_store(
+        os.environ.get("WANXIANG_TASKS_DB"))
 
     app.add_middleware(
         CORSMiddleware,
@@ -121,6 +125,13 @@ def create_app() -> FastAPI:
     try:
         from wanxiang.api.routes.reasoning import router as reasoning_router
         app.include_router(reasoning_router, prefix="/v1")
+    except Exception:
+        pass
+
+    # M3-10：真计费查询端点
+    try:
+        from wanxiang.api.routes.usage import router as usage_router
+        app.include_router(usage_router, prefix="/v1")
     except Exception:
         pass
 
