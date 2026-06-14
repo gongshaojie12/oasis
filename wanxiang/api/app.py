@@ -117,4 +117,11 @@ def create_app() -> FastAPI:
     except Exception:
         pass
 
+    # M6：因果归因 + 反事实推演端点
+    try:
+        from wanxiang.api.routes.reasoning import router as reasoning_router
+        app.include_router(reasoning_router, prefix="/v1")
+    except Exception:
+        pass
+
     return app

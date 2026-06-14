@@ -241,6 +241,34 @@ curl -X POST http://localhost:8000/v1/simulate \
 
 未知 platform 返 400。
 
+### 因果归因 + 反事实推演（M6 收官）
+
+**因果归因**：基线场景 + N 个可移除的"因素"片段 → 每个因素的贡献排名（移除前后指标差）。
+**反事实推演**：基线 + N 个替代方案（改 material/question/options）→ 对比每个方案 vs 基线的指标差。
+
+```bash
+# 因果
+curl -X POST http://localhost:8000/v1/causal -H "X-API-Key: demo-key" \
+  -H "Content-Type: application/json" -d '{
+    "baseline": { /* 完整 SimulateRequest */ },
+    "factors": [
+      {"id":"value_prop","label":"健康卖点","snippet":"0糖0卡"},
+      {"id":"channel","label":"小红书种草","snippet":"小红书"}
+    ]}'
+
+# 反事实
+curl -X POST http://localhost:8000/v1/counterfactual -H "X-API-Key: demo-key" \
+  -H "Content-Type: application/json" -d '{
+    "baseline": { /* 完整 SimulateRequest */ },
+    "baseline_label": "原价 ¥6",
+    "alternatives": [
+      {"id":"cheap","label":"降到 ¥5","material_override":"... ¥5 ..."},
+      {"id":"pricey","label":"涨到 ¥10","material_override":"... ¥10 ..."}
+    ]}'
+```
+
+返回结构带 `rank` / `delta` / `delta_vs_baseline`，可直接喂给 `build_report(... causal=..., counterfactual=...)` 生成完整 Markdown 报告（含"## 因果归因"与"## 反事实推演"两节）。
+
 ## 下一步（路线图）
 
 - ~~M3-2 异步任务：长时间模拟改为 task_id + 轮询，避免 HTTP 超时~~ ✓ 已完成

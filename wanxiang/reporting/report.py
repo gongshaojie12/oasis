@@ -37,6 +37,8 @@ def build_report(
     aggregate: AggregateReport,
     persona_count: int,
     fidelity: FidelityReport | None = None,
+    causal: Any = None,
+    counterfactual: Any = None,
 ) -> dict[str, Any]:
     if aggregate.n_total == 0:
         raise ValueError("cannot report on empty AggregateReport")
@@ -65,6 +67,7 @@ def build_report(
         }
         if fidelity is not None:
             out["fidelity"] = _fidelity_block(fidelity)
+        _attach_causal_counterfactual(out, causal, counterfactual)
         return out
 
     recommendation: dict[str, Any] = {}
@@ -98,7 +101,39 @@ def build_report(
     }
     if fidelity is not None:
         out["fidelity"] = _fidelity_block(fidelity)
+    _attach_causal_counterfactual(out, causal, counterfactual)
     return out
+
+
+def _attach_causal_counterfactual(out: dict[str, Any],
+                                    causal: Any, counterfactual: Any) -> None:
+    """把可选的 causal / counterfactual 报告挂到 out 里。
+    始终设置 key（None 表示未提供），让前端可统一判断。
+    """
+    if causal is not None:
+        out["causal"] = {
+            "baseline_metric": causal.baseline_metric,
+            "contributions": [
+                {"factor_id": c.factor_id, "factor_label": c.factor_label,
+                 "baseline_metric": c.baseline_metric,
+                 "ablated_metric": c.ablated_metric,
+                 "delta": c.delta, "abs_delta": c.abs_delta, "rank": c.rank}
+                for c in causal.contributions],
+            "notes": list(causal.notes),
+        }
+    else:
+        out["causal"] = None
+    if counterfactual is not None:
+        out["counterfactual"] = {
+            "baseline_label": counterfactual.baseline_label,
+            "baseline_metric": counterfactual.baseline_metric,
+            "outcomes": [
+                {"alt_id": o.alt_id, "label": o.label, "metric": o.metric,
+                 "delta_vs_baseline": o.delta_vs_baseline}
+                for o in counterfactual.outcomes],
+        }
+    else:
+        out["counterfactual"] = None
 
 
 def render_markdown(report: dict[str, Any]) -> str:
@@ -157,6 +192,43 @@ def render_markdown(report: dict[str, Any]) -> str:
             lines.append("- 备注：")
             for n in fid["notes"]:
                 lines.append(f"  - {n}")
+        lines.append("")
+
+    causal = report.get("causal")
+    if causal:
+        lines.append("## 因果归因")
+        lines.append(f"基线指标：{causal['baseline_metric']:.2f}")
+        lines.append("")
+        if not causal["contributions"]:
+            lines.append("（无有效因子）")
+        else:
+            lines.append("| 排名 | 因素 | 移除后 | Δ |")
+            lines.append("|---|---|---|---|")
+            for c in causal["contributions"]:
+                lines.append(
+                    f"| {c['rank']} | {c['factor_label']} | "
+                    f"{c['ablated_metric']:.2f} | {c['delta']:+.2f} |")
+        if causal.get("notes"):
+            lines.append("")
+            for n in causal["notes"]:
+                lines.append(f"- _备注_: {n}")
+        lines.append("")
+
+    cf = report.get("counterfactual")
+    if cf:
+        lines.append("## 反事实推演")
+        lines.append(
+            f"基线（{cf['baseline_label']}）指标：{cf['baseline_metric']:.2f}")
+        lines.append("")
+        if not cf["outcomes"]:
+            lines.append("（未提供替代方案）")
+        else:
+            lines.append("| 方案 | 指标 | Δ vs 基线 |")
+            lines.append("|---|---|---|")
+            for o in cf["outcomes"]:
+                lines.append(
+                    f"| {o['label']} | {o['metric']:.2f} | "
+                    f"{o['delta_vs_baseline']:+.2f} |")
         lines.append("")
 
     lines.append("---")
