@@ -10,8 +10,10 @@ DecisionKind 对应 L1 决策响应动作（spec §5.1）：
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
+
+from wanxiang.media.environment import MediaItem
 
 
 class DecisionKind(Enum):
@@ -37,11 +39,16 @@ class ScenarioConfig:
     question: str
     decision_kind: DecisionKind
     options: tuple[str, ...] | None = None
+    # M4 MVP: 动态信息流（每个 persona 决策前看到的内容）
+    media_pool: tuple[MediaItem, ...] = ()
+    feed_k: int = 0
 
     def __post_init__(self):
         if self.decision_kind is DecisionKind.CHOOSE and not self.options:
             raise ValueError(
                 "CHOOSE decision_kind requires non-empty options tuple")
+        if self.feed_k < 0:
+            raise ValueError("feed_k must be >= 0")
 
     def render_user_message(self) -> str:
         parts: list[str] = []

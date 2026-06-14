@@ -13,6 +13,7 @@ import re
 from dataclasses import dataclass
 from typing import Any, Awaitable, Callable
 
+from wanxiang.media.environment import render_feed_prompt, select_feed
 from wanxiang.personas.persona import Persona
 from wanxiang.simulation.scenario import DecisionKind, ScenarioConfig
 
@@ -47,8 +48,15 @@ class DecisionRunner:
         scenario: ScenarioConfig,
         model_call: ModelCall,
     ) -> DecisionResult:
+        # M4: 动态信息流前置注入（feed → persona → scenario）
+        system_text = persona.render_system_prompt()
+        if scenario.media_pool and scenario.feed_k > 0:
+            feed = select_feed(persona, scenario.media_pool, scenario.feed_k)
+            feed_prefix = render_feed_prompt(feed)
+            if feed_prefix:
+                system_text = feed_prefix + "\n" + system_text
         messages = [
-            {"role": "system", "content": persona.render_system_prompt()},
+            {"role": "system", "content": system_text},
             {"role": "user", "content": scenario.render_user_message()},
         ]
         try:

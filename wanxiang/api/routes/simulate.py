@@ -12,10 +12,23 @@ from wanxiang.api.observability import metrics
 from wanxiang.api.schemas import SimulateRequest, SimulateResponse
 from wanxiang.api.tenancy import TenantInfo
 from wanxiang.datasources import load_distribution
+from wanxiang.media.environment import MediaItem
 from wanxiang.personas import PersonaBuilder
 from wanxiang.reporting import build_report, render_markdown
 from wanxiang.simulation import (BatchRunner, DecisionKind, ScenarioConfig,
                                   SocialRoundsRunner, aggregate)
+
+
+def _media_pool_from_payload(payload) -> tuple[MediaItem, ...]:
+    """ScenarioPayload.media_pool (list[MediaItemPayload]) → tuple[MediaItem]."""
+    items = getattr(payload, "media_pool", None) or ()
+    return tuple(
+        MediaItem(
+            item_id=mi.item_id, title=mi.title, body=mi.body,
+            channel=mi.channel, tags=tuple(mi.tags), author=mi.author,
+        )
+        for mi in items
+    )
 
 router = APIRouter()
 
@@ -40,13 +53,15 @@ async def run_simulation_pipeline(
     pb = PersonaBuilder()
     personas = pb.sample(distribution, n=req.n, seed=req.seed)
 
-    # 3. 场景
+    # 3. 场景（含 M4 media_pool）
     kind = DecisionKind(req.scenario.kind)
     scenario = ScenarioConfig(
         material=req.scenario.material,
         question=req.scenario.question,
         decision_kind=kind,
         options=tuple(req.scenario.options) if req.scenario.options else None,
+        media_pool=_media_pool_from_payload(req.scenario),
+        feed_k=req.scenario.feed_k,
     )
 
     # 4. 模型

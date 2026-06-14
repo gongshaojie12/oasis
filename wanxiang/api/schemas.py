@@ -10,11 +10,24 @@ DecisionKindStr = Literal["rate", "choose", "click_probability",
                           "sentiment", "willingness_to_pay"]
 
 
+class MediaItemPayload(BaseModel):
+    """M4: 单条媒体内容条目（HTTP 入参）。"""
+    item_id: str = Field(..., min_length=1)
+    title: str = Field(..., min_length=1)
+    body: str = ""
+    channel: str = ""
+    tags: list[str] = Field(default_factory=list)
+    author: str | None = None
+
+
 class ScenarioPayload(BaseModel):
     material: str = Field(..., min_length=1)
     question: str = Field(..., min_length=1)
     kind: DecisionKindStr
     options: list[str] | None = None
+    # M4 MVP: 动态信息流
+    media_pool: list[MediaItemPayload] = Field(default_factory=list)
+    feed_k: int = Field(0, ge=0, le=50)
 
     @model_validator(mode="after")
     def _choose_needs_options(self):

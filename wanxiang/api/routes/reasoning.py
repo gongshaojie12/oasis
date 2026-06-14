@@ -53,11 +53,15 @@ def _build_scenario_and_personas(req: SimulateRequest):
     pb = PersonaBuilder()
     personas = pb.sample(distribution, n=req.n, seed=req.seed)
     kind = DecisionKind(req.scenario.kind)
+    # M4: 把 media_pool / feed_k 透传到 ScenarioConfig
+    from wanxiang.api.routes.simulate import _media_pool_from_payload
     scenario = ScenarioConfig(
         material=req.scenario.material,
         question=req.scenario.question,
         decision_kind=kind,
         options=tuple(req.scenario.options) if req.scenario.options else None,
+        media_pool=_media_pool_from_payload(req.scenario),
+        feed_k=req.scenario.feed_k,
     )
     return scenario, personas
 

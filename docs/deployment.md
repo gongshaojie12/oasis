@@ -384,6 +384,39 @@ curl -X POST http://localhost:8000/v1/simulations/sweep \
 - 单个 combo 失败不会中断整体；失败信息装到该 combo 的 `error` 字段。
 - 当前仅同步模式（按 combo 顺序执行）；异步 sweep 在后续里程碑提供。
 
+## M4 媒体环境动态注入 (MVP)
+
+在 `scenario.media_pool` 提供候选内容池，`feed_k` 指定每个 persona 决策前
+看到的条数。排序器按"persona 兴趣关键词 ∩ item 标签/标题 + 偏好渠道加成"
+挑出 top-K，作为 system prompt 的前置上下文（"【你最近在信息流看到的内容】"）。
+
+```json
+{
+  "scenario": {
+    "material": "X 品牌新品",
+    "question": "买不买？",
+    "kind": "rate",
+    "media_pool": [
+      {"item_id":"1","title":"闺蜜推荐","body":"用了三天皮肤变好",
+       "channel":"xhs","tags":["beauty"]},
+      {"item_id":"2","title":"同事吐槽","body":"踩雷了","channel":"weibo",
+       "tags":["beauty"]}
+    ],
+    "feed_k": 2
+  }
+}
+```
+
+- 排序公式：`2 * |tags ∩ keywords| + |title_words ∩ keywords| + 3 * (channel 偏好命中)`，稳定排序。
+- `keywords` 取自 `persona.personality` / `persona.demographic` 中所有 str / list[str] 值的 split。
+- 偏好渠道取自 `persona.media` 的键集合（与 spec §M2 的媒体消费习惯对齐）。
+- `feed_k=0` 或 `media_pool=[]` → 无注入（完全向后兼容）。
+- 排序器是 `wanxiang.media.environment.KeywordRanker`（MVP）；接口
+  `Ranker.rank(persona, pool, k)` 是未来接入 OASIS recsys / TwHIN /
+  向量召回的扩展点——替换实现而不改外部 API。
+- 注入位置：system prompt 顶部（feed → persona 画像 → 用户提问），
+  以保证不被对话过程"洗掉"。
+
 ## 下一步（路线图）
 
 - ~~M3-2 异步任务：长时间模拟改为 task_id + 轮询，避免 HTTP 超时~~ ✓ 已完成
