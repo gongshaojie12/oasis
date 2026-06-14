@@ -23,7 +23,11 @@ RUN pip install --upgrade pip && \
         pydantic==2.13.4 \
         pydantic-settings==2.14.1 \
         pyyaml==6.0.3 \
-        numpy pandas igraph neo4j scikit-learn sentence-transformers tqdm
+        numpy pandas igraph neo4j scikit-learn sentence-transformers tqdm \
+        "celery[redis]==5.4.0" \
+        "redis==5.0.7" \
+        "psycopg[binary]==3.3.4" \
+        reportlab==4.5.1
 
 # 拷贝源码
 COPY oasis ./oasis

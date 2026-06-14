@@ -42,6 +42,88 @@ curl -X POST http://localhost:8000/v1/simulate \
   }' | head -c 500
 ```
 
+### 完整 SaaS 栈部署 (Stage 1+2)
+
+万象的 `docker-compose.yml` 提供两种部署模式：
+
+#### 模式 1：完整栈 (生产推荐)
+
+包含 API + PostgreSQL + Redis + Celery worker 共 4 个服务：
+
+```bash
+cp .env.example .env
+vim .env   # 填入 DeepSeek API Key 等
+docker compose up -d
+```
+
+`.env` 里默认 `COMPOSE_PROFILES=full`，所以 `docker compose up` 直接拉起：
+
+- `wanxiang-api` (FastAPI HTTP 服务) :8000
+- `wanxiang-postgres` (PostgreSQL 16) :内部 5432
+- `wanxiang-redis` (Redis 7) :内部 6379
+- `wanxiang-celery` (Celery worker, 默认并发 4)
+
+数据持久化：
+
+- `wanxiang_pgdata` Docker volume — PG 数据库
+- `wanxiang_redisdata` Docker volume — Redis AOF 持久化
+
+#### 模式 2：MVP 单机 (开发/小客户)
+
+仅 API + SQLite + 进程内 asyncio：
+
+```bash
+docker compose --profile minimal up -d
+```
+
+启动 `wanxiang-api-minimal` 一个服务，所有数据写在 `wanxiang_sqlite` volume 的 `wanxiang.db` 单文件。
+
+#### 模式切换的环境变量
+
+| 变量 | 完整栈 | MVP 单机 |
+|---|---|---|
+| `WANXIANG_TASKS_DB` | `postgresql://wanxiang:wanxiang@postgres:5432/wanxiang` | `/app/data/wanxiang.db` |
+| `WANXIANG_EVENT_BUS` | `redis` | `memory` |
+| `WANXIANG_TASK_QUEUE` | `celery` | `asyncio` |
+| `WANXIANG_REDIS_URL` | `redis://redis:6379/2` | (未用) |
+| `WANXIANG_CELERY_BROKER` | `redis://redis:6379/0` | (未用) |
+
+切换是**零代码改动**——所有切换由环境变量驱动，代码侧分别有 `InMemoryEventBus`/`RedisEventBus` + `asyncio.create_task`/`celery .delay()` 两套实现。
+
+#### 健康检查
+
+```bash
+curl http://localhost:8000/healthz   # API
+docker compose ps                    # 所有服务状态
+docker logs wanxiang-celery --tail 50  # worker 日志
+```
+
+#### 备份
+
+```bash
+# PG 备份
+docker exec wanxiang-postgres pg_dump -U wanxiang wanxiang > backup.sql
+# Redis (AOF 已经持久化, volume 拷贝即可)
+docker run --rm -v wanxiang_redisdata:/data -v $(pwd):/backup alpine \
+  tar czf /backup/redis-backup.tar.gz -C /data .
+```
+
+#### 扩容到多 worker
+
+```bash
+# 扩容 Celery worker 实例数 (无需改 yaml)
+docker compose up -d --scale celery-worker=4
+```
+
+#### 阶段升级路径
+
+| 客户量 | 配置 | 升级动作 |
+|---|---|---|
+| MVP 试用 | minimal profile, 2C4G | — |
+| ≤10 付费客户 | 完整栈, 4C8G 单机 | `docker compose up -d` |
+| ≤100 付费客户 | 完整栈, 8C16G 单机 + PG 调优 | 增加 `CELERY_CONCURRENCY` |
+| 100+ 付费客户 | 多机 Docker Swarm / K8s | PG 主从 + Redis Sentinel + 多 worker pod |
+
 ## 配置项
 
 | 环境变量 | 默认 | 说明 |

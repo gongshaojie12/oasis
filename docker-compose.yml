@@ -1,11 +1,24 @@
-# WANXIANG 单机部署（spec §M3-5 deployment basics）
-# 用法：cp .env.example .env && 编辑 .env && docker compose up -d
+# WANXIANG 完整 SaaS 部署 (spec §M3-5 / §7 deployment)
+#
+# 用法：
+#   1. 完整栈 (推荐生产, 默认): cp .env.example .env && docker compose up -d
+#      .env 文件里设置了 COMPOSE_PROFILES=full, 自动启 api+postgres+redis+celery (4 服务)
+#   2. 最小版 (MVP 单机): docker compose --profile minimal up -d
+#      仅起 api-minimal 一个服务 (SQLite + 进程内 asyncio, 无外部依赖)
+#
+# 不通过 .env 走完整栈也可以显式指定:
+#   COMPOSE_PROFILES=full docker compose up -d
+#   docker compose --profile full up -d
+
 services:
+
   api:
     build: .
     image: wanxiang/api:0.0.1
     container_name: wanxiang-api
     restart: unless-stopped
+    profiles:
+      - full
     ports:
       - "${WANXIANG_PORT:-8000}:8000"
     environment:
@@ -14,6 +27,130 @@ services:
       - WANXIANG_LOG_LEVEL=${WANXIANG_LOG_LEVEL:-info}
       - WANXIANG_WORKERS=${WANXIANG_WORKERS:-1}
       - WANXIANG_DEEPSEEK_API_KEY=${WANXIANG_DEEPSEEK_API_KEY:-}
+      - WANXIANG_TENANTS_JSON=${WANXIANG_TENANTS_JSON:-}
+      # PG + Redis (full stack only)
+      - WANXIANG_TASKS_DB=${WANXIANG_TASKS_DB:-postgresql://wanxiang:wanxiang@postgres:5432/wanxiang}
+      - WANXIANG_EVENT_BUS=${WANXIANG_EVENT_BUS:-redis}
+      - WANXIANG_REDIS_URL=${WANXIANG_REDIS_URL:-redis://redis:6379/2}
+      - WANXIANG_TASK_QUEUE=${WANXIANG_TASK_QUEUE:-celery}
+      - WANXIANG_CELERY_BROKER=${WANXIANG_CELERY_BROKER:-redis://redis:6379/0}
+      - WANXIANG_CELERY_BACKEND=${WANXIANG_CELERY_BACKEND:-redis://redis:6379/1}
     volumes:
-      # 把分布文件挂出来方便外部更新
       - ./wanxiang/datasources/distributions:/app/wanxiang/datasources/distributions:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - wanxiang
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: wanxiang-postgres
+    restart: unless-stopped
+    profiles:
+      - full
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-wanxiang}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-wanxiang}
+      POSTGRES_DB: ${POSTGRES_DB:-wanxiang}
+    volumes:
+      - wanxiang_pgdata:/var/lib/postgresql/data
+    networks:
+      - wanxiang
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-wanxiang}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: wanxiang-redis
+    restart: unless-stopped
+    profiles:
+      - full
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - wanxiang_redisdata:/data
+    networks:
+      - wanxiang
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  celery-worker:
+    build: .
+    image: wanxiang/api:0.0.1
+    container_name: wanxiang-celery
+    restart: unless-stopped
+    profiles:
+      - full
+    command: celery -A wanxiang.api.celery_app:get_celery_app worker --loglevel=info --concurrency=${CELERY_CONCURRENCY:-4}
+    environment:
+      - WANXIANG_DEEPSEEK_API_KEY=${WANXIANG_DEEPSEEK_API_KEY:-}
+      - WANXIANG_TENANTS_JSON=${WANXIANG_TENANTS_JSON:-}
+      - WANXIANG_TASKS_DB=${WANXIANG_TASKS_DB:-postgresql://wanxiang:wanxiang@postgres:5432/wanxiang}
+      - WANXIANG_EVENT_BUS=${WANXIANG_EVENT_BUS:-redis}
+      - WANXIANG_REDIS_URL=${WANXIANG_REDIS_URL:-redis://redis:6379/2}
+      - WANXIANG_CELERY_BROKER=${WANXIANG_CELERY_BROKER:-redis://redis:6379/0}
+      - WANXIANG_CELERY_BACKEND=${WANXIANG_CELERY_BACKEND:-redis://redis:6379/1}
+    volumes:
+      - ./wanxiang/datasources/distributions:/app/wanxiang/datasources/distributions:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - wanxiang
+
+  # Minimal profile: 仅 api (SQLite + 进程内 asyncio, 无 PG/Redis)
+  api-minimal:
+    build: .
+    image: wanxiang/api:0.0.1
+    container_name: wanxiang-api-minimal
+    restart: unless-stopped
+    profiles:
+      - minimal
+    ports:
+      - "${WANXIANG_PORT:-8000}:8000"
+    environment:
+      - WANXIANG_HOST=0.0.0.0
+      - WANXIANG_PORT=8000
+      - WANXIANG_LOG_LEVEL=${WANXIANG_LOG_LEVEL:-info}
+      - WANXIANG_WORKERS=${WANXIANG_WORKERS:-1}
+      - WANXIANG_DEEPSEEK_API_KEY=${WANXIANG_DEEPSEEK_API_KEY:-}
+      - WANXIANG_TENANTS_JSON=${WANXIANG_TENANTS_JSON:-}
+      - WANXIANG_TASKS_DB=/app/data/wanxiang.db
+      - WANXIANG_EVENT_BUS=memory
+      - WANXIANG_TASK_QUEUE=asyncio
+    volumes:
+      - ./wanxiang/datasources/distributions:/app/wanxiang/datasources/distributions:ro
+      - wanxiang_sqlite:/app/data
+    networks:
+      - wanxiang
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  wanxiang_pgdata:
+  wanxiang_redisdata:
+  wanxiang_sqlite:
+
+networks:
+  wanxiang:
+    driver: bridge
