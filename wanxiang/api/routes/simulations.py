@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from wanxiang.api.auth import require_tenant
 from wanxiang.api.deps import get_model_factory
-from wanxiang.api.i18n import get_request_locale, t
+from wanxiang.api.i18n import DEFAULT_LOCALE, get_request_locale, t
 from wanxiang.api.observability import metrics
 from wanxiang.api.routes.simulate import run_simulation_pipeline
 from wanxiang.api.schemas import (SimulateRequest, SweepCombo, SweepRequest,
@@ -42,7 +42,8 @@ def _serialize(task: SimulationTask) -> dict:
 async def _run_task(store: TaskStore, task_id: str, req: SimulateRequest,
                     model_factory, usage_store=None,
                     tenant_id: str | None = None,
-                    event_bus=None) -> None:
+                    event_bus=None,
+                    locale: str = DEFAULT_LOCALE) -> None:
     started_at = datetime.now(timezone.utc)
     store.update(task_id, status=TaskStatus.RUNNING, started_at=started_at)
     status_str = "failed"
@@ -57,7 +58,8 @@ async def _run_task(store: TaskStore, task_id: str, req: SimulateRequest,
         except Exception:  # noqa: BLE001
             pass
     try:
-        result = await run_simulation_pipeline(req, model_factory)
+        result = await run_simulation_pipeline(req, model_factory,
+                                                locale=locale)
         finished_at = datetime.now(timezone.utc)
         store.update(task_id, status=TaskStatus.DONE, result=result,
                      finished_at=finished_at)
@@ -126,11 +128,14 @@ async def create_async_simulation(
                 {"kind": req.scenario.kind, "mode": "async"})
     usage_store = getattr(request.app.state, "usage_store", None)
     event_bus = getattr(request.app.state, "event_bus", None)
+    # P3: capture locale now so background task renders in the requester's
+    # language (request.state goes away once the response is sent).
+    locale = get_request_locale(request)
     # 后台跑；同步立即返
     asyncio.create_task(_run_task(
         store, task.id, req, model_factory,
         usage_store=usage_store, tenant_id=tenant.tenant_id,
-        event_bus=event_bus))
+        event_bus=event_bus, locale=locale))
     return _serialize(task)
 
 
@@ -169,13 +174,15 @@ async def sweep_simulations(
     )
 
     usage_store = getattr(request.app.state, "usage_store", None)
+    sweep_locale = get_request_locale(request)
 
     out_combos: list[SweepCombo] = []
     for values in combos_values:
         cid = combo_id(values)
         combo_req = apply_combo(base, values)
         try:
-            result = await run_simulation_pipeline(combo_req, model_factory)
+            result = await run_simulation_pipeline(combo_req, model_factory,
+                                                    locale=sweep_locale)
             if usage_store is not None:
                 from wanxiang.api.usage import build_usage_event
                 evt = build_usage_event(

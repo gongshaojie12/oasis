@@ -2,28 +2,29 @@
 """把 AggregateReport (+ 可选 FidelityReport) 渲染为结构化 dict 与
 人类可读 Markdown。dict 给 chat.html 工件卡用；Markdown 给 PDF/邮件
 导出。
+
+P3: 支持 locale="zh"/"en" 双语渲染。默认 zh，旧 caller 零回归。
 """
 from __future__ import annotations
 
 from typing import Any
 
 from wanxiang.calibration.fidelity import FidelityReport
+from wanxiang.reporting.i18n import DEFAULT_LOCALE, fidelity_label, label
 from wanxiang.simulation.aggregate import AggregateReport
 from wanxiang.simulation.scenario import DecisionKind, ScenarioConfig
 
 
 def _fidelity_label(score: float) -> str:
-    if score >= 0.85:
-        return "高"
-    if score >= 0.6:
-        return "中"
-    return "低"
+    # backwards-compatible (Chinese, no-locale) helper retained for callers
+    # that still import it directly (none in tree as of P3, but keep stable).
+    return fidelity_label(score, locale="zh")
 
 
-def _fidelity_block(fidelity: FidelityReport) -> dict[str, Any]:
+def _fidelity_block(fidelity: FidelityReport, locale: str = "zh") -> dict[str, Any]:
     return {
         "score": fidelity.fidelity_score,
-        "label": _fidelity_label(fidelity.fidelity_score),
+        "label": fidelity_label(fidelity.fidelity_score, locale=locale),
         "spearman": fidelity.spearman,
         "rmse": fidelity.rmse,
         "euclidean": fidelity.euclidean,
@@ -42,6 +43,7 @@ def build_report(
     rejection_analysis: dict[str, Any] | None = None,
     trajectory: list[dict[str, Any]] | list[Any] | None = None,
     commentary: str | None = None,
+    locale: str = DEFAULT_LOCALE,
 ) -> dict[str, Any]:
     if aggregate.n_total == 0:
         raise ValueError("cannot report on empty AggregateReport")
@@ -67,9 +69,10 @@ def build_report(
             "breakdown": [],
             "fidelity": None,
             "no_valid_samples": True,
+            "locale": locale,
         }
         if fidelity is not None:
-            out["fidelity"] = _fidelity_block(fidelity)
+            out["fidelity"] = _fidelity_block(fidelity, locale=locale)
         _attach_causal_counterfactual(out, causal, counterfactual)
         _attach_m6_plus(out, rejection_analysis, trajectory, commentary)
         return out
@@ -102,9 +105,10 @@ def build_report(
         "recommendation": recommendation,
         "breakdown": breakdown,
         "fidelity": None,
+        "locale": locale,
     }
     if fidelity is not None:
-        out["fidelity"] = _fidelity_block(fidelity)
+        out["fidelity"] = _fidelity_block(fidelity, locale=locale)
     _attach_causal_counterfactual(out, causal, counterfactual)
     _attach_m6_plus(out, rejection_analysis, trajectory, commentary)
     return out
@@ -182,73 +186,101 @@ def _attach_causal_counterfactual(out: dict[str, Any],
         out["counterfactual"] = None
 
 
-def render_markdown(report: dict[str, Any]) -> str:
+def render_markdown(report: dict[str, Any], *,
+                     locale: str | None = None) -> str:
+    """Render the report dict to Markdown.
+
+    Locale resolution: explicit ``locale`` arg > ``report['locale']`` > zh.
+    """
+    loc = locale or report.get("locale") or DEFAULT_LOCALE
+
+    def L(key: str, **kw) -> str:
+        return label(key, locale=loc, **kw)
+
     lines: list[str] = []
     sc = report["scenario"]
-    lines.append("# 万象模拟报告")
+    colon = L("punct.colon")
+    lines.append(f"# {L('title.main')}")
     lines.append("")
-    lines.append(f"**研究目标**：{sc['question']}")
-    lines.append(f"**投放材料**：{sc['material']}")
-    lines.append(f"**虚拟人规模**：{report['persona_count']}")
+    lines.append(f"**{L('field.question')}**{colon}{sc['question']}")
+    lines.append(f"**{L('field.material')}**{colon}{sc['material']}")
     lines.append(
-        f"**有效样本**：{report['n_valid']} / {report['n_total']}"
-        f"（错误率 {report['error_rate']:.1%}，错误 {report['error_count']} 例）")
+        f"**{L('field.persona_count')}**{colon}{report['persona_count']}")
+    err_rate_str = f"{report['error_rate']:.1%}"
+    lines.append(
+        f"**{L('field.valid_samples')}**{colon}"
+        + L("field.valid_samples_template",
+            n_valid=report['n_valid'], n_total=report['n_total'],
+            error_rate=err_rate_str, error_count=report['error_count']))
     lines.append("")
 
     # 退化分支：所有样本失效，不要尝试格式化 None
     if report.get("no_valid_samples"):
-        lines.append("## ⚠️ 无有效样本")
+        lines.append(f"## {L('section.no_valid_samples_heading')}")
         lines.append("")
-        lines.append(
-            "本次模拟未产生任何有效决策。可能原因：模型输出非合规 JSON、"
-            "全部样本触发解析错误、或场景配置不当。请检查模型连接与场景设置。")
+        lines.append(L("no_valid_samples.body"))
         lines.append("")
         lines.append("---")
-        lines.append("*结果为概率预测，建议结合业务判断使用。*")
+        lines.append(L("disclaimer"))
         return "\n".join(lines)
 
-    lines.append("## 推荐结论")
+    lines.append(f"## {L('section.recommendation')}")
     rec = report["recommendation"]
     if sc["decision_kind"] == "choose":
+        share_str = f"{rec['share']:.1%}"
         lines.append(
-            f"- 群体首选：**{rec['top']}**（份额 {rec['share']:.1%}）")
+            "- " + L("reco.top_choice_template",
+                     top=rec['top'], share=share_str))
         lines.append("")
-        lines.append("## 选项份额")
+        lines.append(f"## {L('section.option_share')}")
         for row in report["breakdown"]:
+            row_share = f"{row['share']:.1%}"
             lines.append(
-                f"- {row['option']}: {row['share']:.1%}（{row['count']} 票）")
+                "- " + L("reco.option_row_template",
+                         option=row['option'], share=row_share,
+                         count=row['count']))
     else:
         mean = rec["mean"]
         band = rec["confidence_band"]
         rng = rec["range"]
-        lines.append(f"- 群体均值：**{mean:.2f}**")
-        lines.append(f"- 中段（p25–p75）：{band[0]} – {band[1]}")
-        lines.append(f"- 整体范围：{rng[0]} – {rng[1]}")
+        mean_s = f"{mean:.2f}"
+        lines.append("- " + L("reco.mean_template", mean=mean_s))
+        lines.append("- " + L("reco.confidence_band_template",
+                              lo=band[0], hi=band[1]))
+        lines.append("- " + L("reco.range_template",
+                              lo=rng[0], hi=rng[1]))
     lines.append("")
 
     fid = report.get("fidelity")
     if fid is not None:
-        lines.append("## 校准保真度")
-        lines.append(
-            f"- 总评：**{fid['label']}**（fidelity_score={fid['score']:.2f}）")
-        lines.append(f"- Spearman: {fid['spearman']:.3f}")
-        lines.append(f"- RMSE: {fid['rmse']:.3f}")
-        lines.append(f"- 欧氏距离: {fid['euclidean']:.3f}")
+        lines.append(f"## {L('section.fidelity')}")
+        score_s = f"{fid['score']:.2f}"
+        spearman_s = f"{fid['spearman']:.3f}"
+        rmse_s = f"{fid['rmse']:.3f}"
+        eucl_s = f"{fid['euclidean']:.3f}"
+        lines.append("- " + L("fidelity.overall_template",
+                              label=fid['label'], score=score_s))
+        lines.append("- " + L("fidelity.spearman_template", value=spearman_s))
+        lines.append("- " + L("fidelity.rmse_template", value=rmse_s))
+        lines.append("- " + L("fidelity.euclidean_template", value=eucl_s))
         if fid["notes"]:
-            lines.append("- 备注：")
+            lines.append("- " + L("fidelity.notes_label"))
             for n in fid["notes"]:
                 lines.append(f"  - {n}")
         lines.append("")
 
     causal = report.get("causal")
     if causal:
-        lines.append("## 因果归因")
-        lines.append(f"基线指标：{causal['baseline_metric']:.2f}")
+        lines.append(f"## {L('section.factor_contributions')}")
+        baseline_s = f"{causal['baseline_metric']:.2f}"
+        lines.append(L("causal.baseline_metric_template", value=baseline_s))
         lines.append("")
         if not causal["contributions"]:
-            lines.append("（无有效因子）")
+            lines.append(L("causal.no_factors"))
         else:
-            lines.append("| 排名 | 因素 | 移除后 | Δ |")
+            lines.append(
+                f"| {L('header.rank')} | {L('header.factor')} | "
+                f"{L('header.ablated')} | {L('header.delta')} |")
             lines.append("|---|---|---|---|")
             for c in causal["contributions"]:
                 lines.append(
@@ -257,19 +289,22 @@ def render_markdown(report: dict[str, Any]) -> str:
         if causal.get("notes"):
             lines.append("")
             for n in causal["notes"]:
-                lines.append(f"- _备注_: {n}")
+                lines.append("- " + L("causal.note_template", note=n))
         lines.append("")
 
     cf = report.get("counterfactual")
     if cf:
-        lines.append("## 反事实推演")
-        lines.append(
-            f"基线（{cf['baseline_label']}）指标：{cf['baseline_metric']:.2f}")
+        lines.append(f"## {L('section.counterfactuals')}")
+        baseline_s = f"{cf['baseline_metric']:.2f}"
+        lines.append(L("cf.baseline_template",
+                       label=cf['baseline_label'], value=baseline_s))
         lines.append("")
         if not cf["outcomes"]:
-            lines.append("（未提供替代方案）")
+            lines.append(L("cf.no_alternatives"))
         else:
-            lines.append("| 方案 | 指标 | Δ vs 基线 |")
+            lines.append(
+                f"| {L('header.scheme')} | {L('header.metric_value')} | "
+                f"{L('header.delta_vs_baseline')} |")
             lines.append("|---|---|---|")
             for o in cf["outcomes"]:
                 lines.append(
@@ -280,12 +315,13 @@ def render_markdown(report: dict[str, Any]) -> str:
     # ---- M6+ 三件套 ----
     rej = report.get("rejection_analysis")
     if rej and rej.get("total_rejected", 0) > 0:
-        lines.append("## 劝退原因构成")
-        lines.append(
-            f"被拒/低评样本共 **{rej['total_rejected']}** 例，按原因分布如下：")
+        lines.append(f"## {L('section.rejection')}")
+        lines.append(L("rejection.summary_template", n=rej['total_rejected']))
         lines.append("")
         if rej.get("buckets"):
-            lines.append("| 原因 | 占比 | 示例 |")
+            lines.append(
+                f"| {L('header.reason')} | {L('header.percent')} | "
+                f"{L('header.examples')} |")
             lines.append("|---|---|---|")
             total = rej["total_rejected"] or 1
             for bucket, count in rej["buckets"].items():
@@ -298,10 +334,12 @@ def render_markdown(report: dict[str, Any]) -> str:
 
     traj = report.get("trajectory")
     if traj and len(traj) >= 2:
-        lines.append("## 群体情绪演化")
-        lines.append("各轮次的群体均值/中段（p25–p75）：")
+        lines.append(f"## {L('section.trajectory')}")
+        lines.append(L("trajectory.intro"))
         lines.append("")
-        lines.append("| round | n_valid | mean | p25 | p75 |")
+        lines.append(
+            f"| {L('header.round')} | {L('header.n_valid')} | "
+            f"{L('header.mean')} | {L('header.p25')} | {L('header.p75')} |")
         lines.append("|---|---|---|---|---|")
         for p in traj:
             mean = p.get("mean")
@@ -317,10 +355,10 @@ def render_markdown(report: dict[str, Any]) -> str:
 
     commentary = report.get("commentary")
     if commentary:
-        lines.append("## LLM 解读")
+        lines.append(f"## {L('section.llm_commentary')}")
         lines.append(commentary)
         lines.append("")
 
     lines.append("---")
-    lines.append("*结果为概率预测，建议结合业务判断使用。*")
+    lines.append(L("disclaimer"))
     return "\n".join(lines)

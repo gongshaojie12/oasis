@@ -128,7 +128,7 @@ async def run_simulation_pipeline(
     # 6. 聚合 + 报告
     agg = aggregate(results)
     report = build_report(scenario=scenario, aggregate=agg,
-                          persona_count=req.n)
+                          persona_count=req.n, locale=locale)
 
     # M3-12 合规：DP 噪声 + PII 脱敏
     if policy is not None:
@@ -156,11 +156,11 @@ async def run_simulation_pipeline(
         if policy.redact_pii:
             from wanxiang.compliance.pii import redact_report, redact_text
             report = redact_report(report)
-            markdown = redact_text(render_markdown(report))
+            markdown = redact_text(render_markdown(report, locale=locale))
         else:
-            markdown = render_markdown(report)
+            markdown = render_markdown(report, locale=locale)
     else:
-        markdown = render_markdown(report)
+        markdown = render_markdown(report, locale=locale)
 
     elapsed_ms = int((time.monotonic() - started) * 1000)
     return SimulateResponse(
