@@ -526,3 +526,50 @@ n ≤ 6 时退化为完全图（所有人互为好友），适合小样本快速
 - ~~M3-3 多租户：API key 鉴权 + 配额（每租户 RPM 上限）~~ ✓ 已完成
 - M3-4 chat.html 接入：前端从静态原型切到真实 API
 - 持久化：sqlite/postgres 存沙盒与历史
+
+### 数据本地化与私有化部署 (合规, §8)
+
+万象的设计严格遵循「数据不出境 + 模型可本地化」原则，便于通过金融/政企/医疗等
+行业的合规审计：
+
+**数据全程本地化**
+- 任务/计费/审计三库（`WANXIANG_TASKS_DB`）默认 SQLite 单文件，落在客户自有机器；
+  生产环境可改为客户内网 PostgreSQL（`postgresql://...` DSN，零代码切换）
+- Persona 分布数据 `wanxiang/datasources/distributions/*.yaml` 是静态资源，客户可
+  替换为自有授权分布（统计年鉴 / 行业报告 / 授权采购的脱敏面板）
+- Scenario 物料、模拟结果、报告 PDF 全部在租户库内，未向第三方发送
+
+**模型可私有化**
+- 默认 `provider=stub` 离线 (开发/演示)
+- `provider=deepseek` 走 DeepSeek API（请求出境）
+- 客户私有部署：`provider=custom`，`base_url=https://内网LLM网关/v1`，
+  `api_key=<内部密钥>` —— `wanxiang/models/adapter.py` 的 `wrap_camel_model`
+  接 OpenAI 兼容协议，凡国内厂商 (通义/豆包/智谱/Yi/百川) 均支持
+
+**租户级模型默认**（D3）
+- `WANXIANG_TENANTS_JSON` 内每个 tenant 可附 `default_model_config`，金融客户
+  绑定本地 vLLM 网关，互联网客户绑定 DeepSeek，互不干扰
+
+**合规边界一图**
+
+```
+┌─────────── 客户内网 (数据不出境) ───────────┐
+│ wanxiang process (Docker)                   │
+│ ├─ tasks/usage/audit DB (sqlite or PG)      │
+│ ├─ persona distributions (本地 yaml)         │
+│ └─ HTTP API (内网域名/反向代理)              │
+│                                              │
+│         ↕  (仅模型推理出网，可关闭)          │
+│                                              │
+│  外网: 模型 API (可选)                       │
+│  └─ DeepSeek / 通义 / 内网 vLLM             │
+└──────────────────────────────────────────────┘
+```
+
+**合规自检清单**
+- [ ] 已设置 `WANXIANG_TASKS_DB=postgresql://内网/...` （或 SQLite 落在客户存储）
+- [ ] 已替换 `wanxiang/datasources/distributions/` 为客户授权的脱敏分布
+- [ ] 已设置租户的 `default_model_config` 指向内网 LLM 网关
+- [ ] 已通过 `compliance.redact_pii=true` 验证报告无 PII 漏出
+- [ ] 已通过 `compliance.moderate_material=true` + 接入审核服务
+- [ ] 已通过 GET /v1/audit/events 验证审计链完整
