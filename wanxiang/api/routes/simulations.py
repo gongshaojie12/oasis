@@ -12,7 +12,10 @@ from wanxiang.api.auth import require_tenant
 from wanxiang.api.deps import get_model_factory
 from wanxiang.api.observability import metrics
 from wanxiang.api.routes.simulate import run_simulation_pipeline
-from wanxiang.api.schemas import SimulateRequest
+from wanxiang.api.schemas import (SimulateRequest, SweepCombo, SweepRequest,
+                                   SweepResponse)
+from wanxiang.api.sweep import (MAX_SWEEP_COMBOS, apply_combo, combo_id,
+                                 expand_grid)
 from wanxiang.api.tasks import SimulationTask, TaskStatus, TaskStore
 from wanxiang.api.tenancy import TenantInfo
 
@@ -89,6 +92,75 @@ async def create_async_simulation(
         store, task.id, req, model_factory,
         usage_store=usage_store, tenant_id=tenant.tenant_id))
     return _serialize(task)
+
+
+@router.post("/simulations/sweep", response_model=SweepResponse)
+async def sweep_simulations(
+    req: SweepRequest,
+    request: Request,
+    model_factory=Depends(get_model_factory),
+    tenant: TenantInfo = Depends(require_tenant),
+):
+    """M5: 变量笛卡尔展开 (同步)。
+
+    把 variable_grid 笛卡尔积展开成 N 个 combo，依次复用
+    run_simulation_pipeline 跑完，按 combo 写计费事件，最后聚合返回。
+    单个 combo 失败不影响其它 combo（错误装到 combo.error）。
+    """
+    combos_values = expand_grid(req.variable_grid)
+    total = len(combos_values)
+    if total > MAX_SWEEP_COMBOS:
+        raise HTTPException(
+            status_code=400,
+            detail=(f"sweep would produce {total} combos, "
+                    f"exceeds limit of {MAX_SWEEP_COMBOS}"))
+
+    metrics.inc("simulate.requested",
+                {"kind": req.scenario.kind, "mode": "sweep"})
+
+    # 把 sweep 字段折成一个 base SimulateRequest，供每个 combo 复用
+    base = SimulateRequest(
+        distribution_path=req.distribution_path, n=req.n, seed=req.seed,
+        scenario=req.scenario, rounds=req.rounds, platform=req.platform,
+        model=req.model,
+    )
+
+    usage_store = getattr(request.app.state, "usage_store", None)
+
+    out_combos: list[SweepCombo] = []
+    for values in combos_values:
+        cid = combo_id(values)
+        combo_req = apply_combo(base, values)
+        try:
+            result = await run_simulation_pipeline(combo_req, model_factory)
+            if usage_store is not None:
+                from wanxiang.api.usage import build_usage_event
+                evt = build_usage_event(
+                    tenant_id=tenant.tenant_id, request=combo_req,
+                    response_kind=result.decision_kind, status="done")
+                usage_store.record(evt)
+                metrics.observe("usage.cost_units", evt.cost_units,
+                                {"mode": evt.mode,
+                                 "tenant_id": tenant.tenant_id})
+            out_combos.append(SweepCombo(
+                combo_id=cid, values=values, task_id=None,
+                result=result.model_dump(), error=None))
+        except Exception as e:  # noqa: BLE001
+            # 失败 combo 也按消耗计费（cost 已经发生）
+            if usage_store is not None:
+                try:
+                    from wanxiang.api.usage import build_usage_event
+                    evt = build_usage_event(
+                        tenant_id=tenant.tenant_id, request=combo_req,
+                        response_kind=combo_req.scenario.kind, status="failed")
+                    usage_store.record(evt)
+                except Exception:  # noqa: BLE001
+                    pass
+            out_combos.append(SweepCombo(
+                combo_id=cid, values=values, task_id=None,
+                result=None, error=str(e)))
+
+    return SweepResponse(total_combos=total, combos=out_combos)
 
 
 @router.get("/simulations")

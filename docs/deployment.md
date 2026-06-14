@@ -329,6 +329,61 @@ curl -X POST http://localhost:8000/v1/reports/pdf \
 pip install reportlab        # ~2 MB pure Python
 ```
 
+### 变量组合自动展开 (M5)
+
+`POST /v1/simulations/sweep` —— 一次请求触发笛卡尔展开后的多次同步模拟。
+典型用法：A/B 投放对比（多份文案 × 多个渠道 = N 次模拟一键跑完）。
+
+请求体在普通 `SimulateRequest` 字段基础上加 `variable_grid`：
+每个 key 是一个变量轴，value 是该轴的候选值列表。
+`scenario.material` 和 `scenario.question` 中的 `{var}` 占位符会被自动替换。
+
+```bash
+curl -X POST http://localhost:8000/v1/simulations/sweep \
+  -H "X-API-Key: demo-key" -H "Content-Type: application/json" \
+  -d '{
+    "distribution_path": "wanxiang/datasources/distributions/cn_z_generation_v1.yaml",
+    "n": 30, "seed": 1,
+    "scenario": {
+      "material": "看到广告：{copy}",
+      "question": "在{channel}你会买吗？",
+      "kind": "rate"
+    },
+    "rounds": 0,
+    "model": {"provider": "stub"},
+    "variable_grid": {
+      "copy": ["五折大促", "买二送一"],
+      "channel": ["小红书", "抖音", "视频号"]
+    }
+  }'
+```
+
+响应：
+
+```json
+{
+  "total_combos": 6,
+  "combos": [
+    {
+      "combo_id": "channel=小红书|copy=五折大促",
+      "values": {"channel": "小红书", "copy": "五折大促"},
+      "task_id": null,
+      "result": { /* 完整 SimulateResponse */ },
+      "error": null
+    }
+  ]
+}
+```
+
+约束与说明：
+
+- 上限 `MAX_SWEEP_COMBOS = 100`：超出（如 11×11=121）→ 400。
+- `variable_grid` 至少有一个轴，每个轴至少有一个值，否则 → 422。
+- `combo_id` 按轴名字母序排列，`|` 分隔；占位符缺失时原样保留。
+- 每个 combo 单独写一条 `usage` 事件（成功/失败都写），账单与实际消耗一致。
+- 单个 combo 失败不会中断整体；失败信息装到该 combo 的 `error` 字段。
+- 当前仅同步模式（按 combo 顺序执行）；异步 sweep 在后续里程碑提供。
+
 ## 下一步（路线图）
 
 - ~~M3-2 异步任务：长时间模拟改为 task_id + 轮询，避免 HTTP 超时~~ ✓ 已完成
