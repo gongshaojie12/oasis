@@ -186,6 +186,29 @@ curl -X POST http://localhost:8000/v1/templates/marketing_ad_ab_test/instantiate
 # 这个 payload 直接放进 POST /v1/simulate 的 scenario 字段即可。
 ```
 
+### NL 意图解析（M3-8）—— "AI 首席模拟官"
+
+用户用中文描述需求，后端 LLM 自动抽出 SimulateRequest：
+
+```bash
+curl -X POST http://localhost:8000/v1/chat/parse \
+  -H "X-API-Key: demo-key" -H "Content-Type: application/json" \
+  -d '{"user_text":"测一线 Z 世代对新品轻气泡 ¥6 的购买意愿"}'
+```
+
+返回：
+```json
+{
+  "intent": "simulate",
+  "request": { /* 完整 SimulateRequest，可直接 POST /v1/simulate */ },
+  "missing": [],
+  "explanation": "识别为购买意愿打分场景",
+  "confidence": 0.92
+}
+```
+
+若 `missing` 非空，UI 应向用户补问。chat.html 集成下一步：把按钮换为输入框，让 LLM 走这条管线。
+
 ## 下一步（路线图）
 
 - ~~M3-2 异步任务：长时间模拟改为 task_id + 轮询，避免 HTTP 超时~~ ✓ 已完成

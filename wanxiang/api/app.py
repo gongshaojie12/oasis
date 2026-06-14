@@ -115,4 +115,11 @@ def create_app() -> FastAPI:
     except Exception:
         pass
 
+    # M3-8：NL 意图解析路由（POST /v1/chat/parse）
+    try:
+        from wanxiang.api.routes.chat import router as chat_router
+        app.include_router(chat_router, prefix="/v1")
+    except Exception:
+        pass
+
     return app
