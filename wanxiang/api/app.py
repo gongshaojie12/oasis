@@ -51,6 +51,9 @@ def create_app() -> FastAPI:
     from wanxiang.api.usage import make_usage_store
     app.state.usage_store = make_usage_store(
         os.environ.get("WANXIANG_TASKS_DB"))
+    # M3-11：SSE 事件总线（in-memory，per-app 实例）
+    from wanxiang.api.events import EventBus
+    app.state.event_bus = EventBus()
 
     app.add_middleware(
         CORSMiddleware,
@@ -104,6 +107,13 @@ def create_app() -> FastAPI:
         from wanxiang.api.routes.simulations import (
             router as simulations_router)
         app.include_router(simulations_router, prefix="/v1")
+    except Exception:
+        pass
+
+    # M3-11：SSE 进度流路由
+    try:
+        from wanxiang.api.routes.sse import router as sse_router
+        app.include_router(sse_router, prefix="/v1")
     except Exception:
         pass
 

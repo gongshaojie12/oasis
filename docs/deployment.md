@@ -103,6 +103,29 @@ curl http://localhost:8000/v1/simulations/<task_id> \
 
 任务存储为进程内（重启丢失）；生产规模化需替换为 Redis-backed store。
 
+### SSE 流式进度 (M3-11)
+
+`GET /v1/simulations/{task_id}/events` —— 订阅一个异步任务的进度流。
+返回 `text/event-stream`，事件 schema：
+
+| event   | data |
+|---------|------|
+| started | `{"task_id":..., "n":..., "rounds":..., "kind":...}` |
+| progress| `{"task_id":..., "round":..., "stage":...}` *（占位，当前未发出；预留给 SocialRoundsRunner/BatchRunner 后续接入）* |
+| done    | `{"task_id":..., "n_valid":..., "n_total":...}` |
+| error   | `{"task_id":..., "error":...}` |
+
+订阅迟到的客户端会先收到所有历史事件（环形 buffer，默认 1024 条），再切到 live。
+租户隔离：只能订阅自己 tenant 创建的 task，否则 404。
+
+```bash
+# 用 curl 订阅（-N 关闭缓冲）
+curl -N -H "X-API-Key: demo-key" \
+  http://localhost:8000/v1/simulations/<task_id>/events
+```
+
+事件总线为进程内（与 task store 同生命周期）；多副本部署需替换为 Redis pub/sub。
+
 ### 持久化（M3-6 / M3-9 SQLite ↔ PostgreSQL 自由切换）
 
 `WANXIANG_TASKS_DB` 接受 DSN，按 scheme 自动派发：

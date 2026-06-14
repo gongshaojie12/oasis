@@ -40,11 +40,21 @@ def _serialize(task: SimulationTask) -> dict:
 
 async def _run_task(store: TaskStore, task_id: str, req: SimulateRequest,
                     model_factory, usage_store=None,
-                    tenant_id: str | None = None) -> None:
+                    tenant_id: str | None = None,
+                    event_bus=None) -> None:
     started_at = datetime.now(timezone.utc)
     store.update(task_id, status=TaskStatus.RUNNING, started_at=started_at)
     status_str = "failed"
     kind = req.scenario.kind
+    # M3-11：发布 started 事件（即使没有 subscriber 也会进 history buffer）
+    if event_bus is not None:
+        try:
+            event_bus.publish(task_id, "started", {
+                "task_id": task_id, "n": req.n, "rounds": req.rounds,
+                "kind": req.scenario.kind,
+            })
+        except Exception:  # noqa: BLE001
+            pass
     try:
         result = await run_simulation_pipeline(req, model_factory)
         finished_at = datetime.now(timezone.utc)
@@ -56,10 +66,33 @@ async def _run_task(store: TaskStore, task_id: str, req: SimulateRequest,
             (finished_at - started_at).total_seconds() * 1000)
         status_str = "done"
         kind = result.decision_kind
+        if event_bus is not None:
+            try:
+                event_bus.publish(task_id, "done", {
+                    "task_id": task_id,
+                    "n_valid": result.n_valid,
+                    "n_total": result.n_total,
+                })
+            except Exception:  # noqa: BLE001
+                pass
     except Exception as e:  # noqa: BLE001
         store.update(task_id, status=TaskStatus.FAILED, error=str(e),
                      finished_at=datetime.now(timezone.utc))
         metrics.inc("simulate.completed", {"status": "failed"})
+        if event_bus is not None:
+            try:
+                event_bus.publish(task_id, "error", {
+                    "task_id": task_id, "error": str(e),
+                })
+            except Exception:  # noqa: BLE001
+                pass
+    finally:
+        # M3-11：任何情况下都关流，避免订阅者 hang
+        if event_bus is not None:
+            try:
+                event_bus.close(task_id)
+            except Exception:  # noqa: BLE001
+                pass
     # M3-10：无论成功/失败都写一条计费事件（cost 已经发生）
     if usage_store is not None and tenant_id is not None:
         try:
@@ -87,10 +120,12 @@ async def create_async_simulation(
     metrics.inc("simulate.requested",
                 {"kind": req.scenario.kind, "mode": "async"})
     usage_store = getattr(request.app.state, "usage_store", None)
+    event_bus = getattr(request.app.state, "event_bus", None)
     # 后台跑；同步立即返
     asyncio.create_task(_run_task(
         store, task.id, req, model_factory,
-        usage_store=usage_store, tenant_id=tenant.tenant_id))
+        usage_store=usage_store, tenant_id=tenant.tenant_id,
+        event_bus=event_bus))
     return _serialize(task)
 
 
