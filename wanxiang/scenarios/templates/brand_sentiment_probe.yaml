@@ -1,27 +1,48 @@
 id: brand_sentiment_probe
-name: 品牌舆情 · 情感探测
-description: 用一段品牌事件描述测人群情感极性（-1 反感～+1 喜爱）。
+name:
+  zh: 品牌舆情 · 情感探测
+  en: Brand Sentiment · Affect Probe
+description:
+  zh: 用一段品牌事件描述测人群情感极性（-1 反感～+1 喜爱）。
+  en: Use a brand-event description to probe the audience's sentiment polarity (-1 = dislike, +1 = love).
 decision_kind: sentiment
-material_template: |
-  关于 {brand} 的事件：
+material_template:
+  zh: |
+    关于 {brand} 的事件：
 
-  {event_description}
+    {event_description}
 
-  事件发生时间：{event_time}
-question_template: |
-  读完上面这段，请给出你此刻对该品牌的态度极性：
-  -1.0 = 非常反感，0 = 中性，+1.0 = 非常喜爱。
+    事件发生时间：{event_time}
+  en: |
+    Event regarding {brand}:
+
+    {event_description}
+
+    When it happened: {event_time}
+question_template:
+  zh: |
+    读完上面这段，请给出你此刻对该品牌的态度极性：
+    -1.0 = 非常反感，0 = 中性，+1.0 = 非常喜爱。
+  en: |
+    After reading the above, please give your current sentiment polarity toward this brand:
+    -1.0 = strongly dislike, 0 = neutral, +1.0 = strongly love.
 variables:
   - name: brand
-    label: 品牌名
+    label:
+      zh: 品牌名
+      en: Brand
     type: text
     required: true
   - name: event_description
-    label: 事件描述
+    label:
+      zh: 事件描述
+      en: Event description
     type: text
     required: true
   - name: event_time
-    label: 时间（自由格式）
+    label:
+      zh: 时间（自由格式）
+      en: Time (free-form)
     type: text
     required: false
     default: 最近

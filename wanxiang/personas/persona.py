@@ -131,6 +131,10 @@ class Persona:
     demographic: dict[str, Any] = field(default_factory=dict)
     personality: dict[str, Any] = field(default_factory=dict)
     media: dict[str, Any] = field(default_factory=dict)
+    # P5: 来源 locale（zh / en）；默认 zh 兼容历史调用。仅供
+    # render_system_prompt 等下游自检使用，不参与 equality 比较时通常
+    # 是相同 locale 才比较，无需在 __eq__ 上特殊处理。
+    locale: str = "zh"
 
     def trait_count(self) -> int:
         """三组特质合计维数（不含 name/agent_id）。"""

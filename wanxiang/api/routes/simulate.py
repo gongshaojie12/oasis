@@ -71,9 +71,9 @@ async def run_simulation_pipeline(
     # 1. 分布加载（文件不存在 → FileNotFoundError）
     distribution = load_distribution(req.distribution_path)
 
-    # 2. 造人
+    # 2. 造人（P5: 把 locale 传给 builder，让 trait key + value 对应语言）
     pb = PersonaBuilder()
-    personas = pb.sample(distribution, n=req.n, seed=req.seed)
+    personas = pb.sample(distribution, n=req.n, seed=req.seed, locale=locale)
 
     # 3. 场景（含 M4 media_pool；P4: locale 控制 LLM prompt 语言）
     kind = DecisionKind(req.scenario.kind)

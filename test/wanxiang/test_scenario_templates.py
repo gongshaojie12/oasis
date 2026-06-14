@@ -57,7 +57,10 @@ def test_instantiate_choose_uses_default_options():
     values = {n: "x" for n in var_names}
     out = instantiate(t, values)
     assert out["kind"] == "choose"
-    assert out["options"] == list(t.default_options)
+    # P5: default_options is bilingual {"zh": [...], "en": [...]} — default
+    # locale is zh, so the instantiated options should equal the zh list.
+    assert t.default_options is not None
+    assert out["options"] == list(t.default_options["zh"])
 
 
 def test_instantiate_choose_with_override_options():

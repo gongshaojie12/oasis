@@ -43,7 +43,9 @@ def test_en_locale_renders_english_headings_and_translated_labels():
     # trait label translated
     assert "city" in out
     assert "gender" in out
-    # values are NOT translated in P4 (P5 yaml refactor)
+    # P5 note: this Persona is constructed in zh manually (not via the
+    # locale-aware builder), so its stored values stay Chinese — the en
+    # prompt walks the stored data as-is.
     assert "北京" in out
     # zh sectional bracket should not appear in en
     assert "【人口特征】" not in out
