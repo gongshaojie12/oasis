@@ -10,7 +10,6 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from wanxiang.api.tasks import TaskStore
 from wanxiang.api.tenancy import TenantStore
 
 
@@ -39,8 +38,14 @@ def create_app() -> FastAPI:
 
     # 启动时加载租户表（默认 demo 租户；生产由 WANXIANG_TENANTS_JSON 注入）
     app.state.tenant_store = TenantStore.from_env()
-    # M3-2：进程内异步任务存储（重启丢失；生产替换为 Redis-backed）。
-    app.state.task_store = TaskStore()
+    # M3-6：WANXIANG_TASKS_DB 设置则启用 SQLite 持久化，否则进程内内存 store。
+    db_path = os.environ.get("WANXIANG_TASKS_DB")
+    if db_path:
+        from wanxiang.api.task_store_sqlite import SqliteTaskStore
+        app.state.task_store = SqliteTaskStore(db_path)
+    else:
+        from wanxiang.api.tasks import TaskStore
+        app.state.task_store = TaskStore()
 
     app.add_middleware(
         CORSMiddleware,

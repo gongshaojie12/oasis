@@ -61,3 +61,12 @@ class TaskStore:
                 return
             for k, v in fields.items():
                 setattr(t, k, v)
+
+    def list_for_tenant(self, tenant_id: str, limit: int = 20,
+                        offset: int = 0) -> list[SimulationTask]:
+        with self._lock:
+            items = [t for t in self._tasks.values()
+                     if t.tenant_id == tenant_id]
+        # newest first
+        items.sort(key=lambda t: t.created_at, reverse=True)
+        return items[offset:offset + limit]

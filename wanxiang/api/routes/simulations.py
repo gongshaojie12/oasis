@@ -6,7 +6,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from wanxiang.api.auth import require_tenant
 from wanxiang.api.deps import get_model_factory
@@ -59,6 +59,18 @@ async def create_async_simulation(
     # 后台跑；同步立即返
     asyncio.create_task(_run_task(store, task.id, req, model_factory))
     return _serialize(task)
+
+
+@router.get("/simulations")
+async def list_simulations(
+    request: Request,
+    limit: int = Query(20, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    tenant: TenantInfo = Depends(require_tenant),
+):
+    store = _store(request)
+    tasks = store.list_for_tenant(tenant.tenant_id, limit=limit, offset=offset)
+    return [_serialize(t) for t in tasks]
 
 
 @router.get("/simulations/{task_id}")

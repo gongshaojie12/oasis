@@ -103,6 +103,32 @@ curl http://localhost:8000/v1/simulations/<task_id> \
 
 任务存储为进程内（重启丢失）；生产规模化需替换为 Redis-backed store。
 
+### 持久化（M3-6）
+
+设置 `WANXIANG_TASKS_DB=/data/wanxiang.db`（任何宿主可写路径）启用 SQLite 持久化：
+
+- 任务/结果跨重启保留
+- 同一 tenant 可拉历史：`GET /v1/simulations?limit=20&offset=0`
+- 不设此环境变量时回退为内存 store（开发/演示用）
+
+Docker 用户在 `docker-compose.yml` 增加：
+
+```yaml
+services:
+  api:
+    environment:
+      - WANXIANG_TASKS_DB=/data/wanxiang.db
+    volumes:
+      - ./data:/data
+```
+
+历史列表 API：
+
+```bash
+curl http://localhost:8000/v1/simulations?limit=20 \
+  -H "X-API-Key: demo-key"
+```
+
 ## 健康检查
 
 - `GET /healthz` 返回 `{"status":"ok"}` 即服务存活
