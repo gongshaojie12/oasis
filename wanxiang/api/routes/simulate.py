@@ -87,9 +87,19 @@ async def run_simulation_pipeline(
         runner = BatchRunner(decision_concurrency=req.concurrency)
         results = await runner.run_all(personas, scenario, model_call)
     else:
+        # M3+ 微信关系可见性：wechat 平台时构建小世界好友图，每个 focal
+        # 在 social 轮次只看到自己好友的 L2 输出。其他平台保持全局公开广场。
+        friend_graph = None
+        persona_ids = None
+        if req.platform == "wechat":
+            from wanxiang.social_graph.graph import generate_small_world
+            persona_ids = [str(p.agent_id) for p in personas]
+            friend_graph = generate_small_world(
+                persona_ids, k=6, rewire_p=0.1, seed=req.seed)
         social = SocialRoundsRunner(
             rounds=req.rounds, decision_concurrency=req.concurrency,
-            dialect=dialect)
+            dialect=dialect,
+            friend_graph=friend_graph, persona_ids=persona_ids)
         results, _hist = await social.run(personas, scenario, model_call)
 
     # 6. 聚合 + 报告

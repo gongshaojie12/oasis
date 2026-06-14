@@ -417,6 +417,22 @@ curl -X POST http://localhost:8000/v1/simulations/sweep \
 - 注入位置：system prompt 顶部（feed → persona 画像 → 用户提问），
   以保证不被对话过程"洗掉"。
 
+### 微信关系可见性 (M3+)
+
+当 `platform=wechat` 时，social 模式自动构建小世界好友图（Watts-Strogatz, k=6,
+rewire_p=0.1，seed 取自 `req.seed`）。每个 agent 在 social 轮次中只能"看到"
+自己好友的 L2 输出 — 与微信朋友圈"非好友不可见"的产品特性一致。
+
+实现位置：`wanxiang/social_graph/graph.py` + `wanxiang/simulation/social.py`
+中的 `per_focal_peer_signal` / `SocialRoundsRunner._run_per_focal_round`。
+
+其他平台 (xiaohongshu/douyin/weibo/twitter/reddit) 保持公开广场不变 —
+仍使用全局聚合后的同辈参考，对外行为零回归。
+
+n ≤ 6 时退化为完全图（所有人互为好友），适合小样本快速测试。
+焦点 agent 若没有任何好友则注入中立占位 `（暂无同辈数据）`，决策回退到
+仅基于 persona + scenario。
+
 ## 下一步（路线图）
 
 - ~~M3-2 异步任务：长时间模拟改为 task_id + 轮询，避免 HTTP 超时~~ ✓ 已完成
