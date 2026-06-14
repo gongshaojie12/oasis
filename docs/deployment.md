@@ -290,6 +290,45 @@ curl "http://localhost:8000/v1/usage/monthly?year=2026&month=6" -H "X-API-Key: d
 
 数据存储沿用 `WANXIANG_TASKS_DB`（SQLite / PG / 内存）；同一 DSN 同时存 task 与 usage（两张独立表）。
 
+### 报告增强 (M6+)
+
+在 M6 基础（aggregate 统计 + 因果归因 + 反事实推演）之上，新增 4 项报告维度：
+
+| 维度 | 模块 | 触发条件 | 说明 |
+|---|---|---|---|
+| 劝退原因构成 | `wanxiang/reporting/rejection.py` | RATE/SENTIMENT/CLICK_PROBABILITY 低于阈值，或 CHOOSE 非首选 | 关键词桶（中英双语）归类被拒/低评样本的 `reasoning` 文本 |
+| 群体情绪演化 | `wanxiang/reporting/trajectory.py` | `rounds > 0`（社交模式）且 ≥2 轮 | 每轮的 `n_valid / mean / p25 / p75`，揭示从众/分化趋势 |
+| LLM 自然语言解读 | `wanxiang/reporting/commentary.py` | 任意时刻，由调用方提供 `model_call` | 150-250 字中文执行摘要，结论先行，不复述数字 |
+| PDF 导出 | `wanxiang/reporting/pdf.py` | 任意 markdown 报告 | 纯 Python（`reportlab` + 内置 `STSong-Light` CIDFont），无外部二进制依赖 |
+
+`build_report(...)` 新增三个可选 kwarg：`rejection_analysis` / `trajectory` / `commentary`。
+`render_markdown(...)` 在原有节之后追加「## 劝退原因构成」「## 群体情绪演化」「## LLM 解读」三节（按需）。
+
+**PDF 端点**：
+
+```bash
+# 直接喂 markdown
+curl -X POST http://localhost:8000/v1/reports/pdf \
+  -H "X-API-Key: demo-key" -H "Content-Type: application/json" \
+  -d '{"markdown": "# 报告\n\n正文"}' \
+  -o report.pdf
+
+# 或喂已完成异步任务的 ID（从 task_store 取 result.markdown）
+curl -X POST http://localhost:8000/v1/reports/pdf \
+  -H "X-API-Key: demo-key" -H "Content-Type: application/json" \
+  -d '{"task_id": "<uuid>"}' \
+  -o report.pdf
+```
+
+约束：`markdown` 与 `task_id` 必须二选一（同给或同空 → 400）；
+任务不存在或非自有 → 404；未完成 → 409；reportlab 未安装 → 503。
+
+依赖安装：
+
+```bash
+pip install reportlab        # ~2 MB pure Python
+```
+
 ## 下一步（路线图）
 
 - ~~M3-2 异步任务：长时间模拟改为 task_id + 轮询，避免 HTTP 超时~~ ✓ 已完成

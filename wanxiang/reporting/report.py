@@ -39,6 +39,9 @@ def build_report(
     fidelity: FidelityReport | None = None,
     causal: Any = None,
     counterfactual: Any = None,
+    rejection_analysis: dict[str, Any] | None = None,
+    trajectory: list[dict[str, Any]] | list[Any] | None = None,
+    commentary: str | None = None,
 ) -> dict[str, Any]:
     if aggregate.n_total == 0:
         raise ValueError("cannot report on empty AggregateReport")
@@ -68,6 +71,7 @@ def build_report(
         if fidelity is not None:
             out["fidelity"] = _fidelity_block(fidelity)
         _attach_causal_counterfactual(out, causal, counterfactual)
+        _attach_m6_plus(out, rejection_analysis, trajectory, commentary)
         return out
 
     recommendation: dict[str, Any] = {}
@@ -102,7 +106,49 @@ def build_report(
     if fidelity is not None:
         out["fidelity"] = _fidelity_block(fidelity)
     _attach_causal_counterfactual(out, causal, counterfactual)
+    _attach_m6_plus(out, rejection_analysis, trajectory, commentary)
     return out
+
+
+def _normalize_trajectory(
+    traj: list[Any] | None,
+) -> list[dict[str, Any]] | None:
+    if traj is None:
+        return None
+    out: list[dict[str, Any]] = []
+    for p in traj:
+        if isinstance(p, dict):
+            out.append({
+                "round_idx": p.get("round_idx"),
+                "n_valid": p.get("n_valid"),
+                "mean": p.get("mean"),
+                "p25": p.get("p25"),
+                "p75": p.get("p75"),
+            })
+        else:
+            # dataclass-like (TrajectoryPoint)
+            out.append({
+                "round_idx": getattr(p, "round_idx", None),
+                "n_valid": getattr(p, "n_valid", None),
+                "mean": getattr(p, "mean", None),
+                "p25": getattr(p, "p25", None),
+                "p75": getattr(p, "p75", None),
+            })
+    return out
+
+
+def _attach_m6_plus(
+    out: dict[str, Any],
+    rejection_analysis: dict[str, Any] | None,
+    trajectory: list[Any] | None,
+    commentary: str | None,
+) -> None:
+    """M6+ 三件套：rejection / trajectory / commentary。
+    始终设置 key（None 表示未提供），让前端统一判断。
+    """
+    out["rejection_analysis"] = rejection_analysis if rejection_analysis else None
+    out["trajectory"] = _normalize_trajectory(trajectory)
+    out["commentary"] = commentary if commentary else None
 
 
 def _attach_causal_counterfactual(out: dict[str, Any],
@@ -229,6 +275,50 @@ def render_markdown(report: dict[str, Any]) -> str:
                 lines.append(
                     f"| {o['label']} | {o['metric']:.2f} | "
                     f"{o['delta_vs_baseline']:+.2f} |")
+        lines.append("")
+
+    # ---- M6+ 三件套 ----
+    rej = report.get("rejection_analysis")
+    if rej and rej.get("total_rejected", 0) > 0:
+        lines.append("## 劝退原因构成")
+        lines.append(
+            f"被拒/低评样本共 **{rej['total_rejected']}** 例，按原因分布如下：")
+        lines.append("")
+        if rej.get("buckets"):
+            lines.append("| 原因 | 占比 | 示例 |")
+            lines.append("|---|---|---|")
+            total = rej["total_rejected"] or 1
+            for bucket, count in rej["buckets"].items():
+                pct = count / total
+                ex = (rej.get("examples", {}).get(bucket) or [""])[0]
+                ex_short = ex[:30] + ("…" if len(ex) > 30 else "")
+                lines.append(
+                    f"| {bucket} | {count}（{pct:.1%}）| {ex_short} |")
+        lines.append("")
+
+    traj = report.get("trajectory")
+    if traj and len(traj) >= 2:
+        lines.append("## 群体情绪演化")
+        lines.append("各轮次的群体均值/中段（p25–p75）：")
+        lines.append("")
+        lines.append("| round | n_valid | mean | p25 | p75 |")
+        lines.append("|---|---|---|---|---|")
+        for p in traj:
+            mean = p.get("mean")
+            p25 = p.get("p25")
+            p75 = p.get("p75")
+            mean_s = f"{mean:.2f}" if isinstance(mean, (int, float)) else "—"
+            p25_s = f"{p25:.2f}" if isinstance(p25, (int, float)) else "—"
+            p75_s = f"{p75:.2f}" if isinstance(p75, (int, float)) else "—"
+            lines.append(
+                f"| {p.get('round_idx')} | {p.get('n_valid')} | "
+                f"{mean_s} | {p25_s} | {p75_s} |")
+        lines.append("")
+
+    commentary = report.get("commentary")
+    if commentary:
+        lines.append("## LLM 解读")
+        lines.append(commentary)
         lines.append("")
 
     lines.append("---")

@@ -135,4 +135,11 @@ def create_app() -> FastAPI:
     except Exception:
         pass
 
+    # M6+：报告 PDF 导出端点
+    try:
+        from wanxiang.api.routes.reports import router as reports_router
+        app.include_router(reports_router, prefix="/v1")
+    except Exception:
+        pass
+
     return app
