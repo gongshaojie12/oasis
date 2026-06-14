@@ -48,6 +48,14 @@ class ModelConfig(BaseModel):
         return self
 
 
+class CompliancePolicy(BaseModel):
+    """M3-12 合规策略（可选）。所有字段默认 no-op。"""
+    redact_pii: bool = False           # 报告所有字符串叶子做 PII 脱敏
+    dp_epsilon: float | None = None    # 若设，对聚合数值加 Laplace 噪声
+    dp_sensitivity: float = 1.0        # 个体贡献敏感度（默认 1.0）
+    moderate_material: bool = False    # scenario.material 过预设审核器
+
+
 class SimulateRequest(BaseModel):
     distribution_path: str
     n: int = Field(..., gt=0, le=100_000)
@@ -58,6 +66,8 @@ class SimulateRequest(BaseModel):
     model: ModelConfig
     # L3 平台方言名（如 "wechat" / "douyin"），可选；仅在 rounds>0 生效
     platform: str | None = None
+    # M3-12 合规策略（可选；不传 → 行为不变）
+    compliance: CompliancePolicy | None = None
 
 
 class SimulateResponse(BaseModel):

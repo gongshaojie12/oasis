@@ -36,6 +36,8 @@ router = APIRouter()
 async def run_simulation_pipeline(
     req: SimulateRequest,
     model_factory,
+    *,
+    moderator=None,
 ) -> SimulateResponse:
     """共享的端到端模拟流水线。
 
@@ -43,8 +45,25 @@ async def run_simulation_pipeline(
     抛出普通异常（FileNotFoundError 等），由调用方决定如何转换：
       - 同步路由把 FileNotFoundError 转 HTTP 400；
       - 异步任务把任何异常装到 task.error 并标 FAILED。
+
+    M3-12：可选传入 `moderator`（实现 ModeratorProtocol），当
+    `req.compliance.moderate_material` 时审核 scenario.material。
     """
     started = time.monotonic()
+
+    # M3-12 合规：material 审核（在加载分布/造人之前，失败立即返回）
+    policy = getattr(req, "compliance", None)
+    if policy is not None and policy.moderate_material:
+        if moderator is None:
+            from wanxiang.compliance.moderation import NoOpModerator
+            moderator = NoOpModerator()
+        from wanxiang.compliance.moderation import ModerationVerdict
+        verdict = await moderator.check(req.scenario.material)
+        if verdict.verdict == ModerationVerdict.UNSAFE:
+            cats = ",".join(verdict.categories) if verdict.categories else "unsafe"
+            raise HTTPException(
+                status_code=400,
+                detail=f"material flagged by moderator: {cats}")
 
     # 1. 分布加载（文件不存在 → FileNotFoundError）
     distribution = load_distribution(req.distribution_path)
@@ -106,7 +125,38 @@ async def run_simulation_pipeline(
     agg = aggregate(results)
     report = build_report(scenario=scenario, aggregate=agg,
                           persona_count=req.n)
-    markdown = render_markdown(report)
+
+    # M3-12 合规：DP 噪声 + PII 脱敏
+    if policy is not None:
+        # 6a. 暴露 aggregate 视图（mean + quartiles + n_valid）到 report，
+        #     方便后续 DP 与下游可视化。
+        agg_view = _aggregate_view_from_stats(agg.stats, agg.n_valid)
+        if agg_view is not None:
+            if policy.dp_epsilon is not None:
+                from wanxiang.compliance.dp import apply_dp_to_aggregate
+                agg_view = apply_dp_to_aggregate(
+                    agg_view,
+                    epsilon=policy.dp_epsilon,
+                    sensitivity=policy.dp_sensitivity,
+                )
+                # 同步把 DP'd mean / p25 / p75 写回 recommendation，
+                # 保持现有消费者的视图一致。
+                rec = report.get("recommendation") or {}
+                if "mean" in rec and agg_view.get("mean") is not None:
+                    rec["mean"] = agg_view["mean"]
+                if "confidence_band" in rec:
+                    q = agg_view.get("quartiles") or {}
+                    rec["confidence_band"] = (q.get("p25"), q.get("p75"))
+                report["recommendation"] = rec
+            report["aggregate"] = agg_view
+        if policy.redact_pii:
+            from wanxiang.compliance.pii import redact_report, redact_text
+            report = redact_report(report)
+            markdown = redact_text(render_markdown(report))
+        else:
+            markdown = render_markdown(report)
+    else:
+        markdown = render_markdown(report)
 
     elapsed_ms = int((time.monotonic() - started) * 1000)
     return SimulateResponse(
@@ -115,6 +165,22 @@ async def run_simulation_pipeline(
         error_count=agg.error_count, error_rate=agg.error_rate,
         report=report, markdown=markdown, elapsed_ms=elapsed_ms,
     )
+
+
+def _aggregate_view_from_stats(stats: dict, n_valid: int) -> dict | None:
+    """Build a {mean, quartiles:{p25,p50,p75}, n_valid} dict from an
+    AggregateReport.stats. Returns None for CHOOSE / empty aggregates."""
+    if not stats or "mean" not in stats:
+        return None
+    return {
+        "mean": stats.get("mean"),
+        "quartiles": {
+            "p25": stats.get("p25"),
+            "p50": stats.get("median"),
+            "p75": stats.get("p75"),
+        },
+        "n_valid": n_valid,
+    }
 
 
 @router.post("/simulate", response_model=SimulateResponse)
@@ -127,8 +193,10 @@ async def simulate(
     kind_label = req.scenario.kind
     metrics.inc("simulate.requested",
                 {"kind": kind_label, "mode": "sync"})
+    moderator = getattr(request.app.state, "moderator", None)
     try:
-        resp = await run_simulation_pipeline(req, model_factory)
+        resp = await run_simulation_pipeline(
+            req, model_factory, moderator=moderator)
         metrics.observe("simulate.elapsed_ms", resp.elapsed_ms,
                         {"kind": kind_label})
         # M3-10：成功的同步模拟也写计费事件

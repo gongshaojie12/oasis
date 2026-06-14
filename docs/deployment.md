@@ -456,6 +456,38 @@ n ≤ 6 时退化为完全图（所有人互为好友），适合小样本快速
 焦点 agent 若没有任何好友则注入中立占位 `（暂无同辈数据）`，决策回退到
 仅基于 persona + scenario。
 
+### 合规模块 (M3-12)
+
+请求体可附 `compliance` 策略：
+
+```json
+{
+  "compliance": {
+    "redact_pii": true,            // 报告里所有 PII 替换为 [REDACTED:<kind>]
+    "dp_epsilon": 1.0,             // 聚合数值加 ε-DP Laplace 噪声
+    "dp_sensitivity": 1.0,         // 个体贡献敏感度（评分 0-10 建议 1.0）
+    "moderate_material": true      // scenario.material 过预设审核器
+  }
+}
+```
+
+**PII 检测**：覆盖 中国手机号 / 18 位身份证 / 13-19 位银行卡 / 邮箱。重叠时按优先级
+（身份证 > 银行卡 > 手机）排他匹配，避免误标。
+
+**差分隐私**：Laplace(scale = sensitivity / epsilon)。`epsilon=1.0` 强保护，
+`10.0` 弱保护。仅对数值 kind 的 `mean / p25 / p50 / p75` 加噪，CHOOSE 类型
+聚合不受影响。结果同时写入 `report.aggregate` 与 `report.recommendation`，
+便于 chat.html 工件卡与下游消费者共用。
+
+**内容审核**：默认 `NoOpModerator`（全部 SAFE）。生产环境通过
+`app.state.moderator =` 注入：
+
+- `KeywordBlocklistModerator(["禁词1","禁词2"])` — 本地兜底
+- 接阿里云/腾讯云/OpenAI moderation — 实现 `ModeratorProtocol.check(text)
+  -> ModerationResult` 即可
+
+不传 `compliance` 字段 → 行为完全等同于历史接口。
+
 ## 下一步（路线图）
 
 - ~~M3-2 异步任务：长时间模拟改为 task_id + 轮询，避免 HTTP 超时~~ ✓ 已完成

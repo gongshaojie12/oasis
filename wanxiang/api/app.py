@@ -54,6 +54,10 @@ def create_app() -> FastAPI:
     # M3-11：SSE 事件总线（in-memory，per-app 实例）
     from wanxiang.api.events import EventBus
     app.state.event_bus = EventBus()
+    # M3-12：默认内容审核器（NoOp）。生产可注入 KeywordBlocklistModerator
+    # 或云厂商 moderation 实现。
+    from wanxiang.compliance.moderation import NoOpModerator
+    app.state.moderator = NoOpModerator()
 
     app.add_middleware(
         CORSMiddleware,
