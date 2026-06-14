@@ -84,6 +84,25 @@ curl -X POST http://localhost:8000/v1/simulate \
 
 `/healthz` 与 `/`（chat.html）不需要鉴权。
 
+### 异步任务（M3-2）
+
+大规模模拟（n > 500）建议走异步路径，避免 HTTP 超时：
+
+```bash
+# 1. 创建任务，立即返 202 + task_id
+curl -X POST http://localhost:8000/v1/simulations/async \
+  -H "X-API-Key: demo-key" -H "Content-Type: application/json" \
+  -d '{...}'
+# => {"task_id": "...", "status": "pending", ...}
+
+# 2. 轮询状态（pending/running/done/failed）
+curl http://localhost:8000/v1/simulations/<task_id> \
+  -H "X-API-Key: demo-key"
+# => {"status":"done", "result":{...}, ...}
+```
+
+任务存储为进程内（重启丢失）；生产规模化需替换为 Redis-backed store。
+
 ## 健康检查
 
 - `GET /healthz` 返回 `{"status":"ok"}` 即服务存活
@@ -96,7 +115,7 @@ curl -X POST http://localhost:8000/v1/simulate \
 
 ## 下一步（路线图）
 
-- M3-2 异步任务：长时间模拟改为 task_id + 轮询，避免 HTTP 超时
+- ~~M3-2 异步任务：长时间模拟改为 task_id + 轮询，避免 HTTP 超时~~ ✓ 已完成
 - ~~M3-3 多租户：API key 鉴权 + 配额（每租户 RPM 上限）~~ ✓ 已完成
 - M3-4 chat.html 接入：前端从静态原型切到真实 API
 - 持久化：sqlite/postgres 存沙盒与历史

@@ -10,6 +10,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from wanxiang.api.tasks import TaskStore
 from wanxiang.api.tenancy import TenantStore
 
 
@@ -38,6 +39,8 @@ def create_app() -> FastAPI:
 
     # 启动时加载租户表（默认 demo 租户；生产由 WANXIANG_TENANTS_JSON 注入）
     app.state.tenant_store = TenantStore.from_env()
+    # M3-2：进程内异步任务存储（重启丢失；生产替换为 Redis-backed）。
+    app.state.task_store = TaskStore()
 
     app.add_middleware(
         CORSMiddleware,
@@ -73,6 +76,14 @@ def create_app() -> FastAPI:
     try:
         from wanxiang.api.routes.simulate import router as simulate_router
         app.include_router(simulate_router, prefix="/v1")
+    except Exception:
+        pass
+
+    # M3-2：异步模拟任务路由（独立 try 块，不影响同步路由挂载）
+    try:
+        from wanxiang.api.routes.simulations import (
+            router as simulations_router)
+        app.include_router(simulations_router, prefix="/v1")
     except Exception:
         pass
 

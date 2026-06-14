@@ -19,20 +19,21 @@ from wanxiang.simulation import (BatchRunner, DecisionKind, ScenarioConfig,
 router = APIRouter()
 
 
-@router.post("/simulate", response_model=SimulateResponse)
-async def simulate(
+async def run_simulation_pipeline(
     req: SimulateRequest,
-    model_factory=Depends(get_model_factory),
-    tenant: TenantInfo = Depends(require_tenant),
-):
+    model_factory,
+) -> SimulateResponse:
+    """共享的端到端模拟流水线。
+
+    供同步路由 (/v1/simulate) 和异步任务路由 (/v1/simulations/async) 复用。
+    抛出普通异常（FileNotFoundError 等），由调用方决定如何转换：
+      - 同步路由把 FileNotFoundError 转 HTTP 400；
+      - 异步任务把任何异常装到 task.error 并标 FAILED。
+    """
     started = time.monotonic()
 
-    # 1. 分布加载（文件不存在 → 400）
-    try:
-        distribution = load_distribution(req.distribution_path)
-    except FileNotFoundError as e:
-        raise HTTPException(status_code=400,
-                            detail=f"distribution file not found: {e}")
+    # 1. 分布加载（文件不存在 → FileNotFoundError）
+    distribution = load_distribution(req.distribution_path)
 
     # 2. 造人
     pb = PersonaBuilder()
@@ -72,3 +73,16 @@ async def simulate(
         error_count=agg.error_count, error_rate=agg.error_rate,
         report=report, markdown=markdown, elapsed_ms=elapsed_ms,
     )
+
+
+@router.post("/simulate", response_model=SimulateResponse)
+async def simulate(
+    req: SimulateRequest,
+    model_factory=Depends(get_model_factory),
+    tenant: TenantInfo = Depends(require_tenant),
+):
+    try:
+        return await run_simulation_pipeline(req, model_factory)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=400,
+                            detail=f"distribution file not found: {e}")
