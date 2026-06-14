@@ -22,3 +22,15 @@ def default_model_factory(cfg: ModelConfig) -> ModelCall:
 def get_model_factory():
     """FastAPI dependency: returns the factory CALLABLE itself."""
     return default_model_factory
+
+
+def get_model_factory_for_worker():
+    """Worker-side model factory.
+
+    Celery workers don't have FastAPI's Depends chain, so they call this
+    helper directly to obtain the same factory the API process uses.
+    Reads provider config from each request's ``model`` field as usual;
+    secret material (e.g. DeepSeek API key) must come from env vars that
+    the worker container also has access to.
+    """
+    return default_model_factory

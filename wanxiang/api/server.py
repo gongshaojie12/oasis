@@ -26,6 +26,16 @@ class ServerSettings(BaseSettings):
                        "trace"] = "info"
     # 给业务代码使用的默认 DeepSeek key（可选；未配置则只能用 stub provider）
     deepseek_api_key: str | None = None
+    # ---- Stage 1+2: distributed-mode toggles (默认与单机模式完全一致) ----
+    # task_queue: "asyncio" → in-process asyncio.create_task；
+    #             "celery"  → 通过 Celery 投递到 worker 进程。
+    task_queue: Literal["asyncio", "celery"] = "asyncio"
+    # event_bus: "memory" → 进程内 InMemoryEventBus；
+    #            "redis"  → 跨进程 RedisEventBus（Pub/Sub + LIST history）。
+    event_bus: Literal["memory", "redis"] = "memory"
+    redis_url: str = "redis://localhost:6379/2"
+    celery_broker: str = "redis://localhost:6379/0"
+    celery_backend: str = "redis://localhost:6379/1"
 
 
 def main(argv: list[str] | None = None) -> int:

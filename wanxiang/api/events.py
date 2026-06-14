@@ -1,20 +1,27 @@
 # =========== Copyright 2026 @ WANXIANG. All Rights Reserved. ===========
-"""SSE 事件总线 (M3-11).
+"""SSE 事件总线 (M3-11 + Stage 1+2).
 
-每个异步 task_id 对应一个 asyncio.Queue。任务执行时往 queue 里放事件，
-SSE 路由订阅 queue 并以 text/event-stream 推送。
+两种实现：
+- ``InMemoryEventBus`` — 进程内 asyncio.Queue + 环形 history buffer。
+  单机模式默认使用，零外部依赖。
+- ``RedisEventBus`` — 跨进程 Redis Pub/Sub + LIST history。
+  Celery worker 模式使用，多进程/多机器共享事件流。
 
 设计原则：
-- 即使没有订阅者，事件也不阻塞写入（队列容量大，溢出时丢最早）。
-- 多个订阅者共享同一 queue 是错的（先到先得）；多订阅需扇出。MVP 单订阅即可。
-- 任务结束时往 queue 推一个 None 哨兵，订阅端读到立即关闭流。
-- 维护 per-task 的环形 history buffer，让"迟到"订阅者能补看到 task 已经发出
-  的事件（subscribe 先把 history 全部 yield 出去，再切到 live queue）。
+- 即使没有订阅者，事件也不阻塞写入（in-memory: 队列容量大，溢出时丢最早；
+  redis: LIST + LTRIM 限长）。
+- 维护 per-task history，让"迟到"订阅者能补看到 task 已经发出的事件
+  （subscribe 先重放 history，再切到 live channel/queue）。
+- 任务结束时往 queue/channel 推一个结束哨兵，订阅端读到立即关闭流。
+
+向后兼容：``EventBus`` 保留为 ``InMemoryEventBus`` 别名，老代码 import 不破坏。
+环境切换：``get_event_bus()`` 根据 ``WANXIANG_EVENT_BUS`` 选择实现。
 """
 from __future__ import annotations
 
 import asyncio
 import json
+import os
 import time
 from collections import deque
 from dataclasses import dataclass, field
@@ -40,7 +47,7 @@ class SimulationEvent:
         return f"event: {self.event}\ndata: {payload}\n\n"
 
 
-class EventBus:
+class InMemoryEventBus:
     """Per-task event channels + per-task event ring buffer for replay.
 
     维护:
@@ -132,3 +139,134 @@ class EventBus:
     def history(self, task_id: str) -> list[SimulationEvent]:
         """Snapshot of buffered events (for tests + replay introspection)."""
         return list(self._history.get(task_id, []))
+
+
+# Backward-compat: keep ``EventBus`` importable as the in-memory implementation.
+EventBus = InMemoryEventBus
+
+
+# ---------------------------------------------------------------------------
+# Redis-backed event bus (Stage 1+2 distributed mode)
+# ---------------------------------------------------------------------------
+
+_CLOSE_SENTINEL = "__CLOSE__"
+
+
+class RedisEventBus:
+    """Cross-process event bus using Redis LIST (history) + Pub/Sub (live).
+
+    Wire conventions:
+    - History key: ``wanxiang:events:{task_id}`` (Redis LIST, capped by LTRIM)
+    - Live channel: same key, used as a Pub/Sub channel
+    - Close signal: a final ``{"event":"__CLOSE__", ...}`` message published
+      to the channel **and** appended to the LIST; ``history()`` strips it.
+
+    All event payloads are JSON-encoded (UTF-8, no ASCII escaping).
+    """
+
+    def __init__(self, redis_url: str, *, history_size: int = 1024,
+                 ttl_seconds: int = 7 * 24 * 3600):
+        import redis  # lazy import — only when distributed mode is enabled
+        self._r = redis.Redis.from_url(redis_url, decode_responses=True)
+        self._history_size = history_size
+        self._ttl = ttl_seconds
+
+    @staticmethod
+    def _key(task_id: str) -> str:
+        return f"wanxiang:events:{task_id}"
+
+    def publish(self, task_id: str, event: str, data: dict) -> None:
+        ev_dict = {"event": event, "data": data, "timestamp": time.time()}
+        s = json.dumps(ev_dict, ensure_ascii=False)
+        key = self._key(task_id)
+        pipe = self._r.pipeline()
+        pipe.rpush(key, s)
+        # LTRIM keeps the last `history_size` entries.
+        pipe.ltrim(key, -self._history_size, -1)
+        pipe.expire(key, self._ttl)
+        pipe.publish(key, s)
+        pipe.execute()
+        # publish() must explicitly return None (tests rely on it).
+        return None
+
+    def close(self, task_id: str) -> None:
+        self.publish(task_id, _CLOSE_SENTINEL, {"task_id": task_id})
+
+    def history(self, task_id: str) -> list[SimulationEvent]:
+        raw = self._r.lrange(self._key(task_id), 0, -1)
+        out: list[SimulationEvent] = []
+        for s in raw:
+            try:
+                d = json.loads(s)
+            except (TypeError, ValueError):
+                continue
+            if d.get("event") == _CLOSE_SENTINEL:
+                continue
+            out.append(SimulationEvent(
+                event=d["event"], data=d.get("data") or {},
+                timestamp=d.get("timestamp") or time.time()))
+        return out
+
+    async def subscribe(self, task_id: str) -> AsyncIterator[SimulationEvent]:
+        """Replay history, then subscribe to the live Pub/Sub channel.
+
+        Yields ``SimulationEvent`` until the close sentinel is received.
+        Note: as with the in-memory bus there's a small overlap window;
+        we snapshot history length and skip that many live messages to
+        avoid double-emission.
+        """
+        history_snapshot = self.history(task_id)
+        skip = len(history_snapshot)
+        for ev in history_snapshot:
+            yield ev
+
+        pubsub = self._r.pubsub()
+        channel = self._key(task_id)
+        try:
+            pubsub.subscribe(channel)
+            while True:
+                msg = pubsub.get_message(ignore_subscribe_messages=True,
+                                         timeout=1.0)
+                if msg is None:
+                    # Give the event loop a tick so we don't busy-spin
+                    await asyncio.sleep(0.05)
+                    continue
+                raw = msg.get("data")
+                if not raw:
+                    continue
+                try:
+                    d = json.loads(raw)
+                except (TypeError, ValueError):
+                    continue
+                if d.get("event") == _CLOSE_SENTINEL:
+                    return
+                if skip > 0:
+                    skip -= 1
+                    continue
+                yield SimulationEvent(
+                    event=d["event"], data=d.get("data") or {},
+                    timestamp=d.get("timestamp") or time.time())
+        finally:
+            try:
+                pubsub.unsubscribe(channel)
+            except Exception:  # noqa: BLE001
+                pass
+            try:
+                pubsub.close()
+            except Exception:  # noqa: BLE001
+                pass
+
+
+def get_event_bus():
+    """Factory: pick implementation based on ``WANXIANG_EVENT_BUS``.
+
+    - ``"memory"`` (default) → :class:`InMemoryEventBus`
+    - ``"redis"`` → :class:`RedisEventBus` configured by
+      ``WANXIANG_REDIS_URL`` (default ``redis://localhost:6379/2``).
+    """
+    mode = os.environ.get("WANXIANG_EVENT_BUS", "memory").lower()
+    if mode == "redis":
+        url = os.environ.get("WANXIANG_REDIS_URL",
+                             "redis://localhost:6379/2")
+        return RedisEventBus(url)
+    return InMemoryEventBus()

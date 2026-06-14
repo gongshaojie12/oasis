@@ -55,9 +55,10 @@ def create_app() -> FastAPI:
     from wanxiang.api.audit import make_audit_store
     app.state.audit_store = make_audit_store(
         os.environ.get("WANXIANG_TASKS_DB"))
-    # M3-11：SSE 事件总线（in-memory，per-app 实例）
-    from wanxiang.api.events import EventBus
-    app.state.event_bus = EventBus()
+    # M3-11 / Stage 1+2: SSE 事件总线。
+    # 默认 in-memory；设置 WANXIANG_EVENT_BUS=redis 后切到跨进程 Redis 实现。
+    from wanxiang.api.events import get_event_bus
+    app.state.event_bus = get_event_bus()
     # M3-12：默认内容审核器（NoOp）。生产可注入 KeywordBlocklistModerator
     # 或云厂商 moderation 实现。
     from wanxiang.compliance.moderation import NoOpModerator

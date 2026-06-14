@@ -4,6 +4,7 @@ GET /v1/simulations/{id} —— 查状态/结果。"""
 from __future__ import annotations
 
 import asyncio
+import os
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
@@ -111,6 +112,38 @@ async def _run_task(store: TaskStore, task_id: str, req: SimulateRequest,
             pass
 
 
+def _dispatch_async_simulation(
+    *, req: SimulateRequest, locale: str, tenant_id: str, task_id: str,
+    model_factory, task_store: TaskStore, usage_store, event_bus,
+) -> None:
+    """Hand off the async simulation to either asyncio or Celery.
+
+    Selected by ``WANXIANG_TASK_QUEUE`` env var:
+    - ``"asyncio"`` (default) — schedule ``_run_task`` on the current event loop.
+    - ``"celery"`` — enqueue ``wanxiang.run_simulation`` on the configured
+      broker; in eager mode the call runs synchronously inside ``.delay()``.
+
+    Single-process backward compat: when the env var is unset the behaviour
+    is identical to the pre-Stage-1+2 implementation.
+    """
+    mode = os.environ.get("WANXIANG_TASK_QUEUE", "asyncio").lower()
+    if mode == "celery":
+        # Lazy import so single-process mode never pulls Celery in.
+        from wanxiang.api.celery_tasks import run_simulation_task
+        run_simulation_task.delay(
+            request_dict=req.model_dump(),
+            locale=locale,
+            tenant_id=tenant_id,
+            task_id=task_id,
+        )
+        return
+    # Default: in-process asyncio
+    asyncio.create_task(_run_task(
+        task_store, task_id, req, model_factory,
+        usage_store=usage_store, tenant_id=tenant_id,
+        event_bus=event_bus, locale=locale))
+
+
 @router.post("/simulations/async", status_code=status.HTTP_202_ACCEPTED)
 async def create_async_simulation(
     req: SimulateRequest,
@@ -131,11 +164,11 @@ async def create_async_simulation(
     # P3: capture locale now so background task renders in the requester's
     # language (request.state goes away once the response is sent).
     locale = get_request_locale(request)
-    # 后台跑；同步立即返
-    asyncio.create_task(_run_task(
-        store, task.id, req, model_factory,
-        usage_store=usage_store, tenant_id=tenant.tenant_id,
-        event_bus=event_bus, locale=locale))
+    _dispatch_async_simulation(
+        req=req, locale=locale, tenant_id=tenant.tenant_id, task_id=task.id,
+        model_factory=model_factory, task_store=store,
+        usage_store=usage_store, event_bus=event_bus,
+    )
     return _serialize(task)
 
 
