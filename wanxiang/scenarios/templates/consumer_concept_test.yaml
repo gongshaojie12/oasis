@@ -1,0 +1,36 @@
+id: consumer_concept_test
+name: 消费洞察 · 新品概念测试
+description: 测试人群对新品多个变体（口味/包装/卖点等）的偏好排序。
+decision_kind: choose
+material_template: |
+  {brand} 即将推出 {category} 新品 「{product_name}」，零售价 ¥{price}。
+  本次有 {variant_count} 个候选方向供你挑选，请基于个人偏好做出选择。
+question_template: |
+  作为目标人群成员，你最想买哪一个？只能选一个。
+variables:
+  - name: brand
+    label: 品牌名
+    type: text
+    required: true
+  - name: category
+    label: 品类
+    type: text
+    required: true
+    default: 饮品
+  - name: product_name
+    label: 产品名
+    type: text
+    required: true
+  - name: price
+    label: 零售价（元）
+    type: number
+    required: true
+  - name: variant_count
+    label: 候选数量
+    type: number
+    required: false
+    default: 3
+default_options:
+  - 青提
+  - 白桃
+  - 海盐荔枝

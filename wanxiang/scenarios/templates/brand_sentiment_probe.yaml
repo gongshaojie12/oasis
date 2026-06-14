@@ -1,0 +1,28 @@
+id: brand_sentiment_probe
+name: 品牌舆情 · 情感探测
+description: 用一段品牌事件描述测人群情感极性（-1 反感～+1 喜爱）。
+decision_kind: sentiment
+material_template: |
+  关于 {brand} 的事件：
+
+  {event_description}
+
+  事件发生时间：{event_time}
+question_template: |
+  读完上面这段，请给出你此刻对该品牌的态度极性：
+  -1.0 = 非常反感，0 = 中性，+1.0 = 非常喜爱。
+variables:
+  - name: brand
+    label: 品牌名
+    type: text
+    required: true
+  - name: event_description
+    label: 事件描述
+    type: text
+    required: true
+  - name: event_time
+    label: 时间（自由格式）
+    type: text
+    required: false
+    default: 最近
+default_options: null

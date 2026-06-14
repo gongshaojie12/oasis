@@ -87,4 +87,11 @@ def create_app() -> FastAPI:
     except Exception:
         pass
 
+    # M4：场景模板路由
+    try:
+        from wanxiang.api.routes.templates import router as templates_router
+        app.include_router(templates_router, prefix="/v1")
+    except Exception:
+        pass
+
     return app

@@ -113,6 +113,33 @@ curl http://localhost:8000/v1/simulations/<task_id> \
 - OpenAPI 自动文档：`http://<host>:8000/docs`
 - ReDoc 视图：`http://<host>:8000/redoc`
 
+### 场景模板（M4）
+
+无需手写 `ScenarioConfig`——选模板，填空，喂给 `/v1/simulate`。
+
+| id | 类型 | 用途 |
+|---|---|---|
+| `consumer_concept_test` | choose | 消费洞察 · 新品概念测试 |
+| `marketing_ad_ab_test` | rate | 营销预测 · 广告创意 A/B |
+| `brand_sentiment_probe` | sentiment | 品牌舆情 · 情感探测 |
+
+```bash
+# 列表
+curl http://localhost:8000/v1/templates -H "X-API-Key: demo-key"
+
+# 单个详情（含模板原文与变量定义）
+curl http://localhost:8000/v1/templates/marketing_ad_ab_test \
+  -H "X-API-Key: demo-key"
+
+# 实例化（拿到 scenario payload）
+curl -X POST http://localhost:8000/v1/templates/marketing_ad_ab_test/instantiate \
+  -H "X-API-Key: demo-key" -H "Content-Type: application/json" \
+  -d '{"values":{"brand":"X","product_name":"Y","category":"饮品",
+                  "ad_copy":"0糖0卡","price":6},"options":null}'
+# => {"material":"...","question":"...","kind":"rate","options":null}
+# 这个 payload 直接放进 POST /v1/simulate 的 scenario 字段即可。
+```
+
 ## 下一步（路线图）
 
 - ~~M3-2 异步任务：长时间模拟改为 task_id + 轮询，避免 HTTP 超时~~ ✓ 已完成

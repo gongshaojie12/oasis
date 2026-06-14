@@ -1,0 +1,40 @@
+id: marketing_ad_ab_test
+name: 营销预测 · 广告创意 A/B
+description: 给出一个广告创意/卖点文案，估群体购买意愿评分（0-10）。
+decision_kind: rate
+material_template: |
+  广告创意：{ad_copy}
+
+  品牌：{brand}
+  产品：{product_name}（{category}）
+  定价：¥{price}
+  投放渠道：{channel}
+question_template: |
+  看完这条广告，请给出你的购买意愿评分（0=完全不会买，10=肯定会买）。
+variables:
+  - name: brand
+    label: 品牌名
+    type: text
+    required: true
+  - name: product_name
+    label: 产品名
+    type: text
+    required: true
+  - name: category
+    label: 品类
+    type: text
+    required: true
+    default: 消费品
+  - name: ad_copy
+    label: 广告文案 / 卖点
+    type: text
+    required: true
+  - name: price
+    label: 零售价（元）
+    type: number
+    required: true
+  - name: channel
+    label: 投放渠道
+    type: text
+    required: false
+    default: 抖音 / 小红书 信息流
