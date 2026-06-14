@@ -10,6 +10,9 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from wanxiang.api.observability import (AccessLogMiddleware,
+                                          RequestIdMiddleware,
+                                          configure_logging, metrics)
 from wanxiang.api.tenancy import TenantStore
 
 
@@ -36,6 +39,9 @@ def create_app() -> FastAPI:
                   description="万象人群模拟预测平台 API",
                   version="0.0.1")
 
+    # M3-7：访问日志的 handler / 格式（JSON 模式由 WANXIANG_LOG_JSON=1 开启）
+    configure_logging()
+
     # 启动时加载租户表（默认 demo 租户；生产由 WANXIANG_TENANTS_JSON 注入）
     app.state.tenant_store = TenantStore.from_env()
     # M3-6：WANXIANG_TASKS_DB 设置则启用 SQLite 持久化，否则进程内内存 store。
@@ -52,13 +58,23 @@ def create_app() -> FastAPI:
         allow_origins=["*"],
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=["x-tenant-id"],
+        expose_headers=["x-tenant-id", "x-request-id"],
     )
     app.add_middleware(TenantHeaderMiddleware)
+    # M3-7：先加 AccessLog（注册顺序 → AccessLog 在内层），
+    # 再加 RequestId（在外层），这样 RequestIdMiddleware 先跑、
+    # 把 request.state.request_id 准备好，AccessLog 读到。
+    app.add_middleware(AccessLogMiddleware)
+    app.add_middleware(RequestIdMiddleware)
 
     @app.get("/healthz")
     def healthz():
         return {"status": "ok", "version": app.version}
+
+    # M3-7：Prometheus 风格指标抓取端点（非鉴权；生产用网络/防火墙限制）
+    @app.get("/metrics")
+    def metrics_endpoint():
+        return metrics.snapshot()
 
     # M3-4：挂载 docs/prototype 静态资源，让 chat.html 与 /v1/simulate 同源。
     _PROTOTYPE_DIR = os.path.abspath(

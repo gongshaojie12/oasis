@@ -129,6 +129,26 @@ curl http://localhost:8000/v1/simulations?limit=20 \
   -H "X-API-Key: demo-key"
 ```
 
+### 可观测性（M3-7）
+
+**请求追踪**
+所有响应自动带 `X-Request-Id` 头；客户端可主动传 `X-Request-Id` 用作链路 ID。
+
+**指标采集**
+`GET /metrics` 返回内存累积的计数器与直方图 JSON（非鉴权，建议在网络/防火墙层面只对内网开放）。包含：
+- `auth.success` / `auth.failure` / `auth.rate_limited`（按 tenant_id / reason 维度）
+- `simulate.requested`（按 kind / mode：sync|async）
+- `simulate.completed`（按 status：done|failed）
+- `simulate.elapsed_ms`（histogram，按 kind）
+
+样例：
+```bash
+curl http://localhost:8000/metrics
+```
+
+**结构化访问日志**
+默认人类可读 text 格式。设置 `WANXIANG_LOG_JSON=1` 启用一行 JSON 日志（适合 ELK/Loki/CloudWatch 解析）。`/healthz` 和 `/metrics` 自动从 access 日志中过滤掉（避免噪声）。
+
 ## 健康检查
 
 - `GET /healthz` 返回 `{"status":"ok"}` 即服务存活

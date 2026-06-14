@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from wanxiang.api.auth import require_tenant
 from wanxiang.api.deps import get_model_factory
+from wanxiang.api.observability import metrics
 from wanxiang.api.schemas import SimulateRequest, SimulateResponse
 from wanxiang.api.tenancy import TenantInfo
 from wanxiang.datasources import load_distribution
@@ -81,8 +82,14 @@ async def simulate(
     model_factory=Depends(get_model_factory),
     tenant: TenantInfo = Depends(require_tenant),
 ):
+    kind_label = req.scenario.kind
+    metrics.inc("simulate.requested",
+                {"kind": kind_label, "mode": "sync"})
     try:
-        return await run_simulation_pipeline(req, model_factory)
+        resp = await run_simulation_pipeline(req, model_factory)
+        metrics.observe("simulate.elapsed_ms", resp.elapsed_ms,
+                        {"kind": kind_label})
+        return resp
     except FileNotFoundError as e:
         raise HTTPException(status_code=400,
                             detail=f"distribution file not found: {e}")

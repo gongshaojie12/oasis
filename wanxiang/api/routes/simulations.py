@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 
 from wanxiang.api.auth import require_tenant
 from wanxiang.api.deps import get_model_factory
+from wanxiang.api.observability import metrics
 from wanxiang.api.routes.simulate import run_simulation_pipeline
 from wanxiang.api.schemas import SimulateRequest
 from wanxiang.api.tasks import SimulationTask, TaskStatus, TaskStore
@@ -36,15 +37,21 @@ def _serialize(task: SimulationTask) -> dict:
 
 async def _run_task(store: TaskStore, task_id: str, req: SimulateRequest,
                     model_factory) -> None:
-    store.update(task_id, status=TaskStatus.RUNNING,
-                 started_at=datetime.now(timezone.utc))
+    started_at = datetime.now(timezone.utc)
+    store.update(task_id, status=TaskStatus.RUNNING, started_at=started_at)
     try:
         result = await run_simulation_pipeline(req, model_factory)
+        finished_at = datetime.now(timezone.utc)
         store.update(task_id, status=TaskStatus.DONE, result=result,
-                     finished_at=datetime.now(timezone.utc))
+                     finished_at=finished_at)
+        metrics.inc("simulate.completed", {"status": "done"})
+        metrics.observe(
+            "simulate.elapsed_ms_async",
+            (finished_at - started_at).total_seconds() * 1000)
     except Exception as e:  # noqa: BLE001
         store.update(task_id, status=TaskStatus.FAILED, error=str(e),
                      finished_at=datetime.now(timezone.utc))
+        metrics.inc("simulate.completed", {"status": "failed"})
 
 
 @router.post("/simulations/async", status_code=status.HTTP_202_ACCEPTED)
@@ -56,6 +63,8 @@ async def create_async_simulation(
 ):
     store = _store(request)
     task = store.create(tenant.tenant_id, req)
+    metrics.inc("simulate.requested",
+                {"kind": req.scenario.kind, "mode": "async"})
     # 后台跑；同步立即返
     asyncio.create_task(_run_task(store, task.id, req, model_factory))
     return _serialize(task)
