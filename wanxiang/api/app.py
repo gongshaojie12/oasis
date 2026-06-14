@@ -51,6 +51,10 @@ def create_app() -> FastAPI:
     from wanxiang.api.usage import make_usage_store
     app.state.usage_store = make_usage_store(
         os.environ.get("WANXIANG_TASKS_DB"))
+    # M3-13：审计日志 store 与 task/usage store 复用同一 DSN（独立 audit_events 表）。
+    from wanxiang.api.audit import make_audit_store
+    app.state.audit_store = make_audit_store(
+        os.environ.get("WANXIANG_TASKS_DB"))
     # M3-11：SSE 事件总线（in-memory，per-app 实例）
     from wanxiang.api.events import EventBus
     app.state.event_bus = EventBus()
@@ -67,6 +71,10 @@ def create_app() -> FastAPI:
         expose_headers=["x-tenant-id", "x-request-id"],
     )
     app.add_middleware(TenantHeaderMiddleware)
+    # M3-13：审计中间件 — 在 AccessLog 之前注册（更内层），这样它先观察到
+    # 路由的 response.status_code，再让 AccessLog/RequestId 包裹。
+    from wanxiang.api.audit_middleware import AuditMiddleware
+    app.add_middleware(AuditMiddleware)
     # M3-7：先加 AccessLog（注册顺序 → AccessLog 在内层），
     # 再加 RequestId（在外层），这样 RequestIdMiddleware 先跑、
     # 把 request.state.request_id 准备好，AccessLog 读到。
@@ -146,6 +154,13 @@ def create_app() -> FastAPI:
     try:
         from wanxiang.api.routes.usage import router as usage_router
         app.include_router(usage_router, prefix="/v1")
+    except Exception:
+        pass
+
+    # M3-13：审计日志查询端点
+    try:
+        from wanxiang.api.routes.audit import router as audit_router
+        app.include_router(audit_router, prefix="/v1")
     except Exception:
         pass
 

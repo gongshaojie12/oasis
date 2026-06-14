@@ -488,6 +488,38 @@ n ≤ 6 时退化为完全图（所有人互为好友），适合小样本快速
 
 不传 `compliance` 字段 → 行为完全等同于历史接口。
 
+### 审计日志 (M3-13)
+
+`GET /v1/audit/events?start=ISO&end=ISO&action=api_call&limit=100` — 查询当前租户审计记录。
+
+**自动记录**：所有 POST/PUT/PATCH/DELETE 写操作（除 `/healthz`、`/metrics`、`/`、`/prototype/*`）
+经 `AuditMiddleware` 自动落库，字段包含 `method` / `path` / `status` / `ip` /
+`user_agent` / `request_id` / `tenant_id`。
+
+**存储**：复用 `WANXIANG_TASKS_DB`（同 SQLite 文件或 PG 实例的独立 `audit_events` 表）。
+未配置 DSN 时退回内存 store（仅本进程可见，重启后丢失）。
+
+**租户隔离**：严格按 `X-API-Key` 鉴权后的 `tenant_id` 隔离查询，禁止跨租户读取。
+未带或带错 API key → 401；422 校验失败的请求也会被审计（只要 API key 合法）。
+
+**返回**：
+```json
+{
+  "total": 42,
+  "by_action": {"api_call": 42},
+  "by_status": {"200": 30, "202": 8, "422": 4},
+  "events": [
+    {"event_id":"...","tenant_id":"acme","action":"api_call",
+     "resource_type":"api","resource_id":null,"request_id":"...",
+     "method":"POST","path":"/v1/simulate","status":200,
+     "ip":"127.0.0.1","user_agent":"curl/8.0","detail":null,
+     "recorded_at":"2026-06-14T14:37:58.660178+00:00"}
+  ]
+}
+```
+
+**容错**：审计写失败永远不会阻塞业务请求（中间件内 try/except pass）。
+
 ## 下一步（路线图）
 
 - ~~M3-2 异步任务：长时间模拟改为 task_id + 轮询，避免 HTTP 超时~~ ✓ 已完成
