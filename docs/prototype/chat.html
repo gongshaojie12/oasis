@@ -192,6 +192,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
     zh: {
       "meta.title": "万象 WANXIANG · AI首席模拟官",
       "brand.cn_name": "万象",
+      "brand.avatar": "象",
+      "brand.tagline": "WANXIANG",
       "nav.new_sandbox": "新建模拟沙盒",
       "nav.sandbox_label": "沙盒 · 受众数字孪生",
       "sandbox.gen_z.name": "一线 Z 世代 · 饮品消费",
@@ -275,6 +277,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
     en: {
       "meta.title": "WANXIANG · AI Chief Simulation Officer",
       "brand.cn_name": "WANXIANG",
+      "brand.avatar": "W",
+      "brand.tagline": "AI Crowd Simulator",
       "nav.new_sandbox": "New Simulation Sandbox",
       "nav.sandbox_label": "Sandboxes · Audience Digital Twins",
       "sandbox.gen_z.name": "Tier-1 Gen Z · Beverage Consumers",
@@ -444,8 +448,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
   <!-- ===== LEFT: SANDBOX MANAGER ===== -->
   <aside class="side">
     <div class="brand">
-      <div class="logo"><span>象</span></div>
-      <div><b data-i18n="brand.cn_name">万象</b><br><small>WANXIANG</small></div>
+      <div class="logo"><span data-i18n="brand.avatar">象</span></div>
+      <div><b data-i18n="brand.cn_name">万象</b><br><small data-i18n="brand.tagline">WANXIANG</small></div>
     </div>
     <button class="new-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="nav.new_sandbox">新建模拟沙盒</span></button>
     <div class="sb-label" data-i18n="nav.sandbox_label">沙盒 · 受众数字孪生</div>
@@ -497,7 +501,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
         </div></div>
 
         <!-- AI streaming status -->
-        <div class="msg"><div class="m-av ai">象</div><div class="m-body"><div class="m-name" data-i18n="header.ai_name">AI 首席模拟官</div>
+        <div class="msg"><div class="m-av ai" data-i18n="brand.avatar">象</div><div class="m-body"><div class="m-name" data-i18n="header.ai_name">AI 首席模拟官</div>
           <div class="m-text">
             <p data-i18n-html="chat.ai_intro">收到 👍 我已经为你在「一线 Z 世代」沙盒里调度 <b class="hl">50,000 个虚拟人</b>，按 3 口味 × 3 价格共 9 种组合并行推演。右侧数据面板可以实时看到他们的反应 →</p>
           </div>
@@ -513,7 +517,7 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--ink)
         </div></div>
 
         <!-- AI result + artifact -->
-        <div class="msg"><div class="m-av ai">象</div><div class="m-body"><div class="m-name" data-i18n="header.ai_name">AI 首席模拟官</div>
+        <div class="msg"><div class="m-av ai" data-i18n="brand.avatar">象</div><div class="m-body"><div class="m-name" data-i18n="header.ai_name">AI 首席模拟官</div>
           <div class="m-text">
             <p data-i18n-html="chat.ai_result">初步结论出来了：<b class="hl">青提 @ ¥6</b> 在购买意愿和利润空间上最优。有个关键发现——这群人为"健康"付费，价格从 ¥6 降到 ¥5 几乎不提升转化，但涨到 ¥8 会让青提转化骤降 46%。完整预测我整理成了报告卡片：</p>
           </div>
@@ -732,7 +736,11 @@ document.querySelectorAll('.fu').forEach(f=>{if(f.getAttribute('data-i18n')==='f
     let body = makeBody(distroDocker);
     let res = await fetch('/v1/simulate', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': (localStorage.getItem('wanxiang.api_key') || 'demo-key'),
+        'Accept-Language': (window.WANXIANG_LANG || 'zh'),
+      },
       body: JSON.stringify(body),
     });
     if (res.status === 400) {
@@ -740,7 +748,11 @@ document.querySelectorAll('.fu').forEach(f=>{if(f.getAttribute('data-i18n')==='f
       body = makeBody(distroLocal);
       res = await fetch('/v1/simulate', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+        'Content-Type': 'application/json',
+        'X-API-Key': (localStorage.getItem('wanxiang.api_key') || 'demo-key'),
+        'Accept-Language': (window.WANXIANG_LANG || 'zh'),
+      },
         body: JSON.stringify(body),
       });
     }
@@ -787,9 +799,10 @@ document.querySelectorAll('.fu').forEach(f=>{if(f.getAttribute('data-i18n')==='f
     const wrap = document.createElement('div');
     wrap.className = 'msg-wrap';
     const apiLabel = (window.wxT ? window.wxT('realapi.bubble_label') : '真实 API');
+    const avatar = (window.wxT ? window.wxT('brand.avatar') : '象');
     wrap.innerHTML = `
       <div class="msg">
-        <div class="m-av ai">象</div>
+        <div class="m-av ai" data-i18n="brand.avatar">${escapeHtml(avatar)}</div>
         <div class="m-body">
           <div class="m-name">${escapeHtml(apiLabel)}</div>
           <div class="m-text" style="white-space:pre-wrap">${escapeHtml(text)}</div>
