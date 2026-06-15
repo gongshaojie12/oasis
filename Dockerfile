@@ -42,6 +42,8 @@ RUN pip install --upgrade pip && \
 COPY oasis ./oasis
 COPY engine ./engine
 COPY wanxiang ./wanxiang
+# 前端原型 (chat.html) - 让 / 主页能渲染对话 UI
+COPY docs/prototype ./docs/prototype
 
 # 非 root 用户跑
 RUN useradd -ms /bin/bash wanxiang && chown -R wanxiang:wanxiang /app
