@@ -217,6 +217,41 @@ curl -X POST http://localhost:8000/v1/templates/pricing_van_westendorp/instantia
 - **跨 agent 不命中**：每个 agent persona 不同，无法跨 agent 缓存
 - `decision_only` 单次调用 → 缓存无收益
 
+### Token 消耗估算（每 agent）
+
+| 模式 | 调用次数 | 输入(未命中) | 输入(命中缓存) | 输入合计 | 输出 |
+|---|---:|---:|---:|---:|---:|
+| `decision_only` | 1 | 3,200 | 0 | 3,200 | 200 |
+| `social` (rounds=3) | 5 | 4,400 | 11,600 | 16,000 | 1,000 |
+| `platform` (rounds=3) | 5 | 5,400 | 11,600 | 17,000 | 1,000 |
+
+> social 拆分：第 1 次 3,200 全 miss；第 2-5 次每次 3,200（其中 2,900 命中 persona 缓存，300 fresh）。
+> platform：每次额外 +200 tokens 方言上下文。
+
+### Token 消耗估算（按 agent 规模 × 模式）
+
+单位：M = million tokens，B = billion tokens
+
+| Agent 数 | `decision_only` 输入/输出 | `social` 输入miss / 输入hit / 输出 | `platform` 输入miss / 输入hit / 输出 |
+|---:|---:|---:|---:|
+| 1,000 | 3.2M / 0.2M | 4.4M / 11.6M / 1.0M | 5.4M / 11.6M / 1.0M |
+| 5,000 | 16M / 1M | 22M / 58M / 5M | 27M / 58M / 5M |
+| 10,000 | 32M / 2M | 44M / 116M / 10M | 54M / 116M / 10M |
+| **100,000** | **320M / 20M** | **440M / 1.16B / 100M** | **540M / 1.16B / 100M** |
+| 200,000 | 640M / 40M | 880M / 2.32B / 200M | 1.08B / 2.32B / 200M |
+| 500,000 | 1.6B / 100M | 2.2B / 5.8B / 500M | 2.7B / 5.8B / 500M |
+| **1,000,000** | **3.2B / 200M** | **4.4B / 11.6B / 1B** | **5.4B / 11.6B / 1B** |
+
+### Caching 省了多少（100K agents · social 模式）
+
+| 维度 | 无 caching | 有 caching | 省下 |
+|---|---:|---:|---:|
+| 输入 token 全部走未命中价 | 1.6B × ¥1/M = **¥1,600** | 440M × ¥1/M + 1,160M × ¥0.02/M = **¥463** | **¥1,137 (−71%)** |
+| 输出 token (不受 caching 影响) | 100M × ¥2/M = ¥200 | ¥200 | — |
+| **总成本** | **¥1,800** | **¥663** | **¥1,137 (−63%)** |
+
+> 这就是为什么 social/platform 模式即便每个 agent 多 5 倍调用次数，单 agent 成本只翻 2 倍——**caching 把 persona 的开销摊薄到几乎免费**。
+
 ### 成本估算（deepseek-v4-flash，含 caching 优化）
 
 | Agent 数 | decision_only | social(3 轮) | platform(3 轮) |
