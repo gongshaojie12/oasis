@@ -3,18 +3,27 @@ FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/ \
+    PIP_TRUSTED_HOST=mirrors.aliyun.com
 
 WORKDIR /app
 
-# 系统依赖：git 用于装某些 pip 包；libgomp1 是 sentence-transformers/torch 运行期需要
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    git libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
+# 切换 APT 源到国内阿里云镜像 (sed 不可靠, 直接覆写整个 DEB822 sources 文件)
+# 用 HTTP 而非 HTTPS 是为了避免 ca-certificates 未装时的 cert 问题
+RUN set -eux; \
+    rm -f /etc/apt/sources.list /etc/apt/sources.list.d/debian.sources; \
+    printf 'Types: deb\nURIs: http://mirrors.aliyun.com/debian\nSuites: trixie trixie-updates\nComponents: main contrib non-free non-free-firmware\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg\n\nTypes: deb\nURIs: http://mirrors.aliyun.com/debian-security\nSuites: trixie-security\nComponents: main contrib non-free non-free-firmware\nSigned-By: /usr/share/keyrings/debian-archive-keyring.gpg\n' > /etc/apt/sources.list.d/debian.sources; \
+    cat /etc/apt/sources.list.d/debian.sources; \
+    apt-get -o Acquire::Retries=3 update; \
+    apt-get install -y --no-install-recommends --fix-missing git libgomp1; \
+    rm -rf /var/lib/apt/lists/*
 
 # 先拷贝最小依赖清单装包，提高 Docker 层缓存命中率
 COPY pyproject.toml ./
-# 直接装 wanxiang 运行期必需依赖（不走 poetry，简化）
+# wanxiang 运行期必需依赖 (精简版: 移除 torch/sentence-transformers/neo4j/igraph
+# 等 wanxiang 实际不用的 OASIS 旧依赖, 节省 ~700MB 镜像大小 + 15min 构建时间)
+# pip 源已通过 PIP_INDEX_URL 切到阿里云 mirror
 RUN pip install --upgrade pip && \
     pip install \
         "camel-ai==0.2.78" \
@@ -23,7 +32,7 @@ RUN pip install --upgrade pip && \
         pydantic==2.13.4 \
         pydantic-settings==2.14.1 \
         pyyaml==6.0.3 \
-        numpy pandas igraph neo4j scikit-learn sentence-transformers tqdm \
+        numpy tqdm \
         "celery[redis]==5.4.0" \
         "redis==5.0.7" \
         "psycopg[binary]==3.3.4" \

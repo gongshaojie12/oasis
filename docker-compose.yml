@@ -15,6 +15,7 @@ services:
   api:
     build: .
     image: wanxiang/api:0.0.1
+    pull_policy: build       # 本地构建，绝不尝试从 registry pull
     container_name: wanxiang-api
     restart: unless-stopped
     profiles:
@@ -29,7 +30,7 @@ services:
       - WANXIANG_DEEPSEEK_API_KEY=${WANXIANG_DEEPSEEK_API_KEY:-}
       - WANXIANG_TENANTS_JSON=${WANXIANG_TENANTS_JSON:-}
       # PG + Redis (full stack only)
-      - WANXIANG_TASKS_DB=${WANXIANG_TASKS_DB:-postgresql://wanxiang:wanxiang@postgres:5432/wanxiang}
+      - WANXIANG_TASKS_DB=${WANXIANG_TASKS_DB:-postgresql://${POSTGRES_USER:-wanxiang}:${POSTGRES_PASSWORD:-wanxiang}@postgres:5432/${POSTGRES_DB:-wanxiang}}
       - WANXIANG_EVENT_BUS=${WANXIANG_EVENT_BUS:-redis}
       - WANXIANG_REDIS_URL=${WANXIANG_REDIS_URL:-redis://redis:6379/2}
       - WANXIANG_TASK_QUEUE=${WANXIANG_TASK_QUEUE:-celery}
@@ -91,15 +92,16 @@ services:
   celery-worker:
     build: .
     image: wanxiang/api:0.0.1
+    pull_policy: build
     container_name: wanxiang-celery
     restart: unless-stopped
     profiles:
       - full
-    command: celery -A wanxiang.api.celery_app:get_celery_app worker --loglevel=info --concurrency=${CELERY_CONCURRENCY:-4}
+    command: celery -A wanxiang.api.celery_app worker --loglevel=info --concurrency=${CELERY_CONCURRENCY:-4}
     environment:
       - WANXIANG_DEEPSEEK_API_KEY=${WANXIANG_DEEPSEEK_API_KEY:-}
       - WANXIANG_TENANTS_JSON=${WANXIANG_TENANTS_JSON:-}
-      - WANXIANG_TASKS_DB=${WANXIANG_TASKS_DB:-postgresql://wanxiang:wanxiang@postgres:5432/wanxiang}
+      - WANXIANG_TASKS_DB=${WANXIANG_TASKS_DB:-postgresql://${POSTGRES_USER:-wanxiang}:${POSTGRES_PASSWORD:-wanxiang}@postgres:5432/${POSTGRES_DB:-wanxiang}}
       - WANXIANG_EVENT_BUS=${WANXIANG_EVENT_BUS:-redis}
       - WANXIANG_REDIS_URL=${WANXIANG_REDIS_URL:-redis://redis:6379/2}
       - WANXIANG_CELERY_BROKER=${WANXIANG_CELERY_BROKER:-redis://redis:6379/0}
@@ -113,11 +115,19 @@ services:
         condition: service_healthy
     networks:
       - wanxiang
+    # Celery 不监听 HTTP, 用 celery inspect ping 替代 image 默认的 HTTP healthcheck
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A wanxiang.api.celery_app inspect ping -d celery@$$HOSTNAME 2>&1 | grep -q pong"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   # Minimal profile: 仅 api (SQLite + 进程内 asyncio, 无 PG/Redis)
   api-minimal:
     build: .
     image: wanxiang/api:0.0.1
+    pull_policy: build
     container_name: wanxiang-api-minimal
     restart: unless-stopped
     profiles:

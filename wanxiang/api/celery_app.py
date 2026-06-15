@@ -50,3 +50,8 @@ def get_celery_app():
     # Import tasks so they self-register against this Celery app.
     from wanxiang.api import celery_tasks  # noqa: F401
     return app
+
+
+# 模块级 app 实例 —— Celery CLI 用 `-A wanxiang.api.celery_app` 时会查找此变量
+# (lru_cache 保证全进程单例; asyncio 模式虽然也会 import 一次但 Celery 不会启动)
+app = get_celery_app()
