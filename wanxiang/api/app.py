@@ -15,7 +15,10 @@ from wanxiang.api.observability import (AccessLogMiddleware,
                                           configure_logging, metrics)
 from wanxiang.api.server import ServerSettings
 from wanxiang.api.tenancy import TenantStore
+from wanxiang.api.email import make_email_service
+from wanxiang.api.sms import make_sms_service
 from wanxiang.api.users import make_user_store
+from wanxiang.api.verification import make_verification_store
 from wanxiang.api.workspaces import make_workspace_store
 
 
@@ -52,6 +55,13 @@ def create_app() -> FastAPI:
     app.state.user_store = make_user_store(
         os.environ.get("WANXIANG_TASKS_DB"))
     app.state.workspace_store = make_workspace_store(
+        os.environ.get("WANXIANG_TASKS_DB"))
+    # P2: SMS / Email / verification code stores + services.
+    # Default env stays NoOp (logs to stdout) — production wires real
+    # provider via WANXIANG_SMS_PROVIDER / WANXIANG_EMAIL_PROVIDER.
+    app.state.sms_service = make_sms_service()
+    app.state.email_service = make_email_service()
+    app.state.verification_store = make_verification_store(
         os.environ.get("WANXIANG_TASKS_DB"))
     # M3-6 / M3-9：WANXIANG_TASKS_DB 接受 DSN（None/plain-path/sqlite:///.../postgresql://...）。
     from wanxiang.api.tasks import make_task_store
@@ -191,6 +201,13 @@ def create_app() -> FastAPI:
     try:
         from wanxiang.api.routes.auth import router as auth_router
         app.include_router(auth_router, prefix="/v1")
+    except Exception:
+        pass
+
+    # P2: verification code routes (send/verify email + SMS)
+    try:
+        from wanxiang.api.routes.verify import router as verify_router
+        app.include_router(verify_router, prefix="/v1")
     except Exception:
         pass
 

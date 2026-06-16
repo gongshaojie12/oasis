@@ -137,6 +137,27 @@ CATALOG: dict[str, dict[Locale, str]] = {
         "zh": "用户不存在",
         "en": "User not found",
     },
+    # P2: verification code flow
+    "auth.invalid_email_format": {
+        "zh": "邮箱格式无效",
+        "en": "Invalid email format",
+    },
+    "auth.verification_rate_limit": {
+        "zh": "验证码请求过于频繁（{n} 条/小时上限）",
+        "en": "Verification rate limit reached ({n} per hour)",
+    },
+    "auth.no_active_code": {
+        "zh": "无可用验证码，请先获取",
+        "en": "No active code. Request one first",
+    },
+    "auth.too_many_attempts": {
+        "zh": "验证次数超限，请重新获取验证码",
+        "en": "Too many attempts. Request a new code",
+    },
+    "auth.invalid_code": {
+        "zh": "验证码错误，剩余 {remaining} 次",
+        "en": "Invalid code, {remaining} attempts remaining",
+    },
 }
 
 
