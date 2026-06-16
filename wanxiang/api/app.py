@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
@@ -145,18 +145,13 @@ def create_app() -> FastAPI:
     def metrics_endpoint():
         return metrics.snapshot()
 
-    # M3-4：挂载 docs/prototype 静态资源，让 chat.html 与 /v1/simulate 同源。
+    # M3-4：挂载 docs/prototype 静态资源，保留旧 chat.html 原型 (P6 backward compat).
+    # P8: GET / 不再返回 chat.html — 由 React SPA 接管（在文件末尾挂载 catch-all）.
+    #     旧 demo 仍可访问 /prototype/chat.html。
     _PROTOTYPE_DIR = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "..", "..", "docs",
                      "prototype"))
     if os.path.isdir(_PROTOTYPE_DIR):
-        chat_html = os.path.join(_PROTOTYPE_DIR, "chat.html")
-        if os.path.isfile(chat_html):
-
-            @app.get("/", include_in_schema=False)
-            def root():
-                return FileResponse(chat_html, media_type="text/html")
-
         app.mount("/prototype",
                   StaticFiles(directory=_PROTOTYPE_DIR, html=True),
                   name="prototype")
@@ -272,5 +267,54 @@ def create_app() -> FastAPI:
         app.include_router(billing_router, prefix="/v1")
     except Exception:
         pass
+
+    # P8: React SPA — 必须注册在最后，保证 /v1/*, /healthz, /metrics,
+    # /prototype/* 等已注册路由优先匹配，未命中再 fallback 到 index.html。
+    # 镜像内 frontend dist 在 /app/frontend_dist (由 Dockerfile COPY --from)；
+    # 本地开发时若该目录不存在, fallback 到 frontend/dist (npm run build 产物)。
+    _REPO_ROOT = os.path.abspath(
+        os.path.join(os.path.dirname(__file__), "..", ".."))
+    _FRONTEND_DIR = os.path.join(_REPO_ROOT, "frontend_dist")
+    if not os.path.isdir(_FRONTEND_DIR):
+        _FRONTEND_DIR = os.path.join(_REPO_ROOT, "frontend", "dist")
+    if os.path.isdir(_FRONTEND_DIR):
+        _ASSETS_DIR = os.path.join(_FRONTEND_DIR, "assets")
+        if os.path.isdir(_ASSETS_DIR):
+            app.mount("/assets",
+                      StaticFiles(directory=_ASSETS_DIR),
+                      name="frontend-assets")
+
+        @app.get("/favicon.svg", include_in_schema=False)
+        @app.get("/favicon.ico", include_in_schema=False)
+        def _spa_favicon():
+            for fn in ("favicon.svg", "favicon.ico"):
+                p = os.path.join(_FRONTEND_DIR, fn)
+                if os.path.isfile(p):
+                    return FileResponse(p)
+            raise HTTPException(status_code=404)
+
+        _SPA_INDEX = os.path.join(_FRONTEND_DIR, "index.html")
+        # 已注册路由 prefix 集合 — catch-all 不接管这些
+        _RESERVED_PREFIXES = (
+            "v1/", "healthz", "metrics", "prototype/",
+            "assets/", "docs", "openapi.json", "redoc",
+        )
+
+        @app.get("/", include_in_schema=False)
+        def _spa_root():
+            if os.path.isfile(_SPA_INDEX):
+                return FileResponse(_SPA_INDEX, media_type="text/html")
+            raise HTTPException(status_code=404)
+
+        @app.get("/{full_path:path}", include_in_schema=False)
+        def _spa_catch_all(full_path: str):
+            # API / 健康检查 / 文档 / 旧 prototype 已注册, 但 starlette
+            # 在 FastAPI 路由匹配阶段会先尝试已知 route, 走到这说明都没命中。
+            # 防御性再次拒绝保留前缀, 防止 typo URL (如 /v1/foo) 被 SPA 吞掉。
+            if full_path.startswith(_RESERVED_PREFIXES):
+                raise HTTPException(status_code=404)
+            if os.path.isfile(_SPA_INDEX):
+                return FileResponse(_SPA_INDEX, media_type="text/html")
+            raise HTTPException(status_code=404)
 
     return app

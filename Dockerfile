@@ -1,4 +1,30 @@
-# WANXIANG API 镜像 (spec §M7/M3-5)
+# WANXIANG API 镜像 (spec §M7/M3-5, P8 multi-stage: node build → python serve)
+#
+# Stage 1: 用 node:24-alpine 构建 React 前端 (Vite + TS + Tailwind)
+# Stage 2: 用 python:3.11-slim 装后端依赖, COPY --from frontend dist 进来
+# 单容器对外暴露 :8000, 同时服务 React SPA + REST API + (旧 chat.html 兼容).
+
+# ============================
+# Stage 1: Build React frontend
+# ============================
+FROM node:24-alpine AS frontend-builder
+
+WORKDIR /build
+
+# 使用 npmmirror 国内镜像加速 (npm install)
+RUN npm config set registry https://registry.npmmirror.com
+
+# 先拷 package files 走 layer 缓存
+COPY frontend/package.json frontend/package-lock.json* frontend/.npmrc* ./
+RUN npm install
+
+# 拷源码 + 构建
+COPY frontend/ ./
+RUN npm run build
+
+# ============================
+# Stage 2: Python backend + serve frontend
+# ============================
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \
@@ -36,13 +62,20 @@ RUN pip install --upgrade pip && \
         "celery[redis]==5.4.0" \
         "redis==5.0.7" \
         "psycopg[binary]==3.3.4" \
-        reportlab==4.5.1
+        reportlab==4.5.1 \
+        "bcrypt==4.3.0" \
+        "python-jose[cryptography]==3.4.0" \
+        "email-validator==2.2.0"
 
 # 拷贝源码
 COPY oasis ./oasis
 COPY engine ./engine
 COPY wanxiang ./wanxiang
-# 前端原型 (chat.html) - 让 / 主页能渲染对话 UI
+
+# 前端 dist (来自 stage 1) — 走 FastAPI 静态服务
+COPY --from=frontend-builder /build/dist ./frontend_dist
+
+# 旧的 chat.html 原型仍然保留 (P6 backward compat: /prototype/chat.html)
 COPY docs/prototype ./docs/prototype
 
 # 非 root 用户跑

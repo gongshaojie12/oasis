@@ -100,3 +100,4 @@ docker-compose.override.yml
 
 tmp
 docs/1.png
+.gstack/

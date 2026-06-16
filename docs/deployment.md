@@ -655,3 +655,74 @@ n ≤ 6 时退化为完全图（所有人互为好友），适合小样本快速
 - [ ] 已通过 `compliance.redact_pii=true` 验证报告无 PII 漏出
 - [ ] 已通过 `compliance.moderate_material=true` + 接入审核服务
 - [ ] 已通过 GET /v1/audit/events 验证审计链完整
+
+---
+
+### React 前端 + 多阶段镜像 (P8 完整产品版)
+
+万象 v1 完成度从「sales demo prototype」升级到真实 SaaS：
+
+#### 新增前端
+- `frontend/` (React 18 + Vite + TypeScript + Tailwind v4)
+- 13 个页面: login / register / onboarding / dashboard / workspaces /
+  sandbox / reports / billing / members / api-keys / settings / admin / invite
+- 完整双语 (zh/en, i18next + locale 中间件)
+- 视觉系统沿用 chat.html (navy gradient + glass cards + JetBrains Mono)
+
+#### 构建与部署
+单容器内集成前端 + 后端（多阶段 Dockerfile）：
+- **Stage 1** (`node:24-alpine`): `npm install` + `vite build` → `/build/dist`
+- **Stage 2** (`python:3.11-slim`): 后端代码 + `COPY --from=frontend-builder /build/dist /app/frontend_dist`
+- 启动时 FastAPI 静态服务 `/assets/*` + SPA catch-all 返 `index.html`
+
+国内镜像加速:
+- `npm` → `registry.npmmirror.com`
+- `pip` → `mirrors.aliyun.com/pypi`
+- `apt` → `mirrors.aliyun.com/debian`
+
+```bash
+docker compose up -d --build  # 一键, 首次 build ~4-6 分钟
+```
+
+启动后:
+- http://localhost:8000/                    → React SPA (登录/注册/主应用)
+- http://localhost:8000/v1/*                → REST API
+- http://localhost:8000/healthz             → 健康检查 (JSON)
+- http://localhost:8000/prototype/chat.html → 旧 demo (backward compat, P6)
+- http://localhost:8000/docs                → OpenAPI Swagger
+
+#### 路由优先级 (FastAPI 注册顺序)
+1. `/healthz`, `/metrics` (基础设施)
+2. `/v1/*` (所有业务 API 路由)
+3. `/prototype/*` (旧 chat.html 静态)
+4. `/assets/*` (前端 hashed bundle)
+5. `/favicon.svg`, `/favicon.ico`
+6. `/`, `/{full_path:path}` SPA catch-all → `index.html` (React Router 接管)
+
+防御：catch-all 显式排除保留前缀 (`v1/`, `healthz`, `metrics`, `prototype/`,
+`assets/`, `docs`, `openapi.json`, `redoc`), typo URL `/v1/foo` 会返 404
+而非 SPA HTML。
+
+#### 默认账号
+首次启动 bootstrap 创建 demo workspace + `demo-key` API key (旧 X-API-Key 流程仍可用).
+
+设置 super-admin (env):
+```bash
+WANXIANG_SUPER_ADMIN_EMAIL=admin@yourdomain.com
+WANXIANG_SUPER_ADMIN_PASSWORD=YourSecurePassword123!
+```
+首次启动自动创建. 修改密码后建议清除 env.
+
+#### 前端开发模式 (HMR)
+```bash
+cd frontend
+npm run dev   # :5173, proxy /v1/* + /healthz to :8000
+```
+本地后端单跑 (无前端 dist 时, app.py 跳过 SPA mount):
+```bash
+WANXIANG_TASKS_DB=:memory: python -m wanxiang.api.server
+```
+
+#### 镜像大小
+- `wanxiang/api:0.0.1`: ~164MB content / ~705MB disk (含前端 dist + python 运行时)
+- 远小于 1GB 预算 (无 torch / sentence-transformers / igraph)
