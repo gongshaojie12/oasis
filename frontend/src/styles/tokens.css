@@ -481,6 +481,43 @@ body {
   color: var(--wx-text-primary);
 }
 
+/* ===== P9c LandingPage empty states / report-card markdown ===== */
+.wx-sb-empty {
+  padding: 16px 12px;
+}
+.wx-sb-empty-state {
+  padding: 4px 0 8px;
+}
+.wx-panel-empty {
+  flex: 1;
+  display: grid;
+  place-items: center;
+}
+.wx-art-content {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--wx-text-primary);
+}
+.wx-art-content p { margin: 0 0 .6em; }
+.wx-art-content p:last-child { margin-bottom: 0; }
+.wx-art-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 12px;
+}
+.wx-art-content th, .wx-art-content td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--wx-glass-border);
+  text-align: left;
+}
+.wx-art-content code {
+  background: rgba(0, 184, 212, .12);
+  color: var(--wx-accent-cyan);
+  padding: 1px 5px; border-radius: 4px;
+  font-size: .9em;
+}
+
 /* Modal */
 .wx-modal-backdrop {
   position: fixed; inset: 0;
