@@ -13,7 +13,7 @@ export function WorkspacesPage() {
 
   function enter(slug: string) {
     setCurrentWorkspace(slug)
-    nav('/dashboard')
+    nav(`/w/${slug}`)
   }
 
   return (

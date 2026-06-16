@@ -51,3 +51,49 @@ export interface MeResponse {
   user: User
   workspaces: Workspace[]
 }
+
+// P6: Sandbox + Chat
+export interface Sandbox {
+  sandbox_id: string
+  workspace_id: string
+  name: string
+  emoji: string
+  description: string
+  distribution_path: string
+  population_size: number
+  created_by_user_id: string | null
+  created_at: string
+  last_active_at: string
+  archived: boolean
+}
+
+export type ChatMessageKind =
+  | 'text'
+  | 'intent_parsed'
+  | 'simulation_started'
+  | 'simulation_progress'
+  | 'simulation_done'
+  | 'report_card'
+  | 'error'
+
+export type ChatMessageRole = 'user' | 'assistant' | 'system'
+
+export interface ChatMessage {
+  message_id: string
+  sandbox_id: string
+  role: ChatMessageRole
+  content: string
+  kind: ChatMessageKind
+  metadata: Record<string, unknown>
+  user_id: string | null
+  created_at: string
+}
+
+export interface ChatSimulateResponse {
+  user_message: ChatMessage
+  assistant_messages: ChatMessage[]
+  needs_clarification?: boolean
+  missing?: string[]
+  error?: string
+  report?: Record<string, unknown>
+}

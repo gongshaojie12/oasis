@@ -15,6 +15,7 @@ import { ForgotPasswordPage } from '@/pages/auth/ForgotPasswordPage'
 import { OnboardingPage } from '@/pages/onboarding/OnboardingPage'
 import { WorkspacesPage } from '@/pages/WorkspacesPage'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { SandboxPage } from '@/pages/sandbox/SandboxPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { RequireAuth } from '@/components/RequireAuth'
 
@@ -39,7 +40,7 @@ export function App() {
           }}
         />
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/workspaces" replace />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -48,6 +49,8 @@ export function App() {
           <Route path="/onboarding" element={<RequireAuth><OnboardingPage /></RequireAuth>} />
           <Route path="/workspaces" element={<RequireAuth><WorkspacesPage /></RequireAuth>} />
           <Route path="/dashboard" element={<RequireAuth><DashboardPage /></RequireAuth>} />
+          <Route path="/w/:slug" element={<RequireAuth><DashboardPage /></RequireAuth>} />
+          <Route path="/w/:slug/sandboxes/:sandboxId" element={<RequireAuth><SandboxPage /></RequireAuth>} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </BrowserRouter>
