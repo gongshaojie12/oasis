@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+/* WANXIANG Design Tokens — extracted from chat.html prototype */
+:root {
+  /* Brand colors — dark navy stack */
+  --wx-navy-900: #050a1c;
+  --wx-navy-800: #0B1632;
+  --wx-navy-700: #131e3b;
+  --wx-navy-600: #1a274a;
+  --wx-accent-blue: #1B4DFF;
+  --wx-accent-cyan: #00B8D4;
+  --wx-accent-orange: #FF6B3D;
+  --wx-accent-amber: #F5A623;
+  --wx-text-primary: #E8ECFF;
+  --wx-text-secondary: #9AA5C7;
+  --wx-text-tertiary: #5C6786;
+  --wx-glass-bg: rgba(20, 30, 60, 0.6);
+  --wx-glass-border: rgba(120, 145, 220, 0.18);
+  --wx-success: #00D971;
+  --wx-warning: #F5A623;
+  --wx-danger: #FF4D6E;
+  /* Gradients */
+  --wx-grad-blue: linear-gradient(135deg, #1B4DFF, #00B8D4);
+  --wx-grad-orange: linear-gradient(135deg, #FF6B3D, #F5A623);
+  --wx-grad-bg: radial-gradient(ellipse at top, #131e3b 0%, #050a1c 70%);
+  /* Radius */
+  --wx-r-sm: 8px;
+  --wx-r-md: 14px;
+  --wx-r-lg: 20px;
+  /* Shadow */
+  --wx-shadow-blue: 0 12px 32px -8px rgba(27, 77, 255, 0.4);
+  --wx-shadow-deep: 0 24px 64px -16px rgba(0, 0, 0, 0.6);
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { min-height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--wx-grad-bg);
+  background-attachment: fixed;
+  color: var(--wx-text-primary);
+  font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-thumb {
+  background: rgba(120, 145, 220, 0.25);
+  border-radius: 9px;
+  border: 2.5px solid transparent;
+  background-clip: content-box;
+}
+
+.wx-glass {
+  background: var(--wx-glass-bg);
+  border: 1px solid var(--wx-glass-border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--wx-r-md);
+  box-shadow: var(--wx-shadow-deep);
+}
+
+.wx-btn-primary {
+  background: var(--wx-grad-blue);
+  color: white;
+  padding: 10px 20px;
+  border-radius: var(--wx-r-sm);
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  box-shadow: var(--wx-shadow-blue);
+  transition: transform 0.15s, box-shadow 0.15s;
+  font: inherit;
+  font-weight: 600;
+}
+.wx-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 16px 36px -8px rgba(27, 77, 255, 0.6); }
+.wx-btn-primary:active { transform: translateY(0); }
+.wx-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+.wx-btn-ghost {
+  background: transparent;
+  color: var(--wx-text-primary);
+  border: 1px solid var(--wx-glass-border);
+  padding: 8px 16px;
+  border-radius: var(--wx-r-sm);
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  font: inherit;
+}
+.wx-btn-ghost:hover { background: rgba(255,255,255,0.06); border-color: rgba(120, 145, 220, 0.4); }
+
+.wx-input {
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--wx-glass-border);
+  color: var(--wx-text-primary);
+  padding: 10px 14px;
+  border-radius: var(--wx-r-sm);
+  font: inherit;
+  width: 100%;
+  outline: none;
+  transition: border 0.15s, box-shadow 0.15s;
+}
+.wx-input:focus { border-color: var(--wx-accent-cyan); box-shadow: 0 0 0 3px rgba(0, 184, 212, 0.15); }
+.wx-input::placeholder { color: var(--wx-text-tertiary); }
+
+.wx-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--wx-text-secondary);
+  margin-bottom: 6px;
+}
+
+.wx-brand-avatar {
+  width: 42px; height: 42px;
+  display: grid; place-items: center;
+  background: var(--wx-grad-blue);
+  color: white; font-weight: 700; font-size: 18px;
+  border-radius: var(--wx-r-sm);
+  flex-shrink: 0;
+}
+
+.wx-tab {
+  flex: 1;
+  text-align: center;
+  padding: 10px 14px;
+  background: transparent;
+  color: var(--wx-text-secondary);
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+  transition: color 0.15s, border-color 0.15s;
+}
+.wx-tab.active { color: var(--wx-accent-cyan); border-bottom-color: var(--wx-accent-cyan); }
+
+.wx-link { color: var(--wx-accent-cyan); cursor: pointer; }
+.wx-link:hover { text-decoration: underline; }
