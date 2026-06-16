@@ -4,8 +4,8 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 
 export default defineConfig({
-  // P9: SPA 移到 /app/* — base 让 hashed assets 解析到 /app/assets/*。
-  base: '/app/',
+  // P9b: SPA 回到根路径 — `/` 由 React LandingPage 接管 (anon-visible mock UI),
+  // hashed assets 解析到 /assets/* (vite 默认 base)。
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },

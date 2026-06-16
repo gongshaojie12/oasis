@@ -31,7 +31,7 @@ class TenantHeaderMiddleware(BaseHTTPMiddleware):
 
     M3-3 起，request.state.tenant_id 由 require_tenant 鉴权依赖写入，是权威来源；
     客户端自带的 X-Tenant-Id 不再被 /v1/* 信任。对于不需要鉴权的路径
-    （/healthz、/、/prototype/*）保留 M3-1 的 passthrough 行为以兼容旧客户端。
+    （/healthz、/、/prototype/*、SPA 路由）保留 M3-1 的 passthrough 行为以兼容旧客户端。
     """
 
     async def dispatch(self, request: Request, call_next):
@@ -146,18 +146,11 @@ def create_app() -> FastAPI:
         return metrics.snapshot()
 
     # M3-4：挂载 docs/prototype 静态资源 (chat.html 等), 兼容旧 /prototype 路径.
-    # P9: chat.html 重新成为 `/` landing 着陆页 (营销展示 + 未登录 demo),
-    #     React SPA 移到 /app/* 下 (实际产品入口); 见本文件末尾的 SPA 挂载块.
+    # P9b: React SPA 接管 `/` (LandingPage 复刻 chat.html 视觉, 匿名可见 + 输入即弹注册).
+    #      chat.html 仅保留在 /prototype/chat.html 作为旧版本参考, 不再做着陆页.
     _PROTOTYPE_DIR = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "..", "..", "docs",
                      "prototype"))
-    _CHAT_HTML_PATH = os.path.join(_PROTOTYPE_DIR, "chat.html")
-    if os.path.isfile(_CHAT_HTML_PATH):
-
-        @app.get("/", include_in_schema=False)
-        def _landing():
-            return FileResponse(_CHAT_HTML_PATH, media_type="text/html")
-
     if os.path.isdir(_PROTOTYPE_DIR):
         app.mount("/prototype",
                   StaticFiles(directory=_PROTOTYPE_DIR, html=True),
@@ -275,10 +268,9 @@ def create_app() -> FastAPI:
     except Exception:
         pass
 
-    # P9: React SPA 挂载到 /app/* 下 — chat.html 接管 `/` landing，
-    # SPA 仅在用户跳到 /app/login、/app/register、/app/dashboard 等具体路由时加载。
-    # 镜像内 frontend dist 在 /app/frontend_dist (由 Dockerfile COPY --from)；
-    # 本地开发时若该目录不存在, fallback 到 frontend/dist (npm run build 产物)。
+    # P9b: React SPA 挂载到 `/` (LandingPage 在根路径展示 mock UI, 匿名可见).
+    # 镜像内 frontend dist 在 frontend_dist (由 Dockerfile COPY --from);
+    # 本地开发时若该目录不存在, fallback 到 frontend/dist (npm run build 产物).
     _REPO_ROOT = os.path.abspath(
         os.path.join(os.path.dirname(__file__), "..", ".."))
     _FRONTEND_DIR = os.path.join(_REPO_ROOT, "frontend_dist")
@@ -287,13 +279,13 @@ def create_app() -> FastAPI:
     if os.path.isdir(_FRONTEND_DIR):
         _ASSETS_DIR = os.path.join(_FRONTEND_DIR, "assets")
         if os.path.isdir(_ASSETS_DIR):
-            # vite base=/app/ → bundled HTML references /app/assets/index-*.js
-            app.mount("/app/assets",
+            # vite base='/' (default) → bundled HTML references /assets/index-*.js
+            app.mount("/assets",
                       StaticFiles(directory=_ASSETS_DIR),
                       name="frontend-assets")
 
-        @app.get("/app/favicon.svg", include_in_schema=False)
-        @app.get("/app/favicon.ico", include_in_schema=False)
+        @app.get("/favicon.svg", include_in_schema=False)
+        @app.get("/favicon.ico", include_in_schema=False)
         def _spa_favicon():
             for fn in ("favicon.svg", "favicon.ico"):
                 p = os.path.join(_FRONTEND_DIR, fn)
@@ -302,19 +294,18 @@ def create_app() -> FastAPI:
             raise HTTPException(status_code=404)
 
         _SPA_INDEX = os.path.join(_FRONTEND_DIR, "index.html")
-        # /app/* 下保留前缀 (assets 已由上面 mount 接管)，
-        # 防御性拒绝 typo URL 被 SPA 吞成 200 HTML。
-        _SPA_RESERVED_SUBPATHS = ("assets/",)
+        # SPA catch-all at root — registered LAST so all /v1/*, /healthz, /metrics,
+        # /prototype/*, /assets/* API/static routes win first.
+        # Defensive reserved-prefix list keeps typo URLs from getting swallowed
+        # into 200 HTML (e.g. /v1/foo → 404 not SPA).
+        _SPA_RESERVED_PREFIXES = (
+            "v1/", "healthz", "metrics", "docs", "openapi",
+            "assets/", "prototype/", "favicon.",
+        )
 
-        @app.get("/app", include_in_schema=False)
-        def _spa_root():
-            if os.path.isfile(_SPA_INDEX):
-                return FileResponse(_SPA_INDEX, media_type="text/html")
-            raise HTTPException(status_code=404)
-
-        @app.get("/app/{full_path:path}", include_in_schema=False)
+        @app.get("/{full_path:path}", include_in_schema=False)
         def _spa_catch_all(full_path: str):
-            if full_path.startswith(_SPA_RESERVED_SUBPATHS):
+            if full_path.startswith(_SPA_RESERVED_PREFIXES):
                 raise HTTPException(status_code=404)
             if os.path.isfile(_SPA_INDEX):
                 return FileResponse(_SPA_INDEX, media_type="text/html")

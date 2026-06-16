@@ -56,10 +56,13 @@ api.interceptors.response.use(
         original.headers.Authorization = `Bearer ${newAccess}`
         return api(original)
       }
-      // P9: SPA mounted at /app — login is /app/login (full reload so it
-      // works from anywhere including chat.html landing at /).
-      if (typeof window !== 'undefined' && window.location.pathname !== '/app/login') {
-        window.location.href = '/app/login'
+      // P9b: SPA back at root — redirect to /login on auth failure.
+      // Skip if already on /login to avoid redirect loop, and let LandingPage
+      // (which is anon-accessible at /) stay if we're there.
+      if (typeof window !== 'undefined'
+          && window.location.pathname !== '/login'
+          && window.location.pathname !== '/') {
+        window.location.href = '/login'
       }
     }
     return Promise.reject(err)

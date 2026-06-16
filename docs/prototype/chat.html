@@ -820,9 +820,9 @@ document.querySelectorAll('.fu').forEach(f=>{if(f.getAttribute('data-i18n')==='f
 })();
 </script>
 
-<!-- P9: auth gate — chat.html 现在是 `/` landing 着陆页; 用户尝试操作
-     (composer 发送 / "跑真实模拟" 按钮) 时检查 localStorage 里的 React SPA
-     access_token; 未登录就弹双语 modal 引导到 /app/{login|register}?return_to=/。 -->
+<!-- P9b: backward-compat auth gate. chat.html 不再做 `/` landing
+     (LandingPage 已接管根路径), 但若有人通过 /prototype/chat.html 访问,
+     仍提供一致的登录引导 → /{login|register}?return_to=/。 -->
 <script>
 (function() {
   // ---- Auth state helpers (sync with React app's localStorage keys) ----
@@ -874,10 +874,10 @@ document.querySelectorAll('.fu').forEach(f=>{if(f.getAttribute('data-i18n')==='f
     document.body.appendChild(modal);
     const returnTo = encodeURIComponent('/');
     document.getElementById('wx-gate-login').onclick = function() {
-      window.location.href = '/app/login?return_to=' + returnTo;
+      window.location.href = '/login?return_to=' + returnTo;
     };
     document.getElementById('wx-gate-register').onclick = function() {
-      window.location.href = '/app/register?return_to=' + returnTo;
+      window.location.href = '/register?return_to=' + returnTo;
     };
     document.getElementById('wx-gate-close').onclick = function() {
       modal.remove();
@@ -907,7 +907,7 @@ document.querySelectorAll('.fu').forEach(f=>{if(f.getAttribute('data-i18n')==='f
     // Logged-in: redirect to React SPA dashboard (it picks up pending_chat)
     try { localStorage.setItem('wanxiang.pending_chat', text); }
     catch (_) {}
-    window.location.href = '/app/dashboard';
+    window.location.href = '/dashboard';
   }
 
   const composer = document.querySelector('.composer textarea');

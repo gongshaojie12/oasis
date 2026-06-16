@@ -7,6 +7,7 @@ import { Toaster } from 'react-hot-toast'
 import { fetchBrand } from '@/lib/brand'
 import { useBrandStore } from '@/stores/brandStore'
 
+import { LandingPage } from '@/pages/LandingPage'
 import { LoginPage } from '@/pages/auth/LoginPage'
 import { RegisterPage } from '@/pages/auth/RegisterPage'
 import { VerifyEmailPage } from '@/pages/auth/VerifyEmailPage'
@@ -53,9 +54,9 @@ export function App() {
   }, [setBrand])
   return (
     <QueryClientProvider client={queryClient}>
-      {/* P9: SPA mounted at /app/* — basename keeps all <Link> / useNavigate
-          paths internal-relative, but URLs render as /app/login etc. */}
-      <BrowserRouter basename="/app">
+      {/* P9b: SPA mounted at root — `/` renders LandingPage (anon-visible mock UI),
+          all auth/dashboard routes also live at root (no /app prefix). */}
+      <BrowserRouter>
         <Toaster
           position="top-center"
           toastOptions={{
@@ -67,7 +68,8 @@ export function App() {
           }}
         />
         <Routes>
-          {/* Public routes */}
+          {/* Public routes — LandingPage is the anon-accessible demo home */}
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
@@ -77,7 +79,6 @@ export function App() {
 
           {/* Authenticated, no workspace context */}
           <Route element={<ProtectedShell />}>
-            <Route path="/" element={<Navigate to="/workspaces" replace />} />
             <Route path="/workspaces" element={<WorkspacesPage />} />
             <Route path="/onboarding" element={<OnboardingPage />} />
             <Route path="/settings/account" element={<UserSettingsPage />} />

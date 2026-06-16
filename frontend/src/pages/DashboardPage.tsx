@@ -31,8 +31,8 @@ export function DashboardPage() {
   const [creating, setCreating] = useState(false)
   const [loading, setLoading] = useState(true)
 
-  // P9: pick up any composer draft the user typed on chat.html before login.
-  // chat.html stashes it in localStorage and redirects to /app/login → here.
+  // P9b: pick up any composer draft the user typed on LandingPage before login.
+  // LandingPage stashes it in localStorage and redirects to /login → here.
   // Surface it as a toast so they see continuity (next iteration can route
   // straight to a sandbox composer prefill).
   useEffect(() => {

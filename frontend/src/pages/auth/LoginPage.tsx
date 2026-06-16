@@ -42,16 +42,11 @@ export function LoginPage() {
       setWorkspaces(r.data.workspaces)
       const first = r.data.workspaces[0]
       if (first) setCurrentWorkspace(first.slug)
-      // P9: priority — explicit history state.from (RequireAuth redirect) →
-      // ?return_to= (came from chat.html landing) → /dashboard fallback.
+      // P9b: priority — explicit history state.from (RequireAuth redirect) →
+      // ?return_to= (came from LandingPage gate) → /dashboard fallback.
+      // SPA is now at root, so every path stays in-SPA — single nav() call.
       const returnTo = searchParams.get('return_to')
       const target = state?.from || returnTo || '/dashboard'
-      // If returning to a path outside the /app SPA mount (e.g. `/` chat.html
-      // landing), we need a full page load so the FastAPI route can serve it.
-      if (target.startsWith('/') && !target.startsWith('/app')) {
-        window.location.href = target
-        return
-      }
       nav(target, { replace: true })
     } catch (err) {
       const detail = errorDetail(err) ?? t('auth.invalid_credentials')

@@ -110,13 +110,9 @@ export function RegisterPage() {
       setWorkspaces([r.data.default_workspace])
       setCurrentWorkspace(r.data.default_workspace.slug)
       toast.success(t('auth.register_success'))
-      // P9: honor ?return_to= (e.g. came from chat.html landing) — if it's
-      // outside the /app SPA mount (such as `/`), full reload to FastAPI.
+      // P9b: honor ?return_to= (came from LandingPage gate). SPA is at root,
+      // so target stays in-SPA — single nav() call.
       const returnTo = searchParams.get('return_to')
-      if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/app')) {
-        window.location.href = returnTo
-        return
-      }
       nav(returnTo || '/onboarding', { replace: true })
     } catch (err) {
       toast.error(errorDetail(err) ?? t('common.error'))
