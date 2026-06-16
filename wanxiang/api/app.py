@@ -20,6 +20,7 @@ from wanxiang.api.server import ServerSettings
 from wanxiang.api.tenancy import TenantStore
 from wanxiang.api.email import make_email_service
 from wanxiang.api.sms import make_sms_service
+from wanxiang.api.sandboxes import make_sandbox_store
 from wanxiang.api.users import make_user_store
 from wanxiang.api.verification import make_verification_store
 from wanxiang.api.workspaces import make_workspace_store
@@ -58,6 +59,9 @@ def create_app() -> FastAPI:
     app.state.user_store = make_user_store(
         os.environ.get("WANXIANG_TASKS_DB"))
     app.state.workspace_store = make_workspace_store(
+        os.environ.get("WANXIANG_TASKS_DB"))
+    # P6: sandbox + chat message store (shares DSN with other stores)
+    app.state.sandbox_store = make_sandbox_store(
         os.environ.get("WANXIANG_TASKS_DB"))
     # P3: api_key store + bootstrap default demo workspace/api_key
     app.state.api_key_store = make_api_key_store(
@@ -247,6 +251,13 @@ def create_app() -> FastAPI:
     try:
         from wanxiang.api.routes.api_keys import router as ak_router
         app.include_router(ak_router, prefix="/v1")
+    except Exception:
+        pass
+
+    # P6: sandbox + chat routes (/v1/workspaces/{slug}/sandboxes/*)
+    try:
+        from wanxiang.api.routes.sandboxes import router as sandbox_router
+        app.include_router(sandbox_router, prefix="/v1")
     except Exception:
         pass
 

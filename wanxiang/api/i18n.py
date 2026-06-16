@@ -227,6 +227,15 @@ CATALOG: dict[str, dict[Locale, str]] = {
         "en": "First run: super-admin {email} created with initial password "
                "{password} (change immediately)",
     },
+    # P6: sandbox + chat
+    "sandbox.not_found": {
+        "zh": "Sandbox 不存在",
+        "en": "Sandbox not found",
+    },
+    "sandbox.wrong_workspace": {
+        "zh": "Sandbox 不属于当前 Workspace",
+        "en": "Sandbox does not belong to this workspace",
+    },
 }
 
 
