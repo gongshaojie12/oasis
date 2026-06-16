@@ -56,8 +56,10 @@ api.interceptors.response.use(
         original.headers.Authorization = `Bearer ${newAccess}`
         return api(original)
       }
-      if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
-        window.location.href = '/login'
+      // P9: SPA mounted at /app — login is /app/login (full reload so it
+      // works from anywhere including chat.html landing at /).
+      if (typeof window !== 'undefined' && window.location.pathname !== '/app/login') {
+        window.location.href = '/app/login'
       }
     }
     return Promise.reject(err)

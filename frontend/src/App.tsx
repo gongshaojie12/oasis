@@ -53,7 +53,9 @@ export function App() {
   }, [setBrand])
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      {/* P9: SPA mounted at /app/* — basename keeps all <Link> / useNavigate
+          paths internal-relative, but URLs render as /app/login etc. */}
+      <BrowserRouter basename="/app">
         <Toaster
           position="top-center"
           toastOptions={{

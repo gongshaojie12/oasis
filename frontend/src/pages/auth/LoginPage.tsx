@@ -1,7 +1,7 @@
 // =========== Copyright 2026 @ WANXIANG. All Rights Reserved. ===========
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate, Link, useLocation } from 'react-router-dom'
+import { useNavigate, Link, useLocation, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { api } from '@/lib/api'
 import { setTokens } from '@/lib/auth'
@@ -18,6 +18,7 @@ export function LoginPage() {
   const { t } = useTranslation()
   const nav = useNavigate()
   const loc = useLocation()
+  const [searchParams] = useSearchParams()
   const state = (loc.state ?? null) as LocationState | null
   const setUser = useAuthStore((s) => s.setUser)
   const setWorkspaces = useAuthStore((s) => s.setWorkspaces)
@@ -41,7 +42,16 @@ export function LoginPage() {
       setWorkspaces(r.data.workspaces)
       const first = r.data.workspaces[0]
       if (first) setCurrentWorkspace(first.slug)
-      const target = state?.from || '/dashboard'
+      // P9: priority — explicit history state.from (RequireAuth redirect) →
+      // ?return_to= (came from chat.html landing) → /dashboard fallback.
+      const returnTo = searchParams.get('return_to')
+      const target = state?.from || returnTo || '/dashboard'
+      // If returning to a path outside the /app SPA mount (e.g. `/` chat.html
+      // landing), we need a full page load so the FastAPI route can serve it.
+      if (target.startsWith('/') && !target.startsWith('/app')) {
+        window.location.href = target
+        return
+      }
       nav(target, { replace: true })
     } catch (err) {
       const detail = errorDetail(err) ?? t('auth.invalid_credentials')

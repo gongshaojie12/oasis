@@ -31,6 +31,24 @@ export function DashboardPage() {
   const [creating, setCreating] = useState(false)
   const [loading, setLoading] = useState(true)
 
+  // P9: pick up any composer draft the user typed on chat.html before login.
+  // chat.html stashes it in localStorage and redirects to /app/login → here.
+  // Surface it as a toast so they see continuity (next iteration can route
+  // straight to a sandbox composer prefill).
+  useEffect(() => {
+    const pending = localStorage.getItem('wanxiang.pending_chat')
+    if (pending) {
+      localStorage.removeItem('wanxiang.pending_chat')
+      const preview = pending.length > 50 ? pending.slice(0, 50) + '…' : pending
+      toast(
+        i18n.language === 'en'
+          ? `Restored your draft: ${preview}`
+          : `已带回你的输入: ${preview}`,
+        { icon: '💬', duration: 5000 },
+      )
+    }
+  }, [i18n.language])
+
   // If route has explicit /w/:slug, pin it as current
   useEffect(() => {
     if (params.slug && params.slug !== currentSlug) {

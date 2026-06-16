@@ -1,7 +1,7 @@
 // =========== Copyright 2026 @ WANXIANG. All Rights Reserved. ===========
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { api } from '@/lib/api'
 import { setTokens } from '@/lib/auth'
@@ -15,6 +15,7 @@ type Tab = 'email' | 'phone'
 export function RegisterPage() {
   const { t, i18n } = useTranslation()
   const nav = useNavigate()
+  const [searchParams] = useSearchParams()
   const setUser = useAuthStore((s) => s.setUser)
   const setWorkspaces = useAuthStore((s) => s.setWorkspaces)
   const setCurrentWorkspace = useAuthStore((s) => s.setCurrentWorkspace)
@@ -109,7 +110,14 @@ export function RegisterPage() {
       setWorkspaces([r.data.default_workspace])
       setCurrentWorkspace(r.data.default_workspace.slug)
       toast.success(t('auth.register_success'))
-      nav('/onboarding', { replace: true })
+      // P9: honor ?return_to= (e.g. came from chat.html landing) — if it's
+      // outside the /app SPA mount (such as `/`), full reload to FastAPI.
+      const returnTo = searchParams.get('return_to')
+      if (returnTo && returnTo.startsWith('/') && !returnTo.startsWith('/app')) {
+        window.location.href = returnTo
+        return
+      }
+      nav(returnTo || '/onboarding', { replace: true })
     } catch (err) {
       toast.error(errorDetail(err) ?? t('common.error'))
     } finally {

@@ -819,5 +819,131 @@ document.querySelectorAll('.fu').forEach(f=>{if(f.getAttribute('data-i18n')==='f
   btn.addEventListener('click', runSim);
 })();
 </script>
+
+<!-- P9: auth gate — chat.html 现在是 `/` landing 着陆页; 用户尝试操作
+     (composer 发送 / "跑真实模拟" 按钮) 时检查 localStorage 里的 React SPA
+     access_token; 未登录就弹双语 modal 引导到 /app/{login|register}?return_to=/。 -->
+<script>
+(function() {
+  // ---- Auth state helpers (sync with React app's localStorage keys) ----
+  function wxGetAccessToken() {
+    try { return localStorage.getItem('wanxiang.access_token'); }
+    catch (_) { return null; }
+  }
+  function wxIsLoggedIn() {
+    return !!wxGetAccessToken();
+  }
+
+  // ---- Login/register modal (bilingual, matches design system) ----
+  function wxRequireAuth(actionLabel) {
+    // De-dupe: don't stack modals
+    if (document.getElementById('wx-auth-gate-modal')) return;
+    const lang = (window.WANXIANG_LANG === 'en') ? 'en' : 'zh';
+    const tr = (zh, en) => lang === 'en' ? en : zh;
+    const modal = document.createElement('div');
+    modal.id = 'wx-auth-gate-modal';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(5,10,28,0.85);' +
+      'z-index:99999;display:grid;place-items:center;backdrop-filter:blur(8px);' +
+      '-webkit-backdrop-filter:blur(8px)';
+    modal.innerHTML =
+      '<div style="background:linear-gradient(135deg,#131e3b,#0B1632);padding:36px 32px;' +
+      'border:1px solid rgba(120,145,220,0.25);border-radius:18px;max-width:420px;' +
+      'width:90%;text-align:center;box-shadow:0 24px 64px -16px rgba(0,0,0,0.6);' +
+      'color:#E8ECF8;font-family:inherit">' +
+      '<div style="font-size:38px;margin-bottom:8px">🔐</div>' +
+      '<h2 style="font-size:20px;font-weight:700;margin-bottom:8px;color:#fff">' +
+      tr('登录后即可跑真实模拟', 'Sign in to run a real simulation') +
+      '</h2>' +
+      '<p style="font-size:14px;color:#9AA5C7;margin-bottom:24px;line-height:1.6">' +
+      tr('我们已经为你预备好沙盒，注册账号即可立即体验。',
+         'Your sandbox is ready — register an account to start exploring.') +
+      '</p>' +
+      '<div style="display:flex;gap:12px;justify-content:center">' +
+      '<button id="wx-gate-login" type="button" style="background:transparent;color:#fff;' +
+      'border:1px solid rgba(120,145,220,0.4);padding:10px 24px;border-radius:10px;' +
+      'cursor:pointer;font:inherit">' + tr('登录', 'Log in') + '</button>' +
+      '<button id="wx-gate-register" type="button" style="background:linear-gradient(135deg,#1B4DFF,#00B8D4);' +
+      'color:#fff;border:none;padding:10px 24px;border-radius:10px;cursor:pointer;' +
+      'font:inherit;font-weight:600;box-shadow:0 12px 32px -8px rgba(27,77,255,0.4)">' +
+      tr('注册', 'Register') + '</button>' +
+      '</div>' +
+      '<button id="wx-gate-close" type="button" style="background:none;border:none;' +
+      'color:#5C6786;margin-top:18px;cursor:pointer;font:inherit;font-size:13px">' +
+      tr('稍后再说', 'Maybe later') + '</button>' +
+      '</div>';
+    document.body.appendChild(modal);
+    const returnTo = encodeURIComponent('/');
+    document.getElementById('wx-gate-login').onclick = function() {
+      window.location.href = '/app/login?return_to=' + returnTo;
+    };
+    document.getElementById('wx-gate-register').onclick = function() {
+      window.location.href = '/app/register?return_to=' + returnTo;
+    };
+    document.getElementById('wx-gate-close').onclick = function() {
+      modal.remove();
+    };
+    // Click backdrop to dismiss
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) modal.remove();
+    });
+  }
+
+  // Expose for debugging / tests
+  window.wxRequireAuth = wxRequireAuth;
+  window.wxIsLoggedIn = wxIsLoggedIn;
+
+  // ---- Gate the composer (textarea + send button) ----
+  function handleComposerSubmit() {
+    const textarea = document.querySelector('.composer textarea');
+    const text = textarea && textarea.value ? textarea.value.trim() : '';
+    if (!text) return;
+    if (!wxIsLoggedIn()) {
+      // Stash draft so React dashboard can welcome the user back with it
+      try { localStorage.setItem('wanxiang.pending_chat', text); }
+      catch (_) { /* quota — ignore */ }
+      wxRequireAuth('chat-send');
+      return;
+    }
+    // Logged-in: redirect to React SPA dashboard (it picks up pending_chat)
+    try { localStorage.setItem('wanxiang.pending_chat', text); }
+    catch (_) {}
+    window.location.href = '/app/dashboard';
+  }
+
+  const composer = document.querySelector('.composer textarea');
+  if (composer) {
+    composer.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleComposerSubmit();
+      }
+    });
+  }
+  const composerSendBtn = document.querySelector('.composer .comp-send');
+  if (composerSendBtn) {
+    composerSendBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      handleComposerSubmit();
+    });
+  }
+
+  // ---- Gate the "🚀 跑一次真实模拟" header button via capture phase ----
+  // Existing handler (in the script block above) runs runSim() unconditionally.
+  // We register a capture-phase listener that fires BEFORE the bubbling
+  // handler and short-circuits when the user isn't logged in. This avoids
+  // touching runSim's internals (zero risk of breaking the API flow when
+  // logged in).
+  const realSimBtn = document.getElementById('run-real-sim');
+  if (realSimBtn) {
+    realSimBtn.addEventListener('click', function(e) {
+      if (!wxIsLoggedIn()) {
+        e.stopImmediatePropagation();
+        e.preventDefault();
+        wxRequireAuth('header-run-sim');
+      }
+    }, true);
+  }
+})();
+</script>
 </body>
 </html>
