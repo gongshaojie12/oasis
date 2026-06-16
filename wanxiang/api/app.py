@@ -11,7 +11,8 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from wanxiang.api.api_keys import make_api_key_store
-from wanxiang.api.bootstrap import ensure_demo_workspace_and_key
+from wanxiang.api.bootstrap import (ensure_demo_workspace_and_key,
+                                       ensure_super_admin)
 from wanxiang.api.observability import (AccessLogMiddleware,
                                           RequestIdMiddleware,
                                           configure_logging, metrics)
@@ -71,6 +72,13 @@ def create_app() -> FastAPI:
         import logging as _logging
         _logging.getLogger(__name__).warning(
             "bootstrap demo workspace/api_key failed: %s", _e)
+    # P4: optionally create super-admin from WANXIANG_SUPER_ADMIN_EMAIL/PASSWORD
+    try:
+        ensure_super_admin(user_store=app.state.user_store)
+    except Exception as _e:  # pragma: no cover
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "bootstrap super-admin failed: %s", _e)
     # P2: SMS / Email / verification code stores + services.
     # Default env stays NoOp (logs to stdout) — production wires real
     # provider via WANXIANG_SMS_PROVIDER / WANXIANG_EMAIL_PROVIDER.
@@ -88,6 +96,10 @@ def create_app() -> FastAPI:
     # M3-13：审计日志 store 与 task/usage store 复用同一 DSN（独立 audit_events 表）。
     from wanxiang.api.audit import make_audit_store
     app.state.audit_store = make_audit_store(
+        os.environ.get("WANXIANG_TASKS_DB"))
+    # P4：余额流水 store —— 与其他 store 共享同一 DSN（独立 transactions 表）。
+    from wanxiang.api.transactions import make_transaction_store
+    app.state.transaction_store = make_transaction_store(
         os.environ.get("WANXIANG_TASKS_DB"))
     # M3-11 / Stage 1+2: SSE 事件总线。
     # 默认 in-memory；设置 WANXIANG_EVENT_BUS=redis 后切到跨进程 Redis 实现。
@@ -235,6 +247,18 @@ def create_app() -> FastAPI:
     try:
         from wanxiang.api.routes.api_keys import router as ak_router
         app.include_router(ak_router, prefix="/v1")
+    except Exception:
+        pass
+
+    # P4: super-admin routes (/v1/admin/*) + workspace-scoped billing
+    try:
+        from wanxiang.api.routes.admin import router as admin_router
+        app.include_router(admin_router, prefix="/v1")
+    except Exception:
+        pass
+    try:
+        from wanxiang.api.routes.billing import router as billing_router
+        app.include_router(billing_router, prefix="/v1")
     except Exception:
         pass
 

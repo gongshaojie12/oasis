@@ -122,6 +122,13 @@ class InMemoryUserStore:
                     setattr(u, k, v)
             return u
 
+    def list_all(self, *, limit: int = 100) -> list[User]:
+        """P4: super-admin sees all users (DESC by created_at)."""
+        with self._lock:
+            users = sorted(self._users.values(),
+                            key=lambda u: u.created_at, reverse=True)
+        return users[:limit]
+
 
 def make_user_store(dsn: str | None, *, eager_init: bool = True):
     """DSN dispatch: None|plain-path -> SQLite, sqlite:// -> SQLite,

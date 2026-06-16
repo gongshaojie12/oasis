@@ -193,6 +193,15 @@ class InMemoryWorkspaceStore:
         return [inv for inv in self._invites.values()
                 if inv.workspace_id == workspace_id]
 
+    # ---- P4 ----
+
+    def list_all(self, *, limit: int = 100) -> list[Workspace]:
+        """P4: super-admin sees all workspaces (DESC by created_at)."""
+        with self._lock:
+            items = sorted(self._ws.values(),
+                            key=lambda w: w.created_at, reverse=True)
+        return items[:limit]
+
 
 def make_workspace_store(dsn: str | None, *, eager_init: bool = True):
     if not dsn:

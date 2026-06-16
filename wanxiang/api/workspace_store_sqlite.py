@@ -252,3 +252,12 @@ class SqliteWorkspaceStore:
                 "ORDER BY expires_at ASC",
                 (workspace_id,)).fetchall()
         return [_row_to_invite(r) for r in rows]
+
+    # ---- P4 ----
+
+    def list_all(self, *, limit: int = 100) -> list[Workspace]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM workspaces ORDER BY created_at DESC LIMIT ?",
+                (int(limit),)).fetchall()
+        return [_row_to_ws(r) for r in rows]

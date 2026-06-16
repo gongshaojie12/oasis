@@ -38,9 +38,12 @@ def require_user(request: Request):
     return user
 
 
-def require_super_admin(user=Depends(require_user)):
+def require_super_admin(request: Request, user=Depends(require_user)):
     if not user.is_super_admin:
-        raise HTTPException(status_code=403, detail="super-admin required")
+        locale = get_request_locale(request)
+        raise HTTPException(
+            status_code=403,
+            detail=t("admin.requires_super_admin", locale=locale))
     return user
 
 

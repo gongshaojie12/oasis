@@ -188,6 +188,57 @@ def _aggregate_view_from_stats(stats: dict, n_valid: int) -> dict | None:
     }
 
 
+def _enforce_balance_or_402(request: Request, tenant_id: str,
+                              expected_cost: int, locale: str) -> None:
+    """P4: pre-flight balance check. Raises 402 when enforce_balance is on
+    and the workspace can't cover ``expected_cost``."""
+    settings = getattr(request.app.state, "settings", None)
+    if settings is None or not getattr(settings, "enforce_balance", False):
+        return
+    ws_store = getattr(request.app.state, "workspace_store", None)
+    if ws_store is None:
+        return
+    ws = ws_store.get_workspace(tenant_id)
+    if ws is None:
+        return
+    if ws.balance_cost_units < expected_cost:
+        raise HTTPException(
+            status_code=402,
+            detail=t("billing.insufficient_balance", locale=locale,
+                      required=expected_cost,
+                      available=ws.balance_cost_units))
+
+
+def _deduct_balance_best_effort(request: Request, tenant_id: str,
+                                  amount: int, *, task_id: str | None,
+                                  note: str) -> None:
+    """P4: deduct from workspace balance after a sim ran (or attempted).
+
+    Never raises — billing failure must not break the simulate response.
+    ``enforce`` mirrors the settings flag: when ``enforce_balance`` is True
+    we still enforce here (no-op since pre-flight already passed) so the
+    transaction reflects "we would have blocked".
+    """
+    try:
+        from wanxiang.api.billing import deduct_workspace
+        ws_store = getattr(request.app.state, "workspace_store", None)
+        tx_store = getattr(request.app.state, "transaction_store", None)
+        if ws_store is None or tx_store is None:
+            return
+        if ws_store.get_workspace(tenant_id) is None:
+            return  # legacy in-memory tenant; nothing to debit
+        deduct_workspace(
+            workspace_store=ws_store, transaction_store=tx_store,
+            workspace_id=tenant_id, amount=amount,
+            related_task_id=task_id, note=note,
+            enforce=False,  # never block at this point
+        )
+    except Exception as e:  # noqa: BLE001
+        import logging
+        logging.getLogger(__name__).warning(
+            "balance deduction failed: %s", e)
+
+
 @router.post("/simulate", response_model=SimulateResponse)
 async def simulate(
     req: SimulateRequest,
@@ -205,6 +256,14 @@ async def simulate(
         req = req.model_copy(update={
             "model": resolve_effective_model(None, tenant)})
     loc = get_request_locale(request)
+
+    # P4: pre-flight 402 when settings.enforce_balance and workspace short
+    from wanxiang.api.usage import compute_cost_units, derive_mode_label
+    mode_label = derive_mode_label(rounds=req.rounds,
+                                     platform=getattr(req, "platform", None))
+    expected_cost = compute_cost_units(mode_label, req.n, req.rounds)
+    _enforce_balance_or_402(request, tenant.tenant_id, expected_cost, loc)
+
     try:
         resp = await run_simulation_pipeline(
             req, model_factory, moderator=moderator, locale=loc)
@@ -221,6 +280,11 @@ async def simulate(
             metrics.observe("usage.cost_units", evt.cost_units,
                             {"mode": evt.mode,
                              "tenant_id": tenant.tenant_id})
+            # P4: also deduct from workspace balance (best-effort)
+            _deduct_balance_best_effort(
+                request, tenant.tenant_id, evt.cost_units,
+                task_id=None,
+                note=f"sim {req.scenario.kind} n={req.n}")
         return resp
     except FileNotFoundError as e:
         raise HTTPException(

@@ -44,7 +44,9 @@ async def _run_task(store: TaskStore, task_id: str, req: SimulateRequest,
                     model_factory, usage_store=None,
                     tenant_id: str | None = None,
                     event_bus=None,
-                    locale: str = DEFAULT_LOCALE) -> None:
+                    locale: str = DEFAULT_LOCALE,
+                    workspace_store=None,
+                    transaction_store=None) -> None:
     started_at = datetime.now(timezone.utc)
     store.update(task_id, status=TaskStatus.RUNNING, started_at=started_at)
     status_str = "failed"
@@ -107,6 +109,21 @@ async def _run_task(store: TaskStore, task_id: str, req: SimulateRequest,
             usage_store.record(evt)
             metrics.observe("usage.cost_units", evt.cost_units,
                             {"mode": evt.mode, "tenant_id": tenant_id})
+            # P4: also deduct from workspace balance (best-effort)
+            if workspace_store is not None and transaction_store is not None:
+                try:
+                    from wanxiang.api.billing import deduct_workspace
+                    if workspace_store.get_workspace(tenant_id) is not None:
+                        deduct_workspace(
+                            workspace_store=workspace_store,
+                            transaction_store=transaction_store,
+                            workspace_id=tenant_id, amount=evt.cost_units,
+                            related_task_id=task_id,
+                            note=f"async {req.scenario.kind} n={req.n}",
+                            enforce=False,
+                        )
+                except Exception:  # noqa: BLE001
+                    pass
         except Exception:  # noqa: BLE001
             # 计费失败不应影响任务结果
             pass
@@ -115,6 +132,7 @@ async def _run_task(store: TaskStore, task_id: str, req: SimulateRequest,
 def _dispatch_async_simulation(
     *, req: SimulateRequest, locale: str, tenant_id: str, task_id: str,
     model_factory, task_store: TaskStore, usage_store, event_bus,
+    workspace_store=None, transaction_store=None,
 ) -> None:
     """Hand off the async simulation to either asyncio or Celery.
 
@@ -141,7 +159,9 @@ def _dispatch_async_simulation(
     asyncio.create_task(_run_task(
         task_store, task_id, req, model_factory,
         usage_store=usage_store, tenant_id=tenant_id,
-        event_bus=event_bus, locale=locale))
+        event_bus=event_bus, locale=locale,
+        workspace_store=workspace_store,
+        transaction_store=transaction_store))
 
 
 @router.post("/simulations/async", status_code=status.HTTP_202_ACCEPTED)
@@ -161,13 +181,26 @@ async def create_async_simulation(
                 {"kind": req.scenario.kind, "mode": "async"})
     usage_store = getattr(request.app.state, "usage_store", None)
     event_bus = getattr(request.app.state, "event_bus", None)
+    workspace_store = getattr(request.app.state, "workspace_store", None)
+    transaction_store = getattr(request.app.state, "transaction_store", None)
     # P3: capture locale now so background task renders in the requester's
     # language (request.state goes away once the response is sent).
     locale = get_request_locale(request)
+
+    # P4: pre-flight enforce_balance check
+    from wanxiang.api.routes.simulate import _enforce_balance_or_402
+    from wanxiang.api.usage import compute_cost_units, derive_mode_label
+    mode_label = derive_mode_label(rounds=req.rounds,
+                                     platform=getattr(req, "platform", None))
+    expected_cost = compute_cost_units(mode_label, req.n, req.rounds)
+    _enforce_balance_or_402(request, tenant.tenant_id, expected_cost, locale)
+
     _dispatch_async_simulation(
         req=req, locale=locale, tenant_id=tenant.tenant_id, task_id=task.id,
         model_factory=model_factory, task_store=store,
         usage_store=usage_store, event_bus=event_bus,
+        workspace_store=workspace_store,
+        transaction_store=transaction_store,
     )
     return _serialize(task)
 
@@ -209,6 +242,21 @@ async def sweep_simulations(
     usage_store = getattr(request.app.state, "usage_store", None)
     sweep_locale = get_request_locale(request)
 
+    # P4: pre-flight check — sum cost across all combos and verify balance.
+    from wanxiang.api.routes.simulate import (_deduct_balance_best_effort,
+                                                _enforce_balance_or_402)
+    from wanxiang.api.usage import compute_cost_units, derive_mode_label
+
+    def _combo_cost(values):
+        combo_req = apply_combo(base, values)
+        m = derive_mode_label(rounds=combo_req.rounds,
+                                platform=getattr(combo_req, "platform", None))
+        return compute_cost_units(m, combo_req.n, combo_req.rounds)
+
+    total_cost = sum(_combo_cost(v) for v in combos_values)
+    _enforce_balance_or_402(request, tenant.tenant_id, total_cost,
+                              sweep_locale)
+
     out_combos: list[SweepCombo] = []
     for values in combos_values:
         cid = combo_id(values)
@@ -225,6 +273,10 @@ async def sweep_simulations(
                 metrics.observe("usage.cost_units", evt.cost_units,
                                 {"mode": evt.mode,
                                  "tenant_id": tenant.tenant_id})
+                _deduct_balance_best_effort(
+                    request, tenant.tenant_id, evt.cost_units,
+                    task_id=None,
+                    note=f"sweep {combo_req.scenario.kind} n={combo_req.n}")
             out_combos.append(SweepCombo(
                 combo_id=cid, values=values, task_id=None,
                 result=result.model_dump(), error=None))
@@ -237,6 +289,10 @@ async def sweep_simulations(
                         tenant_id=tenant.tenant_id, request=combo_req,
                         response_kind=combo_req.scenario.kind, status="failed")
                     usage_store.record(evt)
+                    _deduct_balance_best_effort(
+                        request, tenant.tenant_id, evt.cost_units,
+                        task_id=None,
+                        note=f"sweep failed {combo_req.scenario.kind}")
                 except Exception:  # noqa: BLE001
                     pass
             out_combos.append(SweepCombo(

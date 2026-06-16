@@ -117,3 +117,11 @@ class PgUserStore:
                 f"UPDATE users SET {', '.join(cols)} WHERE user_id = %s",
                 vals)
         return self.get(user_id)
+
+    def list_all(self, *, limit: int = 100) -> list[User]:
+        with self._connect() as conn:
+            cur = conn.execute(
+                "SELECT * FROM users ORDER BY created_at DESC LIMIT %s",
+                (int(limit),))
+            rows = cur.fetchall()
+        return [_row_to_user(r) for r in rows]

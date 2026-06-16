@@ -207,6 +207,26 @@ CATALOG: dict[str, dict[Locale, str]] = {
         "zh": "验证码错误，剩余 {remaining} 次",
         "en": "Invalid code, {remaining} attempts remaining",
     },
+    # P4: billing + super-admin
+    "billing.insufficient_balance": {
+        "zh": "余额不足 (需要 {required} 单位, 当前 {available})",
+        "en": "Insufficient balance (required {required} units, "
+               "available {available})",
+    },
+    "billing.topup_invalid_amount": {
+        "zh": "充值金额必须为正",
+        "en": "Top-up amount must be positive",
+    },
+    "admin.requires_super_admin": {
+        "zh": "需要超级管理员权限",
+        "en": "Super-admin permission required",
+    },
+    "admin.first_run_password": {
+        "zh": "首次启动: 已创建超级管理员账号 {email}, 初始密码 {password} "
+               "(请立即修改)",
+        "en": "First run: super-admin {email} created with initial password "
+               "{password} (change immediately)",
+    },
 }
 
 

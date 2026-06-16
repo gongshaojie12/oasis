@@ -76,6 +76,48 @@ def ensure_demo_workspace_and_key(*, user_store, workspace_store,
     return ws, ak
 
 
+def ensure_super_admin(*, user_store) -> bool:
+    """P4: ensure a super-admin user exists when ``WANXIANG_SUPER_ADMIN_EMAIL``
+    (and ``WANXIANG_SUPER_ADMIN_PASSWORD``) env vars are set.
+
+    Idempotent: if a user with the given email already exists, just flip
+    ``is_super_admin=True`` (don't reset the password). Returns True if
+    a user was created or modified.
+
+    No-op when ``WANXIANG_SUPER_ADMIN_EMAIL`` is unset — per spec we don't
+    want to silently provision a super-admin with a random password.
+    """
+    from wanxiang.api.users import User, hash_password
+
+    email = os.environ.get("WANXIANG_SUPER_ADMIN_EMAIL")
+    if not email:
+        return False
+    password = os.environ.get("WANXIANG_SUPER_ADMIN_PASSWORD")
+    if not password:
+        log.warning("Bootstrap: WANXIANG_SUPER_ADMIN_EMAIL set without "
+                     "WANXIANG_SUPER_ADMIN_PASSWORD — skipping super-admin")
+        return False
+
+    existing = user_store.get_by_email(email)
+    if existing:
+        if not existing.is_super_admin:
+            user_store.update(existing.user_id, is_super_admin=True)
+            log.info("Bootstrap: promoted existing user %s to super-admin",
+                      email)
+            return True
+        return False
+
+    user = User(
+        user_id="auto", email=email, phone=None,
+        password_hash=hash_password(password),
+        display_name=email.split("@")[0],
+        locale="zh", email_verified=True, is_super_admin=True,
+    )
+    user_store.create(user)
+    log.info("Bootstrap: created super-admin %s", email)
+    return True
+
+
 def _seed_legacy_tenants(workspace_store, api_key_store, user_store, *,
                           fallback_owner_email: str) -> None:
     """Migrate legacy ``WANXIANG_TENANTS_JSON`` entries as workspace + api_key."""
@@ -127,4 +169,4 @@ def _seed_legacy_tenants(workspace_store, api_key_store, user_store, *,
             log.warning("Bootstrap: skipping legacy entry %r: %s", entry, e)
 
 
-__all__ = ["ensure_demo_workspace_and_key"]
+__all__ = ["ensure_demo_workspace_and_key", "ensure_super_admin"]

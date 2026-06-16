@@ -253,3 +253,13 @@ class PgWorkspaceStore:
                 (workspace_id,))
             rows = cur.fetchall()
         return [_row_to_invite(r) for r in rows]
+
+    # ---- P4 ----
+
+    def list_all(self, *, limit: int = 100) -> list[Workspace]:
+        with self._connect() as conn:
+            cur = conn.execute(
+                "SELECT * FROM workspaces ORDER BY created_at DESC LIMIT %s",
+                (int(limit),))
+            rows = cur.fetchall()
+        return [_row_to_ws(r) for r in rows]

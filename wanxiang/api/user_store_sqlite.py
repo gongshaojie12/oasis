@@ -123,3 +123,10 @@ class SqliteUserStore:
                 f"UPDATE users SET {', '.join(cols)} WHERE user_id = ?",
                 vals)
         return self.get(user_id)
+
+    def list_all(self, *, limit: int = 100) -> list[User]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM users ORDER BY created_at DESC LIMIT ?",
+                (int(limit),)).fetchall()
+        return [_row_to_user(r) for r in rows]

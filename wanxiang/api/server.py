@@ -49,6 +49,11 @@ class ServerSettings(BaseSettings):
     jwt_alg: str = "HS256"
     jwt_access_ttl_minutes: int = 15
     jwt_refresh_ttl_days: int = 7
+    # ---- P4: balance enforcement ----
+    # When False (MVP default) deductions still happen but never block the
+    # simulate response. When True, simulate/sweep return 402 if the
+    # workspace balance can't cover the requested cost.
+    enforce_balance: bool = False
 
 
 def main(argv: list[str] | None = None) -> int:
