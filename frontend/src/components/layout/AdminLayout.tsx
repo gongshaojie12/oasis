@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next'
 import { Users, Building, Receipt, ArrowLeft } from 'lucide-react'
 import { BrandLogo } from '@/components/BrandLogo'
 import { I18nToggle } from '@/components/I18nToggle'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 const ADMIN_NAV = [
   { to: '/admin/users', icon: Users, key: 'admin.users' },
@@ -63,7 +64,8 @@ export function AdminLayout() {
             {t('nav.back_to_app')}
           </button>
         </nav>
-        <div className="wx-side-nav-foot">
+        <div className="wx-side-nav-foot" style={{ gap: 6 }}>
+          <ThemeToggle />
           <I18nToggle />
         </div>
       </aside>

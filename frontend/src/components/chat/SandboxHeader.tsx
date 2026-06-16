@@ -3,6 +3,7 @@
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { I18nToggle } from '@/components/I18nToggle'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import type { Sandbox, Workspace } from '@/types/api'
 
 interface Props {
@@ -37,6 +38,7 @@ export function SandboxHeader({ sandbox, workspace }: Props) {
         </small>
       </div>
       <div style={{ flex: 1 }} />
+      <ThemeToggle />
       <I18nToggle />
     </div>
   )

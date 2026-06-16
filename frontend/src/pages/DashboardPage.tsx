@@ -10,6 +10,7 @@ import { clearTokens } from '@/lib/auth'
 import { BrandLogo } from '@/components/BrandLogo'
 import { GlassCard } from '@/components/GlassCard'
 import { I18nToggle } from '@/components/I18nToggle'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { NewSandboxModal } from '@/components/chat/NewSandboxModal'
 import { useAuthStore } from '@/stores/authStore'
 import { useSandboxStore } from '@/stores/sandboxStore'
@@ -123,6 +124,7 @@ export function DashboardPage() {
       <header className="flex items-center justify-between mb-8">
         <BrandLogo size="md" />
         <div className="flex items-center gap-3">
+          <ThemeToggle />
           <I18nToggle />
           <button type="button" className="wx-btn-ghost text-sm"
                    onClick={() => nav('/workspaces')}>

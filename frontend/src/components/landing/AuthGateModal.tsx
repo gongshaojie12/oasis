@@ -139,7 +139,7 @@ export function AuthGateModal({
     <div
       className="fixed inset-0 z-[9999] grid place-items-center"
       style={{
-        background: 'rgba(5,10,28,0.85)',
+        background: 'var(--wx-bg-overlay)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
       }}
@@ -181,12 +181,12 @@ export function AuthGateModal({
             borderRadius: 12, background: 'var(--wx-grad-blue)',
           }}
         >
-          <Lock size={22} color="#fff" />
+          <Lock size={22} color="var(--wx-text-on-primary)" />
         </div>
         <h2
           id="wx-auth-title"
           style={{
-            fontSize: 19, fontWeight: 700, color: '#fff',
+            fontSize: 19, fontWeight: 700, color: 'var(--wx-text-primary)',
             textAlign: 'center', marginBottom: 6,
           }}
         >
@@ -206,9 +206,9 @@ export function AuthGateModal({
           role="tablist"
           style={{
             display: 'flex', gap: 4, padding: 4,
-            background: 'rgba(0,0,0,0.25)',
+            background: 'var(--wx-bg-subtle)',
             borderRadius: 10, marginBottom: 18,
-            border: '1px solid var(--wx-glass-border)',
+            border: '1px solid var(--wx-border)',
           }}
         >
           <TabButton active={tab === 'login'} onClick={() => setTab('login')}>
@@ -275,9 +275,9 @@ export function AuthGateModal({
               role="tablist"
               style={{
                 display: 'flex', gap: 4, padding: 3,
-                background: 'rgba(0,0,0,0.18)',
+                background: 'var(--wx-bg-subtle)',
                 borderRadius: 8,
-                border: '1px solid var(--wx-glass-border)',
+                border: '1px solid var(--wx-border)',
               }}
             >
               <ChannelTab active={regChannel === 'email'} onClick={() => setRegChannel('email')}>
@@ -373,7 +373,7 @@ function TabButton(props: { active: boolean; onClick: () => void; children: Reac
         flex: 1,
         padding: '8px 12px',
         background: props.active ? 'var(--wx-grad-blue)' : 'transparent',
-        color: props.active ? '#fff' : 'var(--wx-text-secondary)',
+        color: props.active ? 'var(--wx-text-on-primary)' : 'var(--wx-text-secondary)',
         border: 'none',
         borderRadius: 8,
         cursor: 'pointer',
@@ -398,7 +398,7 @@ function ChannelTab(props: { active: boolean; onClick: () => void; children: Rea
       style={{
         flex: 1,
         padding: '6px 10px',
-        background: props.active ? 'rgba(120,145,220,0.18)' : 'transparent',
+        background: props.active ? 'var(--wx-bg-active)' : 'transparent',
         color: props.active ? 'var(--wx-text-primary)' : 'var(--wx-text-tertiary)',
         border: 'none',
         borderRadius: 6,

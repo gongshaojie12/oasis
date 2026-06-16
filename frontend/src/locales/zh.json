@@ -313,5 +313,7 @@
   "landing.panel_decision_kind": "决策类型",
   "landing.panel_valid_samples": "有效样本",
   "landing.panel_mean": "群体均值",
-  "landing.default_sandbox_name": "我的第一个沙盒"
+  "landing.default_sandbox_name": "我的第一个沙盒",
+  "theme.switch_to_dark": "切换深色",
+  "theme.switch_to_light": "切换浅色"
 }

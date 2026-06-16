@@ -61,9 +61,10 @@ export function App() {
           position="top-center"
           toastOptions={{
             style: {
-              background: '#131e3b',
-              color: '#fff',
-              border: '1px solid rgba(120,145,220,0.18)',
+              background: 'var(--wx-toast-bg)',
+              color: 'var(--wx-toast-color)',
+              border: '1px solid var(--wx-border)',
+              boxShadow: 'var(--wx-shadow-md)',
             },
           }}
         />

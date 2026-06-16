@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next'
 import toast from 'react-hot-toast'
 import { BrandLogo } from '@/components/BrandLogo'
 import { I18nToggle } from '@/components/I18nToggle'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { api } from '@/lib/api'
 import { clearTokens } from '@/lib/auth'
 import { useAuthStore } from '@/stores/authStore'
@@ -150,6 +151,7 @@ export function WorkspaceLayout() {
         </nav>
         <div className="wx-side-nav-foot">
           <div style={{ display: 'flex', gap: 4 }}>
+            <ThemeToggle />
             <I18nToggle />
             <button
               type="button"

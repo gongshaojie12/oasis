@@ -85,11 +85,11 @@ export function NewSandboxModal({
                 style={{
                   width: 36, height: 36, borderRadius: 9,
                   background: emoji === e
-                    ? 'rgba(27, 77, 255, 0.25)'
-                    : 'rgba(255,255,255,0.05)',
+                    ? 'var(--wx-bg-active)'
+                    : 'var(--wx-bg-hover)',
                   border: emoji === e
                     ? '1px solid var(--wx-accent-cyan)'
-                    : '1px solid var(--wx-glass-border)',
+                    : '1px solid var(--wx-border)',
                   cursor: 'pointer', fontSize: 18,
                 }}
               >{e}</button>

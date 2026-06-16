@@ -1,35 +1,136 @@
 @import "tailwindcss";
 
-/* WANXIANG Design Tokens — extracted from chat.html prototype */
+/* ===== WANXIANG Design Tokens — dual-theme (light default, dark optional) =====
+   Theme switching via `data-theme` attr on <html>. Brand colors are
+   theme-independent; surfaces, text, borders, glass, gradients, shadows
+   re-bind under each theme. Existing dark aesthetic mirrors the original
+   chat.html prototype 1:1. */
+
+/* Common / theme-independent tokens */
 :root {
-  /* Brand colors — dark navy stack */
-  --wx-navy-900: #050a1c;
-  --wx-navy-800: #0B1632;
-  --wx-navy-700: #131e3b;
-  --wx-navy-600: #1a274a;
+  /* Brand accents */
   --wx-accent-blue: #1B4DFF;
   --wx-accent-cyan: #00B8D4;
   --wx-accent-orange: #FF6B3D;
   --wx-accent-amber: #F5A623;
-  --wx-text-primary: #E8ECFF;
-  --wx-text-secondary: #9AA5C7;
-  --wx-text-tertiary: #5C6786;
-  --wx-glass-bg: rgba(20, 30, 60, 0.6);
-  --wx-glass-border: rgba(120, 145, 220, 0.18);
-  --wx-success: #00D971;
-  --wx-warning: #F5A623;
-  --wx-danger: #FF4D6E;
+  --wx-accent-purple: #7C3AED;
   /* Gradients */
   --wx-grad-blue: linear-gradient(135deg, #1B4DFF, #00B8D4);
   --wx-grad-orange: linear-gradient(135deg, #FF6B3D, #F5A623);
-  --wx-grad-bg: radial-gradient(ellipse at top, #131e3b 0%, #050a1c 70%);
+  /* Status */
+  --wx-success: #00D971;
+  --wx-warning: #F5A623;
+  --wx-danger: #FF4D6E;
   /* Radius */
   --wx-r-sm: 8px;
   --wx-r-md: 14px;
   --wx-r-lg: 20px;
-  /* Shadow */
+  /* Legacy navy stack (still referenced in a few component selectors —
+     resolves correctly only in dark mode; in light mode the surface tokens
+     supersede these and visual surfaces are recolored below). */
+  --wx-navy-900: #050a1c;
+  --wx-navy-800: #0B1632;
+  --wx-navy-700: #131e3b;
+  --wx-navy-600: #1a274a;
+}
+
+/* ===== Light theme (DEFAULT) — ChatGPT-style cream/white ===== */
+:root,
+[data-theme="light"] {
+  /* Surfaces */
+  --wx-bg-page: #ffffff;
+  --wx-bg-sidebar: #f7f7f8;
+  --wx-bg-card: #ffffff;
+  --wx-bg-input: #ffffff;
+  --wx-bg-hover: rgba(15, 23, 42, 0.05);
+  --wx-bg-active: rgba(27, 77, 255, 0.10);
+  --wx-bg-subtle: rgba(15, 23, 42, 0.03);
+  --wx-bg-overlay: rgba(15, 23, 42, 0.45);
+  /* Text */
+  --wx-text-primary: #0f172a;
+  --wx-text-secondary: #475569;
+  --wx-text-tertiary: #94a3b8;
+  --wx-text-on-primary: #ffffff;
+  --wx-text-inverse: #ffffff;
+  /* Borders */
+  --wx-border: rgba(15, 23, 42, 0.10);
+  --wx-border-strong: rgba(15, 23, 42, 0.18);
+  /* Glass (translucent white over light bg) */
+  --wx-glass-bg: rgba(255, 255, 255, 0.85);
+  --wx-glass-border: rgba(15, 23, 42, 0.08);
+  /* Background gradient for body */
+  --wx-grad-bg: linear-gradient(180deg, #ffffff 0%, #f3f4f6 100%);
+  /* Sidebar gradient (slightly darker than main, ChatGPT-style) */
+  --wx-grad-sidebar: linear-gradient(180deg, #f7f7f8 0%, #ececf1 100%);
+  /* Panel gradient */
+  --wx-grad-panel: linear-gradient(180deg, #fafafb 0%, #f3f4f6 100%);
+  /* Shadows */
+  --wx-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --wx-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --wx-shadow-blue: 0 8px 24px -6px rgba(27, 77, 255, 0.25);
+  --wx-shadow-deep: 0 12px 36px -12px rgba(15, 23, 42, 0.15);
+  /* Scrollbar */
+  --wx-scrollbar: rgba(15, 23, 42, 0.18);
+  /* Sidebar accent radial-gradient opacity (less intense on light bg) */
+  --wx-sidebar-radial-1: rgba(27, 77, 255, 0.10);
+  --wx-sidebar-radial-2: rgba(0, 184, 212, 0.08);
+  /* Active nav background — gradient */
+  --wx-nav-active-bg: linear-gradient(100deg, rgba(27,77,255,.18), rgba(0,184,212,.06));
+  --wx-nav-active-border: rgba(27, 77, 255, 0.30);
+  --wx-nav-active-color: #1B4DFF;
+  /* Code chip bg */
+  --wx-code-bg: rgba(0, 184, 212, 0.10);
+  /* Toast surface */
+  --wx-toast-bg: #ffffff;
+  --wx-toast-color: #0f172a;
+}
+
+/* ===== Dark theme — full port of original chat.html aesthetic ===== */
+[data-theme="dark"] {
+  /* Surfaces */
+  --wx-bg-page: #0B1632;
+  --wx-bg-sidebar: #0E1726;
+  --wx-bg-card: #131e3b;
+  --wx-bg-input: rgba(0, 0, 0, 0.25);
+  --wx-bg-hover: rgba(120, 145, 220, 0.08);
+  --wx-bg-active: rgba(27, 77, 255, 0.18);
+  --wx-bg-subtle: rgba(255, 255, 255, 0.02);
+  --wx-bg-overlay: rgba(5, 10, 28, 0.85);
+  /* Text */
+  --wx-text-primary: #E8ECFF;
+  --wx-text-secondary: #9AA5C7;
+  --wx-text-tertiary: #5C6786;
+  --wx-text-on-primary: #ffffff;
+  --wx-text-inverse: #0f172a;
+  /* Borders */
+  --wx-border: rgba(120, 145, 220, 0.12);
+  --wx-border-strong: rgba(120, 145, 220, 0.22);
+  /* Glass */
+  --wx-glass-bg: rgba(20, 30, 60, 0.6);
+  --wx-glass-border: rgba(120, 145, 220, 0.18);
+  /* Background gradient — original radial navy */
+  --wx-grad-bg: radial-gradient(ellipse at top, #131e3b 0%, #050a1c 70%);
+  --wx-grad-sidebar: linear-gradient(180deg, #0E1726, #16213B);
+  --wx-grad-panel: linear-gradient(180deg, #0E1726, #050a1c);
+  /* Shadows */
+  --wx-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --wx-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --wx-shadow-blue: 0 12px 32px -8px rgba(27, 77, 255, 0.4);
   --wx-shadow-deep: 0 24px 64px -16px rgba(0, 0, 0, 0.6);
+  /* Scrollbar */
+  --wx-scrollbar: rgba(120, 145, 220, 0.25);
+  /* Sidebar accent radial-gradient opacity */
+  --wx-sidebar-radial-1: rgba(27, 77, 255, 0.40);
+  --wx-sidebar-radial-2: rgba(0, 184, 212, 0.28);
+  /* Active nav background */
+  --wx-nav-active-bg: linear-gradient(100deg, rgba(27,77,255,.22), rgba(0,184,212,.08));
+  --wx-nav-active-border: rgba(123, 162, 255, 0.30);
+  --wx-nav-active-color: #ffffff;
+  /* Code chip bg */
+  --wx-code-bg: rgba(0, 184, 212, 0.12);
+  /* Toast surface */
+  --wx-toast-bg: #131e3b;
+  --wx-toast-color: #E8ECFF;
 }
 
 * { box-sizing: border-box; }
@@ -48,7 +149,7 @@ body {
 
 ::-webkit-scrollbar { width: 9px; height: 9px; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(120, 145, 220, 0.25);
+  background: var(--wx-scrollbar);
   border-radius: 9px;
   border: 2.5px solid transparent;
   background-clip: content-box;
@@ -65,7 +166,7 @@ body {
 
 .wx-btn-primary {
   background: var(--wx-grad-blue);
-  color: white;
+  color: var(--wx-text-on-primary);
   padding: 10px 20px;
   border-radius: var(--wx-r-sm);
   border: none;
@@ -83,18 +184,18 @@ body {
 .wx-btn-ghost {
   background: transparent;
   color: var(--wx-text-primary);
-  border: 1px solid var(--wx-glass-border);
+  border: 1px solid var(--wx-border);
   padding: 8px 16px;
   border-radius: var(--wx-r-sm);
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
   font: inherit;
 }
-.wx-btn-ghost:hover { background: rgba(255,255,255,0.06); border-color: rgba(120, 145, 220, 0.4); }
+.wx-btn-ghost:hover { background: var(--wx-bg-hover); border-color: var(--wx-border-strong); }
 
 .wx-input {
-  background: rgba(0,0,0,0.25);
-  border: 1px solid var(--wx-glass-border);
+  background: var(--wx-bg-input);
+  border: 1px solid var(--wx-border);
   color: var(--wx-text-primary);
   padding: 10px 14px;
   border-radius: var(--wx-r-sm);
@@ -118,7 +219,7 @@ body {
   width: 42px; height: 42px;
   display: grid; place-items: center;
   background: var(--wx-grad-blue);
-  color: white; font-weight: 700; font-size: 18px;
+  color: var(--wx-text-on-primary); font-weight: 700; font-size: 18px;
   border-radius: var(--wx-r-sm);
   flex-shrink: 0;
 }
@@ -181,7 +282,7 @@ body {
   display: grid; place-items: center;
   color: var(--wx-text-secondary);
   border-radius: 8px;
-  background: rgba(120, 145, 220, 0.08);
+  background: var(--wx-bg-hover);
 }
 
 /* Collapse toggle button (used in expanded mode header AND collapsed strip) */
@@ -190,14 +291,14 @@ body {
   display: inline-grid; place-items: center;
   background: transparent;
   color: var(--wx-text-tertiary);
-  border: 1px solid rgba(120, 145, 220, 0.18);
+  border: 1px solid var(--wx-border);
   border-radius: 6px;
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
   flex-shrink: 0;
 }
 .wx-collapse-btn:hover {
-  background: rgba(120, 145, 220, 0.12);
+  background: var(--wx-bg-hover);
   color: var(--wx-text-primary);
 }
 
@@ -208,21 +309,21 @@ body {
 
 /* Sidebar */
 .wx-sb {
-  background: linear-gradient(180deg, #0E1726, #16213B);
+  background: var(--wx-grad-sidebar);
   color: var(--wx-text-primary);
   display: flex;
   flex-direction: column;
   padding: 18px 14px;
   position: relative;
   overflow: hidden;
-  border-right: 1px solid rgba(120, 145, 220, 0.10);
+  border-right: 1px solid var(--wx-border);
 }
 .wx-sb::before {
   content: "";
   position: absolute; inset: 0;
   background:
-    radial-gradient(380px 200px at 80% -5%, rgba(27,77,255,.4), transparent 60%),
-    radial-gradient(320px 220px at -10% 105%, rgba(0,184,212,.28), transparent 60%);
+    radial-gradient(380px 200px at 80% -5%, var(--wx-sidebar-radial-1), transparent 60%),
+    radial-gradient(320px 220px at -10% 105%, var(--wx-sidebar-radial-2), transparent 60%);
   pointer-events: none;
 }
 .wx-sb > * { position: relative; z-index: 1; }
@@ -233,7 +334,7 @@ body {
 .wx-new-btn {
   display: flex; align-items: center; gap: 9px; justify-content: center;
   background: linear-gradient(135deg, #1B4DFF, #3D6BFF);
-  color: white; border: none; cursor: pointer;
+  color: var(--wx-text-on-primary); border: none; cursor: pointer;
   font: inherit; font-weight: 600; font-size: 13.5px;
   padding: 12px; border-radius: 11px; margin: 4px 4px 18px;
   box-shadow: 0 8px 18px -8px rgba(27,77,255,.7);
@@ -241,7 +342,7 @@ body {
 }
 .wx-new-btn:hover { transform: translateY(-1px); }
 .wx-sb-label {
-  font-size: 10px; color: #5C6B86; letter-spacing: 2px;
+  font-size: 10px; color: var(--wx-text-tertiary); letter-spacing: 2px;
   font-weight: 700; padding: 6px 12px 8px;
 }
 .wx-sb-scroll {
@@ -262,30 +363,30 @@ body {
   font: inherit;
   color: inherit;
 }
-.wx-sandbox:hover { background: rgba(255,255,255,.05); }
+.wx-sandbox:hover { background: var(--wx-bg-hover); }
 .wx-sandbox.on {
-  background: linear-gradient(100deg, rgba(27,77,255,.22), rgba(0,184,212,.08));
-  border-color: rgba(123,162,255,.3);
+  background: var(--wx-nav-active-bg);
+  border-color: var(--wx-nav-active-border);
 }
 .wx-sb-emoji {
   width: 30px; height: 30px;
   border-radius: 9px;
-  background: rgba(255,255,255,.07);
+  background: var(--wx-bg-subtle);
   display: grid; place-items: center;
   font-size: 15px; flex-shrink: 0;
 }
 .wx-sb-txt { min-width: 0; flex: 1; }
 .wx-sb-txt b {
-  font-size: 13px; font-weight: 500; color: #E8EEFA;
+  font-size: 13px; font-weight: 500; color: var(--wx-text-primary);
   display: block; white-space: nowrap;
   overflow: hidden; text-overflow: ellipsis; line-height: 1.3;
 }
 .wx-sb-txt small {
-  font-size: 11px; color: #7F8DA8;
+  font-size: 11px; color: var(--wx-text-tertiary);
   display: flex; align-items: center; gap: 5px; margin-top: 3px;
 }
 .wx-sb-foot {
-  border-top: 1px solid rgba(255,255,255,.08);
+  border-top: 1px solid var(--wx-border);
   padding-top: 12px; margin-top: 8px;
 }
 
@@ -295,7 +396,7 @@ body {
   flex-direction: column;
   gap: 2px;
   padding: 4px 4px 12px;
-  border-bottom: 1px solid rgba(255,255,255,.06);
+  border-bottom: 1px solid var(--wx-border);
   margin-bottom: 8px;
 }
 .wx-nav-item {
@@ -316,12 +417,12 @@ body {
   text-decoration: none;
 }
 .wx-nav-item:hover {
-  background: rgba(120, 145, 220, .08);
+  background: var(--wx-bg-hover);
   color: var(--wx-text-primary);
 }
 .wx-nav-item.active {
-  background: rgba(27, 77, 255, .22);
-  color: #fff;
+  background: var(--wx-bg-active);
+  color: var(--wx-nav-active-color);
   font-weight: 500;
 }
 
@@ -329,7 +430,7 @@ body {
 .wx-sb-bottom {
   margin-top: auto;
   padding: 12px 6px 4px;
-  border-top: 1px solid rgba(255,255,255,.08);
+  border-top: 1px solid var(--wx-border);
 }
 .wx-sb-bottom-cta-intro {
   font-size: 12px;
@@ -343,13 +444,13 @@ body {
   background: transparent; border: none;
   width: 100%; font: inherit; color: inherit; text-align: left;
 }
-.wx-usr:hover { background: rgba(255,255,255,.05); }
+.wx-usr:hover { background: var(--wx-bg-hover); }
 .wx-usr-av {
   width: 34px; height: 34px;
   border-radius: 9px;
   background: linear-gradient(135deg, #FF6B3D, #F5A623);
   display: grid; place-items: center;
-  font-weight: 700; font-size: 13px; color: white;
+  font-weight: 700; font-size: 13px; color: var(--wx-text-on-primary);
   flex-shrink: 0;
 }
 
@@ -357,7 +458,7 @@ body {
 .wx-chat-col {
   display: flex; flex-direction: column;
   height: 100vh;
-  background: var(--wx-navy-900);
+  background: var(--wx-bg-page);
   position: relative;
   min-width: 0;
 }
@@ -365,15 +466,15 @@ body {
   height: 60px;
   display: flex; align-items: center; gap: 12px;
   padding: 0 26px;
-  border-bottom: 1px solid var(--wx-glass-border);
-  background: rgba(11, 22, 50, .65);
+  border-bottom: 1px solid var(--wx-border);
+  background: var(--wx-glass-bg);
   backdrop-filter: blur(12px);
 }
 .wx-ct-ava {
   width: 34px; height: 34px; border-radius: 10px;
   background: linear-gradient(135deg, #1B4DFF, #00B8D4);
   display: grid; place-items: center;
-  color: white; font-size: 16px;
+  color: var(--wx-text-on-primary); font-size: 16px;
   box-shadow: 0 4px 12px -3px rgba(27,77,255,.5);
 }
 .wx-ct-name b {
@@ -408,7 +509,7 @@ body {
 .wx-m-av {
   width: 40px; height: 40px; border-radius: 12px;
   display: grid; place-items: center;
-  flex-shrink: 0; font-weight: 700; font-size: 14px; color: white;
+  flex-shrink: 0; font-weight: 700; font-size: 14px; color: var(--wx-text-on-primary);
 }
 .wx-m-av.ai { background: linear-gradient(135deg, #1B4DFF, #00B8D4); }
 .wx-m-av.u  { background: linear-gradient(135deg, #FF6B3D, #F5A623); }
@@ -425,13 +526,14 @@ body {
 .wx-m-text p { margin: 0 0 .6em; }
 .wx-m-text p:last-child { margin-bottom: 0; }
 .wx-m-text code {
-  background: rgba(0, 184, 212, .12);
+  background: var(--wx-code-bg);
   color: var(--wx-accent-cyan);
   padding: 1px 6px; border-radius: 4px;
   font-size: .9em;
 }
 .wx-m-text pre {
-  background: rgba(0, 0, 0, .35);
+  background: var(--wx-bg-subtle);
+  border: 1px solid var(--wx-border);
   padding: 12px; border-radius: 8px;
   overflow-x: auto;
 }
@@ -448,7 +550,7 @@ body {
 }
 .wx-m-text th, .wx-m-text td {
   padding: 6px 10px;
-  border: 1px solid var(--wx-glass-border);
+  border: 1px solid var(--wx-border);
 }
 .wx-msg-error .wx-m-text {
   border-left: 3px solid var(--wx-danger);
@@ -498,7 +600,7 @@ body {
 .wx-composer {
   position: absolute; bottom: 0; left: 0; right: 0;
   padding: 14px 26px 18px;
-  background: linear-gradient(180deg, transparent, var(--wx-navy-900) 35%);
+  background: linear-gradient(180deg, transparent, var(--wx-bg-page) 35%);
 }
 .wx-composer-inner {
   max-width: 720px; margin: 0 auto;
@@ -521,7 +623,7 @@ body {
 .wx-composer textarea::placeholder { color: var(--wx-text-tertiary); }
 .wx-composer-send {
   background: var(--wx-grad-blue);
-  color: white; border: none;
+  color: var(--wx-text-on-primary); border: none;
   width: 38px; height: 38px;
   border-radius: 12px; cursor: pointer;
   display: grid; place-items: center;
@@ -540,9 +642,9 @@ body {
 
 /* Data panel */
 .wx-panel {
-  background: linear-gradient(180deg, #0E1726, #050a1c);
+  background: var(--wx-grad-panel);
   color: var(--wx-text-primary);
-  border-left: 1px solid var(--wx-glass-border);
+  border-left: 1px solid var(--wx-border);
   overflow-y: auto; padding: 18px 18px 24px;
   display: flex; flex-direction: column; gap: 16px;
 }
@@ -566,10 +668,11 @@ body {
 }
 @keyframes wxblink { 50% { opacity: .3; } }
 .wx-panel-stat {
-  background: rgba(0, 0, 0, .25);
-  border: 1px solid var(--wx-glass-border);
+  background: var(--wx-bg-card);
+  border: 1px solid var(--wx-border);
   border-radius: 12px;
   padding: 12px 14px;
+  box-shadow: var(--wx-shadow-sm);
 }
 .wx-panel-stat-label {
   font-size: 11px; color: var(--wx-text-tertiary);
@@ -608,11 +711,11 @@ body {
 }
 .wx-art-content th, .wx-art-content td {
   padding: 4px 8px;
-  border-bottom: 1px solid var(--wx-glass-border);
+  border-bottom: 1px solid var(--wx-border);
   text-align: left;
 }
 .wx-art-content code {
-  background: rgba(0, 184, 212, .12);
+  background: var(--wx-code-bg);
   color: var(--wx-accent-cyan);
   padding: 1px 5px; border-radius: 4px;
   font-size: .9em;
@@ -621,19 +724,20 @@ body {
 /* Modal */
 .wx-modal-backdrop {
   position: fixed; inset: 0;
-  background: rgba(5, 10, 28, .65);
+  background: var(--wx-bg-overlay);
   backdrop-filter: blur(4px);
   z-index: 50;
   display: grid; place-items: center;
   padding: 20px;
 }
 .wx-modal {
-  background: var(--wx-navy-700);
-  border: 1px solid var(--wx-glass-border);
+  background: var(--wx-bg-card);
+  border: 1px solid var(--wx-border);
   border-radius: var(--wx-r-md);
   padding: 24px;
   width: 100%; max-width: 440px;
   box-shadow: var(--wx-shadow-deep);
+  color: var(--wx-text-primary);
 }
 .wx-modal h2 {
   font-size: 18px; font-weight: 600; margin: 0 0 16px;
@@ -643,9 +747,9 @@ body {
 /* ===== P7 shared dashboard surfaces ===== */
 
 .wx-side-nav {
-  background: linear-gradient(180deg, #0E1726, #16213B);
+  background: var(--wx-grad-sidebar);
   color: var(--wx-text-primary);
-  border-right: 1px solid rgba(120, 145, 220, 0.10);
+  border-right: 1px solid var(--wx-border);
   position: relative;
   display: flex;
   flex-direction: column;
@@ -657,15 +761,15 @@ body {
   content: "";
   position: absolute; inset: 0;
   background:
-    radial-gradient(380px 200px at 80% -5%, rgba(27,77,255,.32), transparent 60%),
-    radial-gradient(320px 220px at -10% 105%, rgba(0,184,212,.22), transparent 60%);
+    radial-gradient(380px 200px at 80% -5%, var(--wx-sidebar-radial-1), transparent 60%),
+    radial-gradient(320px 220px at -10% 105%, var(--wx-sidebar-radial-2), transparent 60%);
   pointer-events: none;
 }
 .wx-side-nav > * { position: relative; z-index: 1; }
 .wx-side-nav .wx-side-nav-foot {
   margin-top: auto;
   padding: 12px;
-  border-top: 1px solid rgba(255,255,255,.08);
+  border-top: 1px solid var(--wx-border);
   display: flex; justify-content: space-between; align-items: center;
 }
 
@@ -676,6 +780,7 @@ body {
 }
 .wx-page-title {
   font-size: 22px; font-weight: 600; margin: 0;
+  color: var(--wx-text-primary);
 }
 .wx-page-subtitle {
   font-size: 13px; color: var(--wx-text-secondary);
@@ -695,20 +800,20 @@ body {
   letter-spacing: 1.4px;
   color: var(--wx-text-secondary);
   padding: 10px 14px;
-  border-bottom: 1px solid var(--wx-glass-border);
-  background: rgba(11, 22, 50, 0.45);
+  border-bottom: 1px solid var(--wx-border);
+  background: var(--wx-bg-subtle);
   position: sticky; top: 0;
 }
 .wx-table tbody td {
   padding: 11px 14px;
-  border-bottom: 1px solid rgba(120, 145, 220, 0.08);
+  border-bottom: 1px solid var(--wx-border);
   color: var(--wx-text-primary);
 }
 .wx-table tbody tr:nth-child(even) td {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--wx-bg-subtle);
 }
 .wx-table tbody tr:hover td {
-  background: rgba(27, 77, 255, 0.08);
+  background: var(--wx-bg-active);
 }
 .wx-table .wx-td-empty {
   text-align: center;
@@ -742,7 +847,7 @@ body {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 11px; font-weight: 600;
   padding: 3px 9px; border-radius: 999px;
-  background: rgba(120, 145, 220, 0.12);
+  background: var(--wx-bg-hover);
   color: var(--wx-text-secondary);
 }
 .wx-pill-success { background: rgba(0, 217, 113, .14); color: var(--wx-success); }
@@ -760,13 +865,13 @@ body {
   transition: background .15s, color .15s;
 }
 .wx-side-link:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--wx-bg-hover);
   color: var(--wx-text-primary);
 }
 .wx-side-link.is-active {
-  background: linear-gradient(100deg, rgba(27,77,255,.22), rgba(0,184,212,.08));
-  color: white;
-  border: 1px solid rgba(123,162,255,.3);
+  background: var(--wx-nav-active-bg);
+  color: var(--wx-nav-active-color);
+  border: 1px solid var(--wx-nav-active-border);
 }
 .wx-side-link-admin {
   color: var(--wx-accent-amber);
@@ -774,13 +879,13 @@ body {
 
 .wx-divider-h {
   height: 1px;
-  background: var(--wx-glass-border);
+  background: var(--wx-border);
   margin: 14px 0;
 }
 
 .wx-code-block {
-  background: rgba(0, 0, 0, 0.32);
-  border: 1px solid var(--wx-glass-border);
+  background: var(--wx-bg-subtle);
+  border: 1px solid var(--wx-border);
   border-radius: 10px;
   padding: 12px 14px;
   font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -797,6 +902,5 @@ body {
   transition: background .12s, color .12s;
   font: inherit;
 }
-.wx-icon-btn:hover { background: rgba(255,255,255,.06); color: var(--wx-text-primary); }
+.wx-icon-btn:hover { background: var(--wx-bg-hover); color: var(--wx-text-primary); }
 .wx-icon-btn-danger:hover { color: var(--wx-danger); background: rgba(255, 77, 110, .08); }
-

@@ -311,5 +311,7 @@
   "landing.panel_decision_kind": "Decision kind",
   "landing.panel_valid_samples": "Valid samples",
   "landing.panel_mean": "Population mean",
-  "landing.default_sandbox_name": "My First Sandbox"
+  "landing.default_sandbox_name": "My First Sandbox",
+  "theme.switch_to_dark": "Dark mode",
+  "theme.switch_to_light": "Light mode"
 }

@@ -34,7 +34,7 @@ export function WorkspacesPage() {
             {workspaces.map((w) => (
               <li key={w.workspace_id}
                   className="flex items-center justify-between p-3 rounded"
-                  style={{ background: 'rgba(0,0,0,0.22)', border: '1px solid var(--wx-glass-border)' }}>
+                  style={{ background: 'var(--wx-bg-subtle)', border: '1px solid var(--wx-border)' }}>
                 <div>
                   <div className="font-semibold">{w.name}</div>
                   <div className="text-xs" style={{ color: 'var(--wx-text-tertiary)' }}>

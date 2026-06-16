@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Send } from 'lucide-react'
 import { I18nToggle } from '@/components/I18nToggle'
+import { ThemeToggle } from '@/components/ThemeToggle'
 import { useBrandStore } from '@/stores/brandStore'
 import type { ChatMessage, Sandbox } from '@/types/api'
 
@@ -77,6 +78,7 @@ export function LandingChat(p: Props) {
             {t('landing.go_dashboard')}
           </button>
         )}
+        <ThemeToggle />
         <I18nToggle />
       </div>
 

@@ -76,7 +76,7 @@ function ModeBreakdown({ byMode }: { byMode: Record<string, number> }) {
               style={{
                 height: 6,
                 borderRadius: 4,
-                background: 'rgba(120, 145, 220, 0.12)',
+                background: 'var(--wx-bg-hover)',
                 overflow: 'hidden',
               }}
             >
@@ -119,7 +119,7 @@ export function BillingView({ slug }: { slug: string }) {
     setLoading(true)
     Promise.all([
       api.get<WorkspaceBalance>(`/workspaces/${slug}/balance`),
-      api.get<UsageMonthly>(`/usage/current`),
+      api.get<UsageMonthly>(`/workspaces/${slug}/usage/current`),
       api.get<{ transactions: Transaction[] }>(
         `/workspaces/${slug}/transactions`,
         { params: kind ? { kind, limit: 200 } : { limit: 200 } },
