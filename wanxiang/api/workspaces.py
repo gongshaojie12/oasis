@@ -156,6 +156,43 @@ class InMemoryWorkspaceStore:
             inv.accepted_at = now
             return inv
 
+    # ---- P3 additions ----
+
+    def update_workspace(self, workspace_id: str,
+                          **fields) -> Workspace | None:
+        with self._lock:
+            ws = self._ws.get(workspace_id)
+            if not ws:
+                return None
+            for k, v in fields.items():
+                if v is not None and hasattr(ws, k):
+                    setattr(ws, k, v)
+            return ws
+
+    def delete_workspace(self, workspace_id: str) -> bool:
+        with self._lock:
+            ws = self._ws.pop(workspace_id, None)
+            if not ws:
+                return False
+            self._by_slug.pop(ws.slug, None)
+            self._members = [m for m in self._members
+                              if m.workspace_id != workspace_id]
+            self._invites = {tok: inv for tok, inv in self._invites.items()
+                              if inv.workspace_id != workspace_id}
+            return True
+
+    def remove_member(self, workspace_id: str, user_id: str) -> bool:
+        with self._lock:
+            before = len(self._members)
+            self._members = [m for m in self._members
+                              if not (m.workspace_id == workspace_id
+                                       and m.user_id == user_id)]
+            return len(self._members) < before
+
+    def list_invites(self, workspace_id: str) -> list[WorkspaceInvite]:
+        return [inv for inv in self._invites.values()
+                if inv.workspace_id == workspace_id]
+
 
 def make_workspace_store(dsn: str | None, *, eager_init: bool = True):
     if not dsn:

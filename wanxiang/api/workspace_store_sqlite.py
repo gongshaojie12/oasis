@@ -207,3 +207,48 @@ class SqliteWorkspaceStore:
                 (now.isoformat(), token))
             inv.accepted_at = now
             return inv
+
+    # ---- P3 additions ----
+
+    def update_workspace(self, workspace_id: str,
+                          **fields) -> Workspace | None:
+        allowed = {"name", "locale", "balance_cost_units", "monthly_budget"}
+        sets = {k: v for k, v in fields.items()
+                if k in allowed and v is not None}
+        if not sets:
+            return self.get_workspace(workspace_id)
+        cols = ", ".join(f"{k} = ?" for k in sets)
+        with self._lock, self._connect() as conn:
+            conn.execute(
+                f"UPDATE workspaces SET {cols} WHERE workspace_id = ?",
+                (*sets.values(), workspace_id))
+        return self.get_workspace(workspace_id)
+
+    def delete_workspace(self, workspace_id: str) -> bool:
+        with self._lock, self._connect() as conn:
+            cur = conn.execute(
+                "DELETE FROM workspaces WHERE workspace_id = ?",
+                (workspace_id,))
+            conn.execute(
+                "DELETE FROM workspace_members WHERE workspace_id = ?",
+                (workspace_id,))
+            conn.execute(
+                "DELETE FROM workspace_invites WHERE workspace_id = ?",
+                (workspace_id,))
+            return cur.rowcount > 0
+
+    def remove_member(self, workspace_id: str, user_id: str) -> bool:
+        with self._lock, self._connect() as conn:
+            cur = conn.execute(
+                "DELETE FROM workspace_members "
+                "WHERE workspace_id = ? AND user_id = ?",
+                (workspace_id, user_id))
+            return cur.rowcount > 0
+
+    def list_invites(self, workspace_id: str) -> list[WorkspaceInvite]:
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT * FROM workspace_invites WHERE workspace_id = ? "
+                "ORDER BY expires_at ASC",
+                (workspace_id,)).fetchall()
+        return [_row_to_invite(r) for r in rows]

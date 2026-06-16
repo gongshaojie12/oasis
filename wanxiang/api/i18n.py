@@ -137,6 +137,55 @@ CATALOG: dict[str, dict[Locale, str]] = {
         "zh": "用户不存在",
         "en": "User not found",
     },
+    # P3: workspace + invite + api-key
+    "workspace.not_found": {
+        "zh": "Workspace 不存在",
+        "en": "Workspace not found",
+    },
+    "workspace.not_a_member": {
+        "zh": "不是该 Workspace 成员",
+        "en": "Not a member of this workspace",
+    },
+    "workspace.requires_admin": {
+        "zh": "需要管理员权限",
+        "en": "Admin role required",
+    },
+    "workspace.requires_owner": {
+        "zh": "需要 Owner 权限",
+        "en": "Owner role required",
+    },
+    "workspace.cannot_delete_personal": {
+        "zh": "个人 Workspace 不可删除",
+        "en": "Personal workspace cannot be deleted",
+    },
+    "workspace.cannot_remove_owner": {
+        "zh": "不能移除 Owner",
+        "en": "Cannot remove owner",
+    },
+    "workspace.member_not_found": {
+        "zh": "成员不存在",
+        "en": "Member not found",
+    },
+    "workspace.slug_taken": {
+        "zh": "Slug 已被占用",
+        "en": "Slug already taken",
+    },
+    "workspace.invite_invalid_or_expired": {
+        "zh": "邀请无效或已过期",
+        "en": "Invite invalid or expired",
+    },
+    "workspace.invite_already_accepted": {
+        "zh": "邀请已被接受",
+        "en": "Invite already accepted",
+    },
+    "workspace.invite_email_mismatch": {
+        "zh": "邀请邮箱与当前账号不一致",
+        "en": "Invite email does not match current account",
+    },
+    "workspace.api_key_not_found": {
+        "zh": "API Key 不存在",
+        "en": "API key not found",
+    },
     # P2: verification code flow
     "auth.invalid_email_format": {
         "zh": "邮箱格式无效",

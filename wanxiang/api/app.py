@@ -10,6 +10,8 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from wanxiang.api.api_keys import make_api_key_store
+from wanxiang.api.bootstrap import ensure_demo_workspace_and_key
 from wanxiang.api.observability import (AccessLogMiddleware,
                                           RequestIdMiddleware,
                                           configure_logging, metrics)
@@ -56,6 +58,19 @@ def create_app() -> FastAPI:
         os.environ.get("WANXIANG_TASKS_DB"))
     app.state.workspace_store = make_workspace_store(
         os.environ.get("WANXIANG_TASKS_DB"))
+    # P3: api_key store + bootstrap default demo workspace/api_key
+    app.state.api_key_store = make_api_key_store(
+        os.environ.get("WANXIANG_TASKS_DB"))
+    try:
+        ensure_demo_workspace_and_key(
+            user_store=app.state.user_store,
+            workspace_store=app.state.workspace_store,
+            api_key_store=app.state.api_key_store,
+        )
+    except Exception as _e:  # pragma: no cover (defensive — never break boot)
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "bootstrap demo workspace/api_key failed: %s", _e)
     # P2: SMS / Email / verification code stores + services.
     # Default env stays NoOp (logs to stdout) — production wires real
     # provider via WANXIANG_SMS_PROVIDER / WANXIANG_EMAIL_PROVIDER.
@@ -208,6 +223,18 @@ def create_app() -> FastAPI:
     try:
         from wanxiang.api.routes.verify import router as verify_router
         app.include_router(verify_router, prefix="/v1")
+    except Exception:
+        pass
+
+    # P3: workspace CRUD + member + invite + api-key management
+    try:
+        from wanxiang.api.routes.workspaces import router as ws_router
+        app.include_router(ws_router, prefix="/v1")
+    except Exception:
+        pass
+    try:
+        from wanxiang.api.routes.api_keys import router as ak_router
+        app.include_router(ak_router, prefix="/v1")
     except Exception:
         pass
 

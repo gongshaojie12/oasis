@@ -106,8 +106,13 @@ def test_simulate_with_demo_key_succeeds(client):
               "scenario": {"material":"m","question":"q","kind":"rate"},
               "rounds": 0, "model": {"provider":"stub"}})
     assert res.status_code == 200
-    # Authoritative tenant id should be echoed in response
-    assert res.headers.get("x-tenant-id") == "demo"
+    # P3: tenant_id is now the demo workspace_id (UUID hex from PG bootstrap).
+    # Authoritative source is the api_key lookup; the header is echoed back.
+    echoed = res.headers.get("x-tenant-id")
+    assert echoed, "x-tenant-id header must be echoed back"
+    demo_ws = client.app.state.workspace_store.get_by_slug("demo")
+    assert demo_ws is not None
+    assert echoed == demo_ws.workspace_id
 
 
 def test_healthz_does_not_require_auth(client):
@@ -147,4 +152,9 @@ def test_tenant_id_header_from_client_is_ignored_when_authenticated(client):
               "scenario": {"material":"m","question":"q","kind":"rate"},
               "rounds": 0, "model": {"provider":"stub"}})
     assert res.status_code == 200
-    assert res.headers.get("x-tenant-id") == "demo"  # NOT 'spoofed-evil'
+    # P3: tenant_id is now demo workspace_id, definitely NOT 'spoofed-evil'
+    echoed = res.headers.get("x-tenant-id")
+    assert echoed != "spoofed-evil"
+    demo_ws = client.app.state.workspace_store.get_by_slug("demo")
+    assert demo_ws is not None
+    assert echoed == demo_ws.workspace_id
