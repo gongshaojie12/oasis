@@ -5,12 +5,33 @@
 // - Authed, sandbox selected: shows real sandbox info; once a report_card
 //   message exists, renders real decision_kind / n_valid / mean from its metadata.
 import { useTranslation } from 'react-i18next'
+import { Activity, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { ChatMessage, Sandbox } from '@/types/api'
 
 interface Props {
   authed: boolean
   activeSandbox: Sandbox | null
   messages: ChatMessage[]
+  collapsed: boolean
+  onToggleCollapse: () => void
+}
+
+function PanelCollapseToggle({ collapsed, onClick }: {
+  collapsed: boolean; onClick: () => void
+}) {
+  // Right panel: arrow points RIGHT when expanded (collapse), LEFT when collapsed (expand)
+  const Arrow = collapsed ? ChevronLeft : ChevronRight
+  return (
+    <button
+      type="button"
+      className="wx-collapse-btn"
+      onClick={onClick}
+      title={collapsed ? '展开 / Expand' : '收起 / Collapse'}
+      aria-label={collapsed ? 'Expand panel' : 'Collapse panel'}
+    >
+      <Arrow size={14} />
+    </button>
+  )
 }
 
 interface ReportMeta {
@@ -23,10 +44,25 @@ interface ReportMeta {
 export function LandingDataPanel(p: Props) {
   const { t } = useTranslation()
 
+  // Collapsed mode: narrow strip with activity icon + expand button
+  if (p.collapsed) {
+    return (
+      <aside className="wx-panel collapsed" aria-label="Data panel (collapsed)">
+        <div className="wx-panel-collapsed-inner">
+          <PanelCollapseToggle collapsed={true} onClick={p.onToggleCollapse} />
+          <div className="wx-collapsed-icon" title={t('landing.panel_title')}>
+            <Activity size={18} />
+          </div>
+        </div>
+      </aside>
+    )
+  }
+
   if (!p.authed) {
     return (
       <aside className="wx-panel" aria-label="WANXIANG live data panel">
         <header>
+          <PanelCollapseToggle collapsed={false} onClick={p.onToggleCollapse} />
           <span>{t('landing.panel_title')}</span>
         </header>
         <div className="wx-panel-empty">
@@ -50,6 +86,7 @@ export function LandingDataPanel(p: Props) {
     return (
       <aside className="wx-panel" aria-label="WANXIANG live data panel">
         <header>
+          <PanelCollapseToggle collapsed={false} onClick={p.onToggleCollapse} />
           <span>{t('landing.panel_title')}</span>
         </header>
         <div className="wx-panel-empty">
@@ -76,6 +113,7 @@ export function LandingDataPanel(p: Props) {
   return (
     <aside className="wx-panel" aria-label="WANXIANG live data panel">
       <header>
+        <PanelCollapseToggle collapsed={false} onClick={p.onToggleCollapse} />
         <span>{t('landing.panel_title')}</span>
         {lastReport && <span className="wx-panel-live">LIVE</span>}
       </header>

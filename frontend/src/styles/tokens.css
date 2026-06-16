@@ -143,17 +143,68 @@ body {
 
 /* ===== P6 chat UI — ported from docs/prototype/chat.html ===== */
 
-/* 3-column shell */
+/* 3-column shell with collapsible left + right */
 .wx-app {
   display: grid;
   grid-template-columns: 256px 1fr 360px;
   height: 100vh;
   background: var(--wx-grad-bg);
+  transition: grid-template-columns 0.22s ease;
 }
+.wx-app.left-c { grid-template-columns: 52px 1fr 360px; }
+.wx-app.right-c { grid-template-columns: 256px 1fr 52px; }
+.wx-app.left-c.right-c { grid-template-columns: 52px 1fr 52px; }
+/* When the data panel is hidden (non-chat views), drop the 3rd column so
+   the main content area expands to fill the freed space. */
+.wx-app.no-panel { grid-template-columns: 256px 1fr; }
+.wx-app.no-panel.left-c { grid-template-columns: 52px 1fr; }
 @media (max-width: 1100px) {
   .wx-app { grid-template-columns: 220px 1fr; }
+  .wx-app.left-c { grid-template-columns: 52px 1fr; }
   .wx-panel { display: none; }
 }
+
+/* Collapsed shells */
+.wx-sb.collapsed, .wx-panel.collapsed {
+  padding: 12px 0;
+  overflow: hidden;
+}
+.wx-sb-collapsed-inner, .wx-panel-collapsed-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 4px;
+}
+.wx-collapsed-icon {
+  width: 36px; height: 36px;
+  display: grid; place-items: center;
+  color: var(--wx-text-secondary);
+  border-radius: 8px;
+  background: rgba(120, 145, 220, 0.08);
+}
+
+/* Collapse toggle button (used in expanded mode header AND collapsed strip) */
+.wx-collapse-btn {
+  width: 26px; height: 26px;
+  display: inline-grid; place-items: center;
+  background: transparent;
+  color: var(--wx-text-tertiary);
+  border: 1px solid rgba(120, 145, 220, 0.18);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+.wx-collapse-btn:hover {
+  background: rgba(120, 145, 220, 0.12);
+  color: var(--wx-text-primary);
+}
+
+/* When the toggle is inside the brand area or panel header, align it to the right */
+.wx-sb-brand { display: flex; align-items: center; justify-content: space-between; }
+.wx-panel > header { display: flex; align-items: center; gap: 8px; }
+.wx-panel > header .wx-collapse-btn { margin-right: auto; }
 
 /* Sidebar */
 .wx-sb {
@@ -236,6 +287,55 @@ body {
 .wx-sb-foot {
   border-top: 1px solid rgba(255,255,255,.08);
   padding-top: 12px; margin-top: 8px;
+}
+
+/* Nav menu (ChatGPT-style 7 items) */
+.wx-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 4px 4px 12px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  margin-bottom: 8px;
+}
+.wx-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--wx-text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: background .12s, color .12s;
+  font: inherit;
+  text-decoration: none;
+}
+.wx-nav-item:hover {
+  background: rgba(120, 145, 220, .08);
+  color: var(--wx-text-primary);
+}
+.wx-nav-item.active {
+  background: rgba(27, 77, 255, .22);
+  color: #fff;
+  font-weight: 500;
+}
+
+/* Bottom area of sidebar (auth CTAs or user pill) */
+.wx-sb-bottom {
+  margin-top: auto;
+  padding: 12px 6px 4px;
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+.wx-sb-bottom-cta-intro {
+  font-size: 12px;
+  color: var(--wx-text-tertiary);
+  line-height: 1.5;
+  margin: 0 0 10px;
 }
 .wx-usr {
   display: flex; align-items: center; gap: 10px;

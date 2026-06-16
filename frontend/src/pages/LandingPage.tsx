@@ -1,21 +1,31 @@
 // =========== Copyright 2026 @ WANXIANG. All Rights Reserved. ===========
-// P9c: LandingPage — anonymous-accessible home, but with ZERO mock data.
-// - Anonymous: sidebar shows register/login CTAs, chat shows a welcome bubble,
-//   data panel is a placeholder. Composer send → AuthGateModal.
-// - Authenticated: sidebar fetches real workspaces + sandboxes; chat fetches
-//   real messages; composer hits POST /v1/.../chat (auto-creates a default
-//   sandbox on first send if none exists).
-// 3-column chat.html visual layout preserved.
+// LandingPage — ChatGPT-style single-page layout.
+// Sidebar holds 7 nav items. Main area swaps content based on activeView
+// state (no page navigation). Right data panel is only visible on chat view.
+//
+// Anonymous:
+//   - sidebar shows the nav menu + 登录/注册 CTAs at the BOTTOM
+//   - clicking any requires-auth nav item opens AuthGateModal
+//   - chat view still works with the welcome bubble + composer (gated send)
+// Authenticated:
+//   - sidebar shows nav menu + (when chat view) sandbox list + user pill
+//   - main area can switch to dashboard / reports / billing / members /
+//     api_keys / settings without leaving the SPA
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { I18nToggle } from '@/components/I18nToggle'
 import { isAuthenticated } from '@/lib/auth'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/authStore'
-import { LandingSidebar } from '@/components/landing/LandingSidebar'
+import { LandingSidebar, type ViewKey } from '@/components/landing/LandingSidebar'
 import { LandingChat } from '@/components/landing/LandingChat'
 import { LandingDataPanel } from '@/components/landing/LandingDataPanel'
 import { AuthGateModal } from '@/components/landing/AuthGateModal'
+import { DashboardView } from '@/views/DashboardView'
+import { ReportsView } from '@/views/ReportsView'
+import { BillingView } from '@/views/BillingView'
+import { MembersView } from '@/views/MembersView'
+import { ApiKeysView } from '@/views/ApiKeysView'
+import { SettingsView } from '@/views/SettingsView'
 import { useTranslation } from 'react-i18next'
 import type { ChatMessage, Sandbox } from '@/types/api'
 
@@ -33,7 +43,30 @@ export function LandingPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(false)
   const [gateOpen, setGateOpen] = useState(false)
+  const [gateTab, setGateTab] = useState<'login' | 'register'>('register')
   const [pendingText, setPendingText] = useState<string | undefined>(undefined)
+  const [activeView, setActiveView] = useState<ViewKey>('chat')
+  // Collapsible panels (default expanded). Persist user choice in localStorage.
+  const [leftCollapsed, setLeftCollapsed] = useState<boolean>(
+    () => localStorage.getItem('wanxiang.landing.left_collapsed') === '1',
+  )
+  const [rightCollapsed, setRightCollapsed] = useState<boolean>(
+    () => localStorage.getItem('wanxiang.landing.right_collapsed') === '1',
+  )
+  function toggleLeft() {
+    setLeftCollapsed((v) => {
+      const nv = !v
+      localStorage.setItem('wanxiang.landing.left_collapsed', nv ? '1' : '0')
+      return nv
+    })
+  }
+  function toggleRight() {
+    setRightCollapsed((v) => {
+      const nv = !v
+      localStorage.setItem('wanxiang.landing.right_collapsed', nv ? '1' : '0')
+      return nv
+    })
+  }
 
   const currentWs =
     workspaces.find((w) => w.slug === currentWorkspaceSlug) || workspaces[0]
@@ -68,7 +101,6 @@ export function LandingPage() {
       .then((r) => {
         const list: Sandbox[] = r.data.sandboxes || []
         setSandboxes(list)
-        // Auto-select first sandbox if none active or active belongs to old ws.
         setActiveSandbox((prev) => {
           if (prev && list.some((s) => s.sandbox_id === prev.sandbox_id)) {
             return prev
@@ -89,21 +121,29 @@ export function LandingPage() {
       .catch(() => setMessages([]))
   }, [activeSandbox?.sandbox_id, currentWs?.slug])
 
+  function handleSelectView(view: ViewKey, requiresAuth: boolean) {
+    if (requiresAuth && !authed) {
+      setGateTab('register')
+      setGateOpen(true)
+      return
+    }
+    setActiveView(view)
+  }
+
   async function handleSend(text: string) {
     if (!text.trim()) return
     if (!authed) {
       setPendingText(text)
+      setGateTab('register')
       setGateOpen(true)
       return
     }
     if (!currentWs) {
-      // Shouldn't normally happen; /me must have given at least the personal ws.
       nav('/workspaces')
       return
     }
     setLoading(true)
     try {
-      // If no sandbox yet, create a default one.
       let sb = activeSandbox
       if (!sb) {
         const created = await api.post(`/workspaces/${currentWs.slug}/sandboxes`, {
@@ -115,7 +155,6 @@ export function LandingPage() {
         setActiveSandbox(sb)
         setSandboxes((prev) => [sb as Sandbox, ...prev])
       }
-      // Optimistic user message.
       const tempUserMsg: ChatMessage = {
         message_id: 'tmp-' + Date.now(),
         sandbox_id: sb.sandbox_id,
@@ -176,9 +215,58 @@ export function LandingPage() {
     setActiveSandbox(created)
   }
 
+  // Right panel only renders on chat view → drop the 3rd grid column to give
+  // the main area more room when a data-heavy view is active.
+  const noPanel = activeView !== 'chat'
+  const shellClass = [
+    'wx-app',
+    leftCollapsed ? 'left-c' : '',
+    rightCollapsed ? 'right-c' : '',
+    noPanel ? 'no-panel' : '',
+  ].filter(Boolean).join(' ')
+
+  function renderMain() {
+    if (activeView === 'chat') {
+      return (
+        <LandingChat
+          authed={authed}
+          activeSandbox={activeSandbox}
+          messages={messages}
+          loading={loading}
+          onSend={handleSend}
+        />
+      )
+    }
+    // All other views require auth + a workspace
+    const slug = currentWs?.slug
+    if (!slug) {
+      return (
+        <section className="wx-chat-col">
+          <div style={{ padding: '28px 36px', color: 'var(--wx-text-secondary)' }}>
+            {t('workspaces.empty')}
+          </div>
+        </section>
+      )
+    }
+    let body: React.ReactNode = null
+    switch (activeView) {
+      case 'dashboard': body = <DashboardView slug={slug} />; break
+      case 'reports':   body = <ReportsView   slug={slug} />; break
+      case 'billing':   body = <BillingView   slug={slug} />; break
+      case 'members':   body = <MembersView   slug={slug} />; break
+      case 'api_keys':  body = <ApiKeysView   slug={slug} />; break
+      case 'settings':  body = <SettingsView  slug={slug} />; break
+    }
+    return (
+      <section className="wx-chat-col" style={{ overflowY: 'auto' }}>
+        {body}
+      </section>
+    )
+  }
+
   return (
     <>
-      <div className="wx-app">
+      <div className={shellClass}>
         <LandingSidebar
           authed={authed}
           workspaces={workspaces}
@@ -189,33 +277,31 @@ export function LandingPage() {
           onSelectSandbox={setActiveSandbox}
           onCreateSandbox={createSandboxFromSidebar}
           user={user}
+          collapsed={leftCollapsed}
+          onToggleCollapse={toggleLeft}
+          onOpenAuth={(t) => { setGateTab(t); setGateOpen(true) }}
+          activeView={activeView}
+          onSelectView={handleSelectView}
         />
-        <LandingChat
-          authed={authed}
-          activeSandbox={activeSandbox}
-          messages={messages}
-          loading={loading}
-          onSend={handleSend}
-        />
-        <LandingDataPanel
-          authed={authed}
-          activeSandbox={activeSandbox}
-          messages={messages}
-        />
-      </div>
-
-      <div
-        style={{
-          position: 'fixed', top: 14, right: 18, zIndex: 200,
-          display: 'flex', alignItems: 'center', gap: 8,
-        }}
-      >
-        <I18nToggle />
+        {renderMain()}
+        {!noPanel && (
+          <LandingDataPanel
+            authed={authed}
+            activeSandbox={activeSandbox}
+            messages={messages}
+            collapsed={rightCollapsed}
+            onToggleCollapse={toggleRight}
+          />
+        )}
       </div>
 
       <AuthGateModal
         open={gateOpen}
         onClose={() => setGateOpen(false)}
+        initialTab={gateTab}
+        onAuthed={() => {
+          setAuthed(true)
+        }}
         pendingText={pendingText}
       />
     </>
