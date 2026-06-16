@@ -36,6 +36,19 @@ class ServerSettings(BaseSettings):
     redis_url: str = "redis://localhost:6379/2"
     celery_broker: str = "redis://localhost:6379/0"
     celery_backend: str = "redis://localhost:6379/1"
+    # ---- P1: brand config (exposed via GET /v1/brand; env-overridable) ----
+    brand_name_zh: str = "万象 WANXIANG"
+    brand_name_en: str = "WANXIANG"
+    brand_short: str = "WANXIANG"
+    brand_avatar_zh: str = "象"
+    brand_avatar_en: str = "W"
+    brand_tagline_zh: str = "AI 首席模拟官"
+    brand_tagline_en: str = "AI Chief Simulation Officer"
+    # ---- P1: JWT auth ----
+    jwt_secret: str = "CHANGE-ME-IN-PRODUCTION-32-bytes-min-secret-key"
+    jwt_alg: str = "HS256"
+    jwt_access_ttl_minutes: int = 15
+    jwt_refresh_ttl_days: int = 7
 
 
 def main(argv: list[str] | None = None) -> int:

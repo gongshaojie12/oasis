@@ -96,6 +96,47 @@ CATALOG: dict[str, dict[Locale, str]] = {
         "zh": "无效的 ISO 8601 时间: {value}",
         "en": "Invalid ISO 8601 datetime: {value}",
     },
+    # P1: user auth (JWT path; X-API-Key catalog above still applies to legacy)
+    "auth.email_or_phone_required": {
+        "zh": "必须提供邮箱或手机号",
+        "en": "Email or phone required",
+    },
+    "auth.invalid_phone_format": {
+        "zh": "手机号格式无效",
+        "en": "Invalid phone number format",
+    },
+    "auth.password_too_short": {
+        "zh": "密码至少 8 位",
+        "en": "Password must be at least 8 characters",
+    },
+    "auth.password_too_weak": {
+        "zh": "密码需包含字母和数字",
+        "en": "Password must contain letters and digits",
+    },
+    "auth.email_already_registered": {
+        "zh": "该邮箱已注册",
+        "en": "Email already registered",
+    },
+    "auth.phone_already_registered": {
+        "zh": "该手机号已注册",
+        "en": "Phone already registered",
+    },
+    "auth.invalid_credentials": {
+        "zh": "用户名或密码错误",
+        "en": "Invalid username or password",
+    },
+    "auth.missing_token": {
+        "zh": "缺少认证 token",
+        "en": "Missing auth token",
+    },
+    "auth.invalid_token": {
+        "zh": "token 无效或已过期",
+        "en": "Invalid or expired token",
+    },
+    "auth.user_not_found": {
+        "zh": "用户不存在",
+        "en": "User not found",
+    },
 }
 
 

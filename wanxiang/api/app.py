@@ -13,7 +13,10 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from wanxiang.api.observability import (AccessLogMiddleware,
                                           RequestIdMiddleware,
                                           configure_logging, metrics)
+from wanxiang.api.server import ServerSettings
 from wanxiang.api.tenancy import TenantStore
+from wanxiang.api.users import make_user_store
+from wanxiang.api.workspaces import make_workspace_store
 
 
 class TenantHeaderMiddleware(BaseHTTPMiddleware):
@@ -44,6 +47,12 @@ def create_app() -> FastAPI:
 
     # 启动时加载租户表（默认 demo 租户；生产由 WANXIANG_TENANTS_JSON 注入）
     app.state.tenant_store = TenantStore.from_env()
+    # P1: ServerSettings exposed on app.state for brand/JWT config + new deps
+    app.state.settings = ServerSettings()
+    app.state.user_store = make_user_store(
+        os.environ.get("WANXIANG_TASKS_DB"))
+    app.state.workspace_store = make_workspace_store(
+        os.environ.get("WANXIANG_TASKS_DB"))
     # M3-6 / M3-9：WANXIANG_TASKS_DB 接受 DSN（None/plain-path/sqlite:///.../postgresql://...）。
     from wanxiang.api.tasks import make_task_store
     app.state.task_store = make_task_store(os.environ.get("WANXIANG_TASKS_DB"))
@@ -173,6 +182,15 @@ def create_app() -> FastAPI:
     try:
         from wanxiang.api.routes.reports import router as reports_router
         app.include_router(reports_router, prefix="/v1")
+    except Exception:
+        pass
+
+    # P1: user auth routes (/v1/auth/{register,login,refresh,logout},
+    # /v1/me, /v1/brand). Independent try block so failures don't break
+    # legacy X-API-Key routes above.
+    try:
+        from wanxiang.api.routes.auth import router as auth_router
+        app.include_router(auth_router, prefix="/v1")
     except Exception:
         pass
 
