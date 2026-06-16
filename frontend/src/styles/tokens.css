@@ -501,4 +501,165 @@ body {
 .wx-modal h2 {
   font-size: 18px; font-weight: 600; margin: 0 0 16px;
 }
+.wx-modal-lg { max-width: 640px; }
+
+/* ===== P7 shared dashboard surfaces ===== */
+
+.wx-side-nav {
+  background: linear-gradient(180deg, #0E1726, #16213B);
+  color: var(--wx-text-primary);
+  border-right: 1px solid rgba(120, 145, 220, 0.10);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.wx-side-nav::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(380px 200px at 80% -5%, rgba(27,77,255,.32), transparent 60%),
+    radial-gradient(320px 220px at -10% 105%, rgba(0,184,212,.22), transparent 60%);
+  pointer-events: none;
+}
+.wx-side-nav > * { position: relative; z-index: 1; }
+.wx-side-nav .wx-side-nav-foot {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid rgba(255,255,255,.08);
+  display: flex; justify-content: space-between; align-items: center;
+}
+
+.wx-page-header {
+  display: flex; align-items: end; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  margin-bottom: 18px;
+}
+.wx-page-title {
+  font-size: 22px; font-weight: 600; margin: 0;
+}
+.wx-page-subtitle {
+  font-size: 13px; color: var(--wx-text-secondary);
+  margin: 4px 0 0;
+}
+
+.wx-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.wx-table thead th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--wx-text-secondary);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--wx-glass-border);
+  background: rgba(11, 22, 50, 0.45);
+  position: sticky; top: 0;
+}
+.wx-table tbody td {
+  padding: 11px 14px;
+  border-bottom: 1px solid rgba(120, 145, 220, 0.08);
+  color: var(--wx-text-primary);
+}
+.wx-table tbody tr:nth-child(even) td {
+  background: rgba(255, 255, 255, 0.02);
+}
+.wx-table tbody tr:hover td {
+  background: rgba(27, 77, 255, 0.08);
+}
+.wx-table .wx-td-empty {
+  text-align: center;
+  padding: 40px 14px;
+  color: var(--wx-text-tertiary);
+}
+
+.wx-stat-card {
+  background: var(--wx-glass-bg);
+  border: 1px solid var(--wx-glass-border);
+  border-radius: var(--wx-r-md);
+  padding: 18px 20px;
+  box-shadow: var(--wx-shadow-deep);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.wx-stat-label {
+  font-size: 11px; color: var(--wx-text-tertiary);
+  text-transform: uppercase; letter-spacing: 1.4px;
+  font-weight: 600;
+}
+.wx-stat-value {
+  font-size: 28px; font-weight: 700;
+  color: var(--wx-text-primary);
+  line-height: 1.2;
+}
+.wx-stat-sub {
+  font-size: 12px; color: var(--wx-text-secondary);
+}
+
+.wx-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600;
+  padding: 3px 9px; border-radius: 999px;
+  background: rgba(120, 145, 220, 0.12);
+  color: var(--wx-text-secondary);
+}
+.wx-pill-success { background: rgba(0, 217, 113, .14); color: var(--wx-success); }
+.wx-pill-warning { background: rgba(245, 166, 35, .14); color: var(--wx-warning); }
+.wx-pill-danger { background: rgba(255, 77, 110, .14); color: var(--wx-danger); }
+.wx-pill-info { background: rgba(0, 184, 212, .14); color: var(--wx-accent-cyan); }
+
+.wx-side-link {
+  display: flex; align-items: center; gap: 9px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  color: var(--wx-text-secondary);
+  text-decoration: none;
+  transition: background .15s, color .15s;
+}
+.wx-side-link:hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--wx-text-primary);
+}
+.wx-side-link.is-active {
+  background: linear-gradient(100deg, rgba(27,77,255,.22), rgba(0,184,212,.08));
+  color: white;
+  border: 1px solid rgba(123,162,255,.3);
+}
+.wx-side-link-admin {
+  color: var(--wx-accent-amber);
+}
+
+.wx-divider-h {
+  height: 1px;
+  background: var(--wx-glass-border);
+  margin: 14px 0;
+}
+
+.wx-code-block {
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid var(--wx-glass-border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--wx-accent-cyan);
+  overflow-x: auto;
+  white-space: pre;
+}
+
+.wx-icon-btn {
+  background: transparent; border: 1px solid transparent;
+  cursor: pointer; padding: 6px 8px; border-radius: 6px;
+  color: var(--wx-text-secondary);
+  transition: background .12s, color .12s;
+  font: inherit;
+}
+.wx-icon-btn:hover { background: rgba(255,255,255,.06); color: var(--wx-text-primary); }
+.wx-icon-btn-danger:hover { color: var(--wx-danger); background: rgba(255, 77, 110, .08); }
 
