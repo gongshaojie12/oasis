@@ -47,6 +47,59 @@ def test_usage_current_empty_for_new_tenant(client):
     assert body["events"] == []
 
 
+def test_ws_usage_current_with_jwt():
+    """Workspace-scoped JWT version of /usage/current (for SPA frontend)."""
+    app = create_app()
+    c = TestClient(app)
+    # Register a user → returns JWT + default workspace
+    r = c.post("/v1/auth/register", json={
+        "email": "billtest@x.com", "password": "Hello123!",
+        "display_name": "BillTest",
+    })
+    assert r.status_code == 200
+    tok = r.json()["access_token"]
+    slug = r.json()["default_workspace"]["slug"]
+    # Brand-new workspace: usage MUST return empty, not error
+    res = c.get(f"/v1/workspaces/{slug}/usage/current",
+                 headers={"Authorization": f"Bearer {tok}"})
+    assert res.status_code == 200
+    body = res.json()
+    assert body["total_cost_units"] == 0
+    assert body["events"] == []
+
+
+def test_ws_usage_current_404_for_unknown_workspace():
+    app = create_app()
+    c = TestClient(app)
+    r = c.post("/v1/auth/register", json={
+        "email": "billtest2@x.com", "password": "Hello123!",
+        "display_name": "BillTest2",
+    })
+    tok = r.json()["access_token"]
+    res = c.get("/v1/workspaces/nonexistent-slug/usage/current",
+                 headers={"Authorization": f"Bearer {tok}"})
+    assert res.status_code == 404
+
+
+def test_ws_usage_current_403_for_non_member():
+    app = create_app()
+    c = TestClient(app)
+    # User A creates workspace via register
+    a = c.post("/v1/auth/register", json={
+        "email": "alice_bill@x.com", "password": "Hello123!",
+        "display_name": "Alice",
+    }).json()
+    a_slug = a["default_workspace"]["slug"]
+    # User B tries to access A's usage
+    b = c.post("/v1/auth/register", json={
+        "email": "bob_bill@x.com", "password": "Hello123!",
+        "display_name": "Bob",
+    }).json()
+    res = c.get(f"/v1/workspaces/{a_slug}/usage/current",
+                 headers={"Authorization": f"Bearer {b['access_token']}"})
+    assert res.status_code == 403
+
+
 def test_sync_simulate_records_usage(client):
     r = client.post("/v1/simulate", json=_body(n=50))
     assert r.status_code == 200

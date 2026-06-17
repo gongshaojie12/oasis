@@ -17,9 +17,18 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { BrandLogo } from '@/components/BrandLogo'
+import { NewSandboxModal } from '@/components/chat/NewSandboxModal'
 import { clearTokens } from '@/lib/auth'
 import { useAuthStore } from '@/stores/authStore'
 import type { Sandbox, User, Workspace } from '@/types/api'
+
+export interface CreateSandboxPayload {
+  name: string
+  emoji: string
+  description: string
+  population_size: number
+  distribution_path: string
+}
 
 export type ViewKey =
   | 'chat'
@@ -55,7 +64,7 @@ interface Props {
   activeSandbox: Sandbox | null
   onSelectWorkspace: (slug: string) => void
   onSelectSandbox: (sb: Sandbox) => void
-  onCreateSandbox: (name: string) => Promise<void>
+  onCreateSandbox: (payload: CreateSandboxPayload) => Promise<void>
   user: User | null
   collapsed: boolean
   onToggleCollapse: () => void
@@ -90,18 +99,15 @@ function CollapseToggle({ collapsed, onClick, side }: {
 export function LandingSidebar(p: Props) {
   const { t } = useTranslation()
   const { logout } = useAuthStore()
-  const [creating, setCreating] = useState(false)
-  const [newName, setNewName] = useState('')
+  const [modalOpen, setModalOpen] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
-  async function submitCreate(e: React.FormEvent) {
-    e.preventDefault()
-    if (!newName.trim() || submitting) return
+  async function submitFromModal(payload: CreateSandboxPayload) {
+    if (submitting) return
     setSubmitting(true)
     try {
-      await p.onCreateSandbox(newName.trim())
-      setNewName('')
-      setCreating(false)
+      await p.onCreateSandbox(payload)
+      setModalOpen(false)
     } finally {
       setSubmitting(false)
     }
@@ -197,42 +203,18 @@ export function LandingSidebar(p: Props) {
           <button
             type="button"
             className="wx-new-btn"
-            onClick={() => setCreating(true)}
+            onClick={() => setModalOpen(true)}
           >
             <Plus size={14} />
             {t('landing.new_sandbox')}
           </button>
 
-          {creating && (
-            <form onSubmit={submitCreate} style={{ padding: '0 8px 12px' }}>
-              <input
-                className="wx-input"
-                style={{ fontSize: 12.5 }}
-                placeholder={t('landing.sandbox_name_placeholder')}
-                value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                autoFocus
-              />
-              <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                <button
-                  type="submit"
-                  className="wx-btn-primary"
-                  style={{ fontSize: 11, padding: '6px 10px', flex: 1 }}
-                  disabled={submitting || !newName.trim()}
-                >
-                  {t('common.create')}
-                </button>
-                <button
-                  type="button"
-                  className="wx-btn-ghost"
-                  style={{ fontSize: 11, padding: '6px 10px' }}
-                  onClick={() => { setCreating(false); setNewName('') }}
-                >
-                  {t('common.cancel')}
-                </button>
-              </div>
-            </form>
-          )}
+          <NewSandboxModal
+            isOpen={modalOpen}
+            onClose={() => setModalOpen(false)}
+            onSubmit={submitFromModal}
+            submitting={submitting}
+          />
 
           <div className="wx-sb-label">{t('landing.sandbox_label')}</div>
           <div className="wx-sb-scroll">

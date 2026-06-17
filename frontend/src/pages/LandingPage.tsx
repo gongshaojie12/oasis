@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/stores/authStore'
-import { LandingSidebar, type ViewKey } from '@/components/landing/LandingSidebar'
+import { LandingSidebar, type ViewKey, type CreateSandboxPayload } from '@/components/landing/LandingSidebar'
 import { LandingChat } from '@/components/landing/LandingChat'
 import { LandingDataPanel } from '@/components/landing/LandingDataPanel'
 import { AuthGateModal } from '@/components/landing/AuthGateModal'
@@ -203,13 +203,9 @@ export function LandingPage() {
     }
   }
 
-  async function createSandboxFromSidebar(name: string) {
+  async function createSandboxFromSidebar(payload: CreateSandboxPayload) {
     if (!authed || !currentWs) return
-    const r = await api.post(`/workspaces/${currentWs.slug}/sandboxes`, {
-      name,
-      emoji: '🥤',
-      population_size: 50,
-    })
+    const r = await api.post(`/workspaces/${currentWs.slug}/sandboxes`, payload)
     const created = r.data as Sandbox
     setSandboxes((prev) => [created, ...prev])
     setActiveSandbox(created)
