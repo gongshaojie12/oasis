@@ -250,11 +250,13 @@ async def simulate(
     metrics.inc("simulate.requested",
                 {"kind": kind_label, "mode": "sync"})
     moderator = getattr(request.app.state, "moderator", None)
-    # spec D3：请求未指定 model 时，回落到 tenant.default_model_config，
+    # spec D3：请求未指定 model 时，回落到 workspace 配置，
     # 再回落到 stub。pipeline 不感知 tenant，所以在这里把 req 改写一遍。
-    if req.model is None:
-        req = req.model_copy(update={
-            "model": resolve_effective_model(None, tenant)})
+    from wanxiang.api.model_resolve import resolve_workspace_model
+    req = req.model_copy(update={
+        "model": resolve_workspace_model(
+            req.model, tenant.tenant_id,
+            request.app.state.model_config_store)})
     loc = get_request_locale(request)
 
     # P4: pre-flight 402 when settings.enforce_balance and workspace short

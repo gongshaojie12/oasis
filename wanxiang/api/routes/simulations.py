@@ -231,10 +231,12 @@ async def create_async_simulation(
     model_factory=Depends(get_model_factory),
     tenant: TenantInfo = Depends(require_tenant),
 ):
-    # spec D3：请求未指定 model 时回落到 tenant 默认 → stub
-    if req.model is None:
-        req = req.model_copy(update={
-            "model": resolve_effective_model(None, tenant)})
+    # spec D3：请求未指定 model 时回落到 workspace 配置 → stub
+    from wanxiang.api.model_resolve import resolve_workspace_model
+    req = req.model_copy(update={
+        "model": resolve_workspace_model(
+            req.model, tenant.tenant_id,
+            request.app.state.model_config_store)})
     store = _store(request)
     task = store.create(tenant.tenant_id, req)
     metrics.inc("simulate.requested",
@@ -290,8 +292,11 @@ async def sweep_simulations(
     metrics.inc("simulate.requested",
                 {"kind": req.scenario.kind, "mode": "sweep"})
 
-    # spec D3：sweep 同样支持租户默认模型回落
-    effective_model = resolve_effective_model(req.model, tenant)
+    # spec D3：sweep 同样支持工作区配置回落
+    from wanxiang.api.model_resolve import resolve_workspace_model
+    effective_model = resolve_workspace_model(
+        req.model, tenant.tenant_id,
+        request.app.state.model_config_store)
     # 把 sweep 字段折成一个 base SimulateRequest，供每个 combo 复用
     base = SimulateRequest(
         distribution_path=req.distribution_path, n=req.n, seed=req.seed,

@@ -191,13 +191,18 @@ async def chat_simulate(slug: str, sandbox_id: str, req: ChatSimulateReq,
         content=req.text, user_id=user.user_id,
     ))
 
-    # Parse intent (stub provider unless caller overrides)
+    # Parse intent —— 用工作区默认模型(请求未带 model 时)
     from wanxiang.api.schemas import ModelConfig
+    from wanxiang.api.model_resolve import resolve_workspace_model
     from wanxiang.chat.intent import parse_intent
-    try:
-        model_cfg = ModelConfig(**(req.model or {"provider": "stub"}))
-    except Exception:
-        model_cfg = ModelConfig(provider="stub")
+    req_model = None
+    if req.model:
+        try:
+            req_model = ModelConfig(**req.model)
+        except Exception:
+            req_model = None
+    model_cfg = resolve_workspace_model(
+        req_model, ws.workspace_id, request.app.state.model_config_store)
     model_call = model_factory(model_cfg)
     intent = await parse_intent(
         req.text, model_call=model_call,
@@ -222,6 +227,7 @@ async def chat_simulate(slug: str, sandbox_id: str, req: ChatSimulateReq,
 
     # Override defaults with sandbox config when blank
     sim_req = intent.request
+    sim_req.model = model_cfg
     if not sim_req.distribution_path:
         sim_req.distribution_path = sb.distribution_path
     if not sim_req.n:
