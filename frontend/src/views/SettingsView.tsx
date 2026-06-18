@@ -47,6 +47,65 @@ export function SettingsView({ slug }: { slug: string }) {
   const isOwner = !!user && !!ownerId && user.user_id === ownerId
   const canDelete = isOwner && ws?.type === 'team'
 
+  // ── model config state ──
+  const [presets, setPresets] = useState<Array<{
+    id: string; label: string; base_url: string | null;
+    default_model: string | null; needs_key: boolean;
+    allow_custom_base_url: boolean }>>([])
+  const [mcProvider, setMcProvider] = useState('stub')
+  const [mcKey, setMcKey] = useState('')
+  const [mcKeyMasked, setMcKeyMasked] = useState<string | null>(null)
+  const [mcBaseUrl, setMcBaseUrl] = useState('')
+  const [mcModelName, setMcModelName] = useState('')
+  const [mcSaving, setMcSaving] = useState(false)
+  const [myRole, setMyRole] = useState<string>('member')
+
+  useEffect(() => {
+    api.get('/model-presets')
+      .then((r) => setPresets(r.data.presets ?? []))
+      .catch(() => { /* non-fatal */ })
+  }, [])
+
+  useEffect(() => {
+    if (!slug) return
+    api.get(`/workspaces/${slug}/model-config`).then((r) => {
+      setMcProvider(r.data.provider ?? 'stub')
+      setMcKeyMasked(r.data.api_key_masked ?? null)
+      setMcBaseUrl(r.data.base_url ?? '')
+      setMcModelName(r.data.model_name ?? '')
+    }).catch(() => { /* non-fatal */ })
+    api.get(`/workspaces/${slug}/members`).then((r) => {
+      const me = (r.data.members ?? []).find(
+        (m: { user_id: string }) => m.user_id === user?.user_id)
+      if (me) setMyRole(me.role)
+    }).catch(() => { /* non-fatal */ })
+  }, [slug, user?.user_id])
+
+  const canEditModel = myRole === 'owner' || myRole === 'admin'
+  const curPreset = presets.find((p) => p.id === mcProvider)
+
+  async function handleSaveModel(e: FormEvent) {
+    e.preventDefault()
+    if (!slug) return
+    setMcSaving(true)
+    try {
+      const payload: Record<string, unknown> = { provider: mcProvider }
+      if (mcKey) payload.api_key = mcKey
+      if (curPreset?.allow_custom_base_url) payload.base_url = mcBaseUrl
+      if (mcModelName) payload.model_name = mcModelName
+      const r = await api.put(
+        `/workspaces/${slug}/model-config`, payload)
+      setMcKey('')
+      setMcKeyMasked(r.data.api_key_masked ?? null)
+      toast.success(t('settings.model_saved'))
+    } catch (err) {
+      const ex = err as { response?: { data?: { detail?: string } } }
+      toast.error(ex.response?.data?.detail ?? t('common.error'))
+    } finally {
+      setMcSaving(false)
+    }
+  }
+
   async function handleSave(e: FormEvent) {
     e.preventDefault()
     if (!slug) return
@@ -137,6 +196,79 @@ export function SettingsView({ slug }: { slug: string }) {
               {saving ? t('common.loading') : t('common.submit')}
             </button>
           </div>
+        </form>
+      </GlassCard>
+
+      <GlassCard className="mt-6">
+        <div className="wx-page-header" style={{ marginBottom: 12 }}>
+          <div>
+            <h2 className="wx-page-title" style={{ fontSize: 18 }}>
+              {t('settings.model_title')}
+            </h2>
+            <p className="wx-page-subtitle">{t('settings.model_subtitle')}</p>
+          </div>
+        </div>
+        {!canEditModel && (
+          <p className="text-sm" style={{ color: 'var(--wx-text-secondary)',
+               marginBottom: 12 }}>
+            {t('settings.model_readonly_hint')}
+          </p>
+        )}
+        <form onSubmit={handleSaveModel}>
+          <FormField label={t('settings.model_provider')}>
+            <select
+              data-testid="model-provider-select"
+              className="wx-input"
+              value={mcProvider}
+              disabled={!canEditModel}
+              onChange={(e) => setMcProvider(e.target.value)}
+            >
+              {presets.map((p) => (
+                <option key={p.id} value={p.id}>{p.label}</option>
+              ))}
+            </select>
+          </FormField>
+          {curPreset?.needs_key && (
+            <FormField label={t('settings.model_api_key')}
+                       hint={t('settings.model_api_key_hint')}>
+              <input
+                className="wx-input"
+                type="password"
+                value={mcKey}
+                disabled={!canEditModel}
+                placeholder={mcKeyMasked ?? ''}
+                onChange={(e) => setMcKey(e.target.value)}
+              />
+            </FormField>
+          )}
+          {curPreset?.allow_custom_base_url && (
+            <FormField label={t('settings.model_base_url')}>
+              <input
+                className="wx-input"
+                value={mcBaseUrl}
+                disabled={!canEditModel}
+                placeholder="https://your-gateway/v1"
+                onChange={(e) => setMcBaseUrl(e.target.value)}
+              />
+            </FormField>
+          )}
+          <FormField label={t('settings.model_model_name')}>
+            <input
+              className="wx-input"
+              value={mcModelName}
+              disabled={!canEditModel}
+              placeholder={curPreset?.default_model ?? ''}
+              onChange={(e) => setMcModelName(e.target.value)}
+            />
+          </FormField>
+          {canEditModel && (
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button type="submit" className="wx-btn-primary"
+                      disabled={mcSaving}>
+                {mcSaving ? t('common.loading') : t('common.submit')}
+              </button>
+            </div>
+          )}
         </form>
       </GlassCard>
 

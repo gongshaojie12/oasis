@@ -236,6 +236,15 @@ CATALOG: dict[str, dict[Locale, str]] = {
         "zh": "Sandbox 不属于当前 Workspace",
         "en": "Sandbox does not belong to this workspace",
     },
+    # model config
+    "model_config.key_required": {
+        "zh": "该 provider 需要 API Key",
+        "en": "This provider requires an API key",
+    },
+    "model_config.base_url_required": {
+        "zh": "自定义网关需填写 Base URL",
+        "en": "Custom gateway requires a base URL",
+    },
 }
 
 
