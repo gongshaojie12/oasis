@@ -59,6 +59,7 @@ export function App() {
       <BrowserRouter>
         <Toaster
           position="top-center"
+          containerStyle={{ zIndex: 100000 }}
           toastOptions={{
             style: {
               background: 'var(--wx-toast-bg)',
