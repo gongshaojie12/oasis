@@ -93,3 +93,24 @@ def make_deepseek_call(
         **kwargs,
     )
     return wrap_camel_model(backend)
+
+
+def make_openai_compatible_call(
+    api_key: str,
+    base_url: str,
+    model_name: str,
+    **kwargs: Any,
+) -> ModelCall:
+    """OpenAI 兼容网关(DeepSeek/OpenAI/通义/自建 vLLM 等)统一工厂。
+
+    用 camel 的 OPENAI_COMPATIBLE_MODEL 平台,凭 base_url + api_key 接入。
+    不在构造时发请求——只在 await 返回的 call 时。
+    """
+    backend = ModelFactory.create(
+        model_platform=ModelPlatformType.OPENAI_COMPATIBLE_MODEL,
+        model_type=model_name,
+        api_key=api_key,
+        url=base_url,
+        **kwargs,
+    )
+    return wrap_camel_model(backend)
