@@ -66,6 +66,10 @@ def create_app() -> FastAPI:
     # P3: api_key store + bootstrap default demo workspace/api_key
     app.state.api_key_store = make_api_key_store(
         os.environ.get("WANXIANG_TASKS_DB"))
+    # 模型配置 store(每工作区一份大模型 provider+key);与其他 store 共享 DSN
+    from wanxiang.api.model_config import make_model_config_store
+    app.state.model_config_store = make_model_config_store(
+        os.environ.get("WANXIANG_TASKS_DB"))
     try:
         ensure_demo_workspace_and_key(
             user_store=app.state.user_store,
@@ -246,6 +250,14 @@ def create_app() -> FastAPI:
     try:
         from wanxiang.api.routes.api_keys import router as ak_router
         app.include_router(ak_router, prefix="/v1")
+    except Exception:
+        pass
+
+    # 模型配置路由(/v1/workspaces/{slug}/model-config + /v1/model-presets)
+    try:
+        from wanxiang.api.routes.model_config import (
+            router as model_config_router)
+        app.include_router(model_config_router, prefix="/v1")
     except Exception:
         pass
 
