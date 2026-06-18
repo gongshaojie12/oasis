@@ -37,14 +37,22 @@ class ScenarioPayload(BaseModel):
 
 
 class ModelConfig(BaseModel):
-    provider: Literal["stub", "deepseek"]
+    provider: Literal["stub", "deepseek", "openai", "qwen", "custom"]
     api_key: str | None = None
     model_name: str | None = None
+    base_url: str | None = None
 
     @model_validator(mode="after")
-    def _deepseek_needs_key(self):
-        if self.provider == "deepseek" and not self.api_key:
-            raise ValueError("provider='deepseek' requires api_key")
+    def _validate_against_preset(self):
+        from wanxiang.api.model_presets import get_preset
+        preset = get_preset(self.provider)
+        if preset is None:
+            raise ValueError(f"unknown provider: {self.provider}")
+        if preset["needs_key"] and not self.api_key:
+            raise ValueError(f"provider={self.provider!r} requires api_key")
+        if preset["allow_custom_base_url"] and not self.base_url:
+            raise ValueError(
+                f"provider={self.provider!r} requires base_url")
         return self
 
 
