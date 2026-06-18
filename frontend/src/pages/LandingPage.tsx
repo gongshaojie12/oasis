@@ -169,7 +169,7 @@ export function LandingPage() {
 
       const r = await api.post(
         `/workspaces/${currentWs.slug}/sandboxes/${sb.sandbox_id}/chat`,
-        { text, model: { provider: 'stub' } },
+        { text },
       )
       setMessages((prev) => {
         const without = prev.filter((m) => m.message_id !== tempUserMsg.message_id)
