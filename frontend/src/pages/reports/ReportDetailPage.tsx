@@ -35,14 +35,16 @@ export function ReportDetailPage() {
     let cancelled = false
     setLoading(true)
     api
-      .get<SimulationTaskSummary>(`/simulations/${taskId}`)
+      .get<SimulationTaskSummary>(`/simulations/${taskId}`, {
+        params: { workspace: slug },
+      })
       .then((r) => !cancelled && setTask(r.data))
       .catch(() => !cancelled && toast.error(t('common.error')))
       .finally(() => !cancelled && setLoading(false))
     return () => {
       cancelled = true
     }
-  }, [taskId, t])
+  }, [taskId, t, slug])
 
   function fmtDate(iso: string | null): string {
     if (!iso) return '—'

@@ -34,7 +34,9 @@ export function ReportsView({ slug }: { slug: string }) {
     let cancelled = false
     setLoading(true)
     api
-      .get<SimulationTaskSummary[]>('/simulations', { params: { limit: 100 } })
+      .get<SimulationTaskSummary[]>('/simulations', {
+        params: { limit: 100, workspace: slug },
+      })
       .then((r) => {
         if (cancelled) return
         setRows(Array.isArray(r.data) ? r.data : [])
@@ -44,7 +46,7 @@ export function ReportsView({ slug }: { slug: string }) {
     return () => {
       cancelled = true
     }
-  }, [t])
+  }, [t, slug])
 
   function fmtDate(iso: string): string {
     try {

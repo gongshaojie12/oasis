@@ -7,9 +7,12 @@ import asyncio
 import os
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import (APIRouter, Depends, Header, HTTPException, Query, Request,
+                     status)
 
-from wanxiang.api.auth import require_tenant
+from wanxiang.api.auth import get_tenant_store, require_tenant
+from wanxiang.api.auth_jwt import decode_token
+from wanxiang.api.auth_user import get_bearer_token
 from wanxiang.api.deps import get_model_factory
 from wanxiang.api.i18n import DEFAULT_LOCALE, get_request_locale, t
 from wanxiang.api.observability import metrics
@@ -38,6 +41,63 @@ def _serialize(task: SimulationTask) -> dict:
         "result": task.result.model_dump() if task.result is not None else None,
         "error": task.error,
     }
+
+
+def resolve_read_tenant_id(
+    request: Request,
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+    x_workspace_slug: str | None = Header(default=None,
+                                          alias="X-Workspace-Slug"),
+    workspace: str | None = Query(default=None),
+) -> str:
+    """Auth for read-only task endpoints, accepting EITHER scheme:
+
+    1. Legacy X-API-Key (tenant_id == workspace_id). Delegates to
+       ``require_tenant`` so RPM quota / locale behaviour is unchanged.
+    2. Web JWT Bearer + workspace slug (header ``X-Workspace-Slug`` or
+       ``?workspace=`` query). The authenticated user must be a member of
+       that workspace; tenant_id == workspace_id, matching how tasks are
+       stored by the chat/simulate paths.
+
+    Returns the effective ``tenant_id`` (== workspace_id) to scope the
+    task store lookup.
+    """
+    loc = get_request_locale(request)
+
+    # Path 1: API-key — reuse require_tenant so quota/locale stay identical.
+    if x_api_key:
+        store = get_tenant_store(request)
+        tenant = require_tenant(request, x_api_key=x_api_key, store=store)
+        return tenant.tenant_id
+
+    # Path 2: JWT Bearer + workspace slug.
+    token = get_bearer_token(request)
+    if not token:
+        raise HTTPException(
+            status_code=401, detail=t("auth.missing_api_key", locale=loc))
+    settings = request.app.state.settings
+    claims = decode_token(token, secret=settings.jwt_secret,
+                          alg=settings.jwt_alg, expected_type="access")
+    if not claims:
+        raise HTTPException(
+            status_code=401, detail=t("auth.invalid_token", locale=loc))
+    user = request.app.state.user_store.get(claims["sub"])
+    if not user:
+        raise HTTPException(
+            status_code=401, detail=t("auth.user_not_found", locale=loc))
+
+    slug = x_workspace_slug or workspace
+    if not slug:
+        raise HTTPException(
+            status_code=400, detail=t("auth.missing_api_key", locale=loc))
+    ws_store = request.app.state.workspace_store
+    ws = ws_store.get_by_slug(slug)
+    if not ws:
+        raise HTTPException(status_code=404, detail="workspace not found")
+    if not ws_store.get_member(ws.workspace_id, user.user_id):
+        raise HTTPException(
+            status_code=403, detail="not a member of this workspace")
+    return ws.workspace_id
 
 
 async def _run_task(store: TaskStore, task_id: str, req: SimulateRequest,
@@ -307,10 +367,10 @@ async def list_simulations(
     request: Request,
     limit: int = Query(20, ge=1, le=200),
     offset: int = Query(0, ge=0),
-    tenant: TenantInfo = Depends(require_tenant),
+    tenant_id: str = Depends(resolve_read_tenant_id),
 ):
     store = _store(request)
-    tasks = store.list_for_tenant(tenant.tenant_id, limit=limit, offset=offset)
+    tasks = store.list_for_tenant(tenant_id, limit=limit, offset=offset)
     return [_serialize(t) for t in tasks]
 
 
@@ -318,10 +378,10 @@ async def list_simulations(
 async def get_simulation_task(
     task_id: str,
     request: Request,
-    tenant: TenantInfo = Depends(require_tenant),
+    tenant_id: str = Depends(resolve_read_tenant_id),
 ):
     store = _store(request)
-    task = store.get(tenant.tenant_id, task_id)
+    task = store.get(tenant_id, task_id)
     if task is None:
         raise HTTPException(
             status_code=404,
