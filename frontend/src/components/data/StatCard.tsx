@@ -12,7 +12,7 @@ export function StatCard({ label, value, sub, accent }: Props) {
   const accentStyle: Record<string, string> = {
     blue: 'var(--wx-grad-blue)',
     orange: 'var(--wx-grad-orange)',
-    cyan: 'linear-gradient(135deg, #00B8D4, #00D971)',
+    cyan: 'linear-gradient(135deg, #A78BFA, #C9B6F5)',
   }
   return (
     <div className="wx-stat-card">

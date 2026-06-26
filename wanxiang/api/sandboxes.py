@@ -28,8 +28,7 @@ class Sandbox:
     name: str
     emoji: str = "🥤"
     description: str = ""
-    distribution_path: str = (
-        "wanxiang/datasources/distributions/cn_z_generation_v1.yaml")
+    distribution_path: str = "cn_census_2020"
     population_size: int = 1000
     created_by_user_id: str | None = None
     created_at: datetime = field(

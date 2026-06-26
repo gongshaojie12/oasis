@@ -1,0 +1,421 @@
+{
+  "name": {
+    "zh": "中国全国人口 2020(七普)",
+    "en": "China National Population 2020 (7th Census)"
+  },
+  "demographic": [
+    {
+      "name": {
+        "zh": "性别",
+        "en": "gender"
+      },
+      "distribution": {
+        "values": [
+          {
+            "label": {
+              "zh": "男",
+              "en": "male"
+            },
+            "weight": 0.5124
+          },
+          {
+            "label": {
+              "zh": "女",
+              "en": "female"
+            },
+            "weight": 0.4876
+          }
+        ]
+      }
+    },
+    {
+      "name": {
+        "zh": "年龄段",
+        "en": "age_group"
+      },
+      "distribution": {
+        "values": [
+          {
+            "label": {
+              "zh": "0-14岁",
+              "en": "0-14"
+            },
+            "weight": 0.1795
+          },
+          {
+            "label": {
+              "zh": "15-59岁",
+              "en": "15-59"
+            },
+            "weight": 0.6335
+          },
+          {
+            "label": {
+              "zh": "60岁以上",
+              "en": "60+"
+            },
+            "weight": 0.187
+          }
+        ]
+      }
+    },
+    {
+      "name": {
+        "zh": "城乡",
+        "en": "urban_rural"
+      },
+      "distribution": {
+        "values": [
+          {
+            "label": {
+              "zh": "城镇",
+              "en": "urban"
+            },
+            "weight": 0.6389
+          },
+          {
+            "label": {
+              "zh": "乡村",
+              "en": "rural"
+            },
+            "weight": 0.3611
+          }
+        ]
+      }
+    },
+    {
+      "name": {
+        "zh": "受教育程度",
+        "en": "education"
+      },
+      "distribution": {
+        "values": [
+          {
+            "label": {
+              "zh": "大专及以上",
+              "en": "college+"
+            },
+            "weight": 0.1547
+          },
+          {
+            "label": {
+              "zh": "高中",
+              "en": "senior secondary"
+            },
+            "weight": 0.1509
+          },
+          {
+            "label": {
+              "zh": "初中",
+              "en": "junior secondary"
+            },
+            "weight": 0.3451
+          },
+          {
+            "label": {
+              "zh": "小学",
+              "en": "primary"
+            },
+            "weight": 0.2477
+          },
+          {
+            "label": {
+              "zh": "未上学",
+              "en": "no schooling"
+            },
+            "weight": 0.1016
+          }
+        ]
+      }
+    },
+    {
+      "name": {
+        "zh": "民族",
+        "en": "ethnicity"
+      },
+      "distribution": {
+        "values": [
+          {
+            "label": {
+              "zh": "汉族",
+              "en": "Han"
+            },
+            "weight": 0.9111
+          },
+          {
+            "label": {
+              "zh": "少数民族",
+              "en": "ethnic minorities"
+            },
+            "weight": 0.0889
+          }
+        ]
+      }
+    },
+    {
+      "name": {
+        "zh": "区域",
+        "en": "region"
+      },
+      "distribution": {
+        "values": [
+          {
+            "label": {
+              "zh": "东部",
+              "en": "East"
+            },
+            "weight": 0.3509
+          },
+          {
+            "label": {
+              "zh": "中部",
+              "en": "Central"
+            },
+            "weight": 0.2583
+          },
+          {
+            "label": {
+              "zh": "西部",
+              "en": "West"
+            },
+            "weight": 0.2712
+          },
+          {
+            "label": {
+              "zh": "东北",
+              "en": "Northeast"
+            },
+            "weight": 0.0698
+          }
+        ]
+      }
+    },
+    {
+      "name": {
+        "zh": "省份",
+        "en": "province"
+      },
+      "distribution": {
+        "values": [
+          {
+            "label": {
+              "zh": "广东",
+              "en": "Guangdong"
+            },
+            "weight": 0.0893
+          },
+          {
+            "label": {
+              "zh": "山东",
+              "en": "Shandong"
+            },
+            "weight": 0.0719
+          },
+          {
+            "label": {
+              "zh": "河南",
+              "en": "Henan"
+            },
+            "weight": 0.0704
+          },
+          {
+            "label": {
+              "zh": "江苏",
+              "en": "Jiangsu"
+            },
+            "weight": 0.06
+          },
+          {
+            "label": {
+              "zh": "四川",
+              "en": "Sichuan"
+            },
+            "weight": 0.0593
+          },
+          {
+            "label": {
+              "zh": "河北",
+              "en": "Hebei"
+            },
+            "weight": 0.0528
+          },
+          {
+            "label": {
+              "zh": "湖南",
+              "en": "Hunan"
+            },
+            "weight": 0.0471
+          },
+          {
+            "label": {
+              "zh": "浙江",
+              "en": "Zhejiang"
+            },
+            "weight": 0.0457
+          },
+          {
+            "label": {
+              "zh": "安徽",
+              "en": "Anhui"
+            },
+            "weight": 0.0432
+          },
+          {
+            "label": {
+              "zh": "湖北",
+              "en": "Hubei"
+            },
+            "weight": 0.0409
+          },
+          {
+            "label": {
+              "zh": "广西",
+              "en": "Guangxi"
+            },
+            "weight": 0.0355
+          },
+          {
+            "label": {
+              "zh": "云南",
+              "en": "Yunnan"
+            },
+            "weight": 0.0334
+          },
+          {
+            "label": {
+              "zh": "江西",
+              "en": "Jiangxi"
+            },
+            "weight": 0.032
+          },
+          {
+            "label": {
+              "zh": "辽宁",
+              "en": "Liaoning"
+            },
+            "weight": 0.0302
+          },
+          {
+            "label": {
+              "zh": "福建",
+              "en": "Fujian"
+            },
+            "weight": 0.0294
+          },
+          {
+            "label": {
+              "zh": "陕西",
+              "en": "Shaanxi"
+            },
+            "weight": 0.028
+          },
+          {
+            "label": {
+              "zh": "贵州",
+              "en": "Guizhou"
+            },
+            "weight": 0.0273
+          },
+          {
+            "label": {
+              "zh": "山西",
+              "en": "Shanxi"
+            },
+            "weight": 0.0247
+          },
+          {
+            "label": {
+              "zh": "重庆",
+              "en": "Chongqing"
+            },
+            "weight": 0.0227
+          },
+          {
+            "label": {
+              "zh": "黑龙江",
+              "en": "Heilongjiang"
+            },
+            "weight": 0.0226
+          },
+          {
+            "label": {
+              "zh": "新疆",
+              "en": "Xinjiang"
+            },
+            "weight": 0.0183
+          },
+          {
+            "label": {
+              "zh": "甘肃",
+              "en": "Gansu"
+            },
+            "weight": 0.0177
+          },
+          {
+            "label": {
+              "zh": "上海",
+              "en": "Shanghai"
+            },
+            "weight": 0.0176
+          },
+          {
+            "label": {
+              "zh": "吉林",
+              "en": "Jilin"
+            },
+            "weight": 0.0171
+          },
+          {
+            "label": {
+              "zh": "内蒙古",
+              "en": "Inner Mongolia"
+            },
+            "weight": 0.017
+          },
+          {
+            "label": {
+              "zh": "北京",
+              "en": "Beijing"
+            },
+            "weight": 0.0155
+          },
+          {
+            "label": {
+              "zh": "天津",
+              "en": "Tianjin"
+            },
+            "weight": 0.0098
+          },
+          {
+            "label": {
+              "zh": "海南",
+              "en": "Hainan"
+            },
+            "weight": 0.0071
+          },
+          {
+            "label": {
+              "zh": "宁夏",
+              "en": "Ningxia"
+            },
+            "weight": 0.0051
+          },
+          {
+            "label": {
+              "zh": "青海",
+              "en": "Qinghai"
+            },
+            "weight": 0.0042
+          },
+          {
+            "label": {
+              "zh": "西藏",
+              "en": "Tibet"
+            },
+            "weight": 0.0026
+          }
+        ]
+      }
+    }
+  ]
+}

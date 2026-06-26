@@ -70,6 +70,10 @@ def create_app() -> FastAPI:
     from wanxiang.api.model_config import make_model_config_store
     app.state.model_config_store = make_model_config_store(
         os.environ.get("WANXIANG_TASKS_DB"))
+    # M1 人群画像库 store(全局共享,超管维护);与其他 store 共享 DSN
+    from wanxiang.api.distributions import make_distribution_store
+    app.state.distribution_store = make_distribution_store(
+        os.environ.get("WANXIANG_TASKS_DB"))
     try:
         ensure_demo_workspace_and_key(
             user_store=app.state.user_store,
@@ -87,6 +91,14 @@ def create_app() -> FastAPI:
         import logging as _logging
         _logging.getLogger(__name__).warning(
             "bootstrap super-admin failed: %s", _e)
+    # M1: seed 内置 yaml 画像入库(幂等,只读 yaml 作 seed 源)
+    try:
+        from wanxiang.api.bootstrap import ensure_builtin_distributions
+        ensure_builtin_distributions(app.state.distribution_store)
+    except Exception as _e:  # pragma: no cover
+        import logging as _logging
+        _logging.getLogger(__name__).warning(
+            "bootstrap builtin distributions failed: %s", _e)
     # P2: SMS / Email / verification code stores + services.
     # Default env stays NoOp (logs to stdout) — production wires real
     # provider via WANXIANG_SMS_PROVIDER / WANXIANG_EMAIL_PROVIDER.
@@ -258,6 +270,14 @@ def create_app() -> FastAPI:
         from wanxiang.api.routes.model_config import (
             router as model_config_router)
         app.include_router(model_config_router, prefix="/v1")
+    except Exception:
+        pass
+
+    # M1 人群画像库路由(/v1/distributions + /v1/admin/distributions)
+    try:
+        from wanxiang.api.routes.distributions import (
+            router as distributions_router)
+        app.include_router(distributions_router, prefix="/v1")
     except Exception:
         pass
 

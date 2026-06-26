@@ -52,7 +52,7 @@ export function ConfirmDialog({
             destructive
               ? {
                   background:
-                    'linear-gradient(135deg, #FF4D6E, #FF6B3D)',
+                    'linear-gradient(135deg, #FF4D6E, #C026A8)',
                   boxShadow: '0 12px 32px -8px rgba(255, 77, 110, 0.4)',
                 }
               : undefined

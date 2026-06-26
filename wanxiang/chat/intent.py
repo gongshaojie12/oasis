@@ -10,7 +10,6 @@
 from __future__ import annotations
 
 import json
-import os
 import re
 from typing import Any, Literal
 
@@ -88,10 +87,9 @@ Do not output any text outside the JSON. Do not add markdown fences.
 _SYSTEM_PROMPT = _SYSTEM_PROMPT_ZH
 
 
-# wanxiang/chat/intent.py -> 父目录 wanxiang/chat -> 再往上 wanxiang/
-_BUNDLED_DIST = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "datasources", "distributions", "cn_z_generation_v1.yaml")
+# 默认画像:指向 DB 内置画像 slug(resolve_distribution 会解析);
+# 不再用文件路径,因为内置画像现在以 DB 为唯一真相源。
+_BUNDLED_DIST = "cn_census_2020"
 
 
 class IntentParseResult(BaseModel):

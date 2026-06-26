@@ -15,10 +15,13 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { isAuthenticated } from '@/lib/auth'
 import { api } from '@/lib/api'
+import { streamSse } from '@/lib/sse'
 import { useAuthStore } from '@/stores/authStore'
+import { useSandboxStore } from '@/stores/sandboxStore'
 import { LandingSidebar, type ViewKey, type CreateSandboxPayload } from '@/components/landing/LandingSidebar'
 import { LandingChat } from '@/components/landing/LandingChat'
 import { LandingDataPanel } from '@/components/landing/LandingDataPanel'
+import { CockpitOverlay } from '@/components/chat/CockpitOverlay'
 import { AuthGateModal } from '@/components/landing/AuthGateModal'
 import { DashboardView } from '@/views/DashboardView'
 import { ReportsView } from '@/views/ReportsView'
@@ -27,7 +30,7 @@ import { MembersView } from '@/views/MembersView'
 import { ApiKeysView } from '@/views/ApiKeysView'
 import { SettingsView } from '@/views/SettingsView'
 import { useTranslation } from 'react-i18next'
-import type { ChatMessage, Sandbox } from '@/types/api'
+import type { ChatMessage, Sandbox, SimProgress } from '@/types/api'
 
 export function LandingPage() {
   const { t } = useTranslation()
@@ -42,6 +45,11 @@ export function LandingPage() {
   const [activeSandbox, setActiveSandbox] = useState<Sandbox | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(false)
+  const [liveProgress, setLiveProgress] = useState<SimProgress | null>(null)
+  const [cockpitOpen, setCockpitOpen] = useState(false)
+  // feed 统一走 store,供 CockpitOverlay 跨页读取;liveProgress 仍按页 local。
+  const pushFeedItem = useSandboxStore((s) => s.pushFeedItem)
+  const clearFeed = useSandboxStore((s) => s.clearFeed)
   const [gateOpen, setGateOpen] = useState(false)
   const [gateTab, setGateTab] = useState<'login' | 'register'>('register')
   const [pendingText, setPendingText] = useState<string | undefined>(undefined)
@@ -168,7 +176,7 @@ export function LandingPage() {
       setMessages((prev) => [...prev, tempUserMsg])
 
       const r = await api.post(
-        `/workspaces/${currentWs.slug}/sandboxes/${sb.sandbox_id}/chat`,
+        `/workspaces/${currentWs.slug}/sandboxes/${sb.sandbox_id}/chat/stream`,
         { text },
       )
       setMessages((prev) => {
@@ -179,6 +187,59 @@ export function LandingPage() {
           ...((r.data.assistant_messages as ChatMessage[]) || []),
         ]
       })
+
+      if (r.data.streaming && r.data.run_id) {
+        const total = (r.data.n as number) ?? sb.population_size
+        clearFeed()
+        setLiveProgress({ done: 0, total, status: 'running',
+                          kind: r.data.kind })
+        const sbId = sb.sandbox_id
+        await streamSse(
+          `/workspaces/${currentWs.slug}/sandboxes/${sbId}/runs/${r.data.run_id}/events`,
+          {
+            onEvent: (event, data) => {
+              const d = (data ?? {}) as Record<string, unknown>
+              if (event === 'progress') {
+                setLiveProgress({
+                  done: Number(d.done ?? 0),
+                  total: Number(d.total ?? total),
+                  mean: d.mean as number | null | undefined,
+                  kind: d.kind as string | undefined,
+                  status: 'running',
+                })
+                const feed = d.feed as Record<string, unknown> | undefined
+                if (feed) {
+                  pushFeedItem({
+                    agent_id: Number(feed.agent_id ?? 0),
+                    name: feed.name as string | undefined,
+                    city: feed.city as string | null | undefined,
+                    gender: feed.gender as string | null | undefined,
+                    age: feed.age as string | null | undefined,
+                    kind: String(feed.kind ?? ''),
+                    value: (feed.value ?? null) as number | string | null,
+                    error: feed.error as string | null | undefined,
+                  })
+                }
+              } else if (event === 'done') {
+                const card = d.report_card as ChatMessage | undefined
+                if (card) setMessages((prev) => [...prev, card])
+                setLiveProgress(null)
+              } else if (event === 'error') {
+                setLiveProgress(null)
+                const em: ChatMessage = {
+                  message_id: 'err-' + Date.now(),
+                  sandbox_id: sbId, role: 'assistant',
+                  content: String(d.error ?? 'error'), kind: 'error',
+                  metadata: {}, user_id: null,
+                  created_at: new Date().toISOString(),
+                }
+                setMessages((prev) => [...prev, em])
+              }
+            },
+            onError: () => setLiveProgress(null),
+          },
+        )
+      }
     } catch (e: unknown) {
       // eslint-disable-next-line no-console
       console.error(e)
@@ -285,8 +346,10 @@ export function LandingPage() {
             authed={authed}
             activeSandbox={activeSandbox}
             messages={messages}
+            liveProgress={liveProgress}
             collapsed={rightCollapsed}
             onToggleCollapse={toggleRight}
+            onExpandCockpit={() => setCockpitOpen(true)}
           />
         )}
       </div>
@@ -300,6 +363,9 @@ export function LandingPage() {
         }}
         pendingText={pendingText}
       />
+      <CockpitOverlay open={cockpitOpen}
+                      onClose={() => setCockpitOpen(false)}
+                      liveProgress={liveProgress} />
     </>
   )
 }

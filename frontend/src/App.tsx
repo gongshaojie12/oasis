@@ -34,6 +34,7 @@ import { InviteAcceptPage } from '@/pages/invite/InviteAcceptPage'
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
 import { AdminWorkspacesPage } from '@/pages/admin/AdminWorkspacesPage'
 import { AdminTransactionsPage } from '@/pages/admin/AdminTransactionsPage'
+import { AdminDistributionsPage } from '@/pages/admin/AdminDistributionsPage'
 
 import { RequireAuth } from '@/components/RequireAuth'
 
@@ -118,6 +119,8 @@ export function App() {
               <Route path="users" element={<AdminUsersPage />} />
               <Route path="workspaces" element={<AdminWorkspacesPage />} />
               <Route path="transactions" element={<AdminTransactionsPage />} />
+              <Route path="distributions"
+                     element={<AdminDistributionsPage />} />
             </Route>
           </Route>
 

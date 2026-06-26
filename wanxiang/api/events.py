@@ -208,53 +208,35 @@ class RedisEventBus:
         return out
 
     async def subscribe(self, task_id: str) -> AsyncIterator[SimulationEvent]:
-        """Replay history, then subscribe to the live Pub/Sub channel.
+        """按索引轮询 history LIST,逐条产出直到 close 哨兵。
 
-        Yields ``SimulationEvent`` until the close sentinel is received.
-        Note: as with the in-memory bus there's a small overlap window;
-        we snapshot history length and skip that many live messages to
-        avoid double-emission.
+        历史教训:原实现先 snapshot history 再 subscribe pub/sub,但 pub/sub
+        是 fire-and-forget —— 在 snapshot 与 subscribe 之间 publish 的事件会
+        永久丢失。快速模拟(并发完成)时大量 progress/done 因此丢失,SSE 只
+        收到前几条就断流。
+
+        改为对 history LIST 做 index 轮询:RPUSH 原子有序、LIST 保留全部事件
+        (含 __CLOSE__ 哨兵且不被 LTRIM 在 ≤history_size 时丢弃),故无竞态。
+        延迟 = 轮询间隔(0.12s),对实时面板足够。
         """
-        history_snapshot = self.history(task_id)
-        skip = len(history_snapshot)
-        for ev in history_snapshot:
-            yield ev
-
-        pubsub = self._r.pubsub()
-        channel = self._key(task_id)
-        try:
-            pubsub.subscribe(channel)
-            while True:
-                msg = pubsub.get_message(ignore_subscribe_messages=True,
-                                         timeout=1.0)
-                if msg is None:
-                    # Give the event loop a tick so we don't busy-spin
-                    await asyncio.sleep(0.05)
-                    continue
-                raw = msg.get("data")
-                if not raw:
-                    continue
-                try:
-                    d = json.loads(raw)
-                except (TypeError, ValueError):
-                    continue
-                if d.get("event") == _CLOSE_SENTINEL:
-                    return
-                if skip > 0:
-                    skip -= 1
-                    continue
-                yield SimulationEvent(
-                    event=d["event"], data=d.get("data") or {},
-                    timestamp=d.get("timestamp") or time.time())
-        finally:
-            try:
-                pubsub.unsubscribe(channel)
-            except Exception:  # noqa: BLE001
-                pass
-            try:
-                pubsub.close()
-            except Exception:  # noqa: BLE001
-                pass
+        key = self._key(task_id)
+        idx = 0  # 下一个要读的 LIST 下标
+        while True:
+            raw_items = self._r.lrange(key, idx, -1)
+            if raw_items:
+                idx += len(raw_items)
+                for s in raw_items:
+                    try:
+                        d = json.loads(s)
+                    except (TypeError, ValueError):
+                        continue
+                    if d.get("event") == _CLOSE_SENTINEL:
+                        return
+                    yield SimulationEvent(
+                        event=d["event"], data=d.get("data") or {},
+                        timestamp=d.get("timestamp") or time.time())
+            else:
+                await asyncio.sleep(0.12)
 
 
 def get_event_bus():

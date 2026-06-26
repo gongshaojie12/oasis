@@ -42,6 +42,39 @@ def _quantiles(values: list[float]) -> tuple[float, float, float]:
     return qs[0], qs[1], qs[2]
 
 
+def _histogram(values: list[float], kind: DecisionKind) -> list[dict]:
+    """直方图(供前端画分布柱状图)。返回 [{label, count}] 有序桶。
+
+    - RATE: 固定 0..10 共 11 个整数桶(评分本就是整数)。
+    - 其他数值 kind: 在 [min,max] 上等宽分 10 桶;退化(全相等)→ 单桶。
+    """
+    if not values:
+        return []
+    if kind is DecisionKind.RATE:
+        counts = {i: 0 for i in range(11)}
+        for v in values:
+            b = max(0, min(10, int(round(v))))
+            counts[b] += 1
+        return [{"label": str(i), "count": counts[i]} for i in range(11)]
+
+    lo, hi = min(values), max(values)
+    if hi <= lo:
+        return [{"label": f"{lo:.2f}", "count": len(values)}]
+    bins = 10
+    width = (hi - lo) / bins
+    counts = [0] * bins
+    for v in values:
+        idx = int((v - lo) / width)
+        if idx >= bins:
+            idx = bins - 1
+        counts[idx] += 1
+    out = []
+    for i in range(bins):
+        left = lo + i * width
+        out.append({"label": f"{left:.2f}", "count": counts[i]})
+    return out
+
+
 def aggregate(results: Iterable[DecisionResult]) -> AggregateReport:
     items = list(results)
     n_total = len(items)
@@ -75,6 +108,7 @@ def aggregate(results: Iterable[DecisionResult]) -> AggregateReport:
             "p75": p75,
             "min": min(nums),
             "max": max(nums),
+            "histogram": _histogram(nums, kind),
         }
     elif kind is DecisionKind.CHOOSE:
         counter = Counter(r.value for r in valid)

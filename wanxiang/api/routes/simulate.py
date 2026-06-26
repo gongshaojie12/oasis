@@ -12,7 +12,8 @@ from wanxiang.api.i18n import DEFAULT_LOCALE, get_request_locale, t
 from wanxiang.api.observability import metrics
 from wanxiang.api.schemas import SimulateRequest, SimulateResponse
 from wanxiang.api.tenancy import TenantInfo, resolve_effective_model
-from wanxiang.datasources import load_distribution
+from wanxiang.datasources import (load_distribution,
+                                  load_distribution_from_dict)
 from wanxiang.media.environment import MediaItem
 from wanxiang.personas import PersonaBuilder
 from wanxiang.reporting import build_report, render_markdown
@@ -34,12 +35,32 @@ def _media_pool_from_payload(payload) -> tuple[MediaItem, ...]:
 router = APIRouter()
 
 
+def resolve_distribution(distribution_ref: str, distribution_store=None):
+    """把沙盒里存的 distribution_ref 解析成可造人的分布视图。
+
+    M1:优先按 DB 画像解析(ref = distribution_id 或 slug);兼容旧数据:
+    ref 形如 ``*.yaml`` 路径或 DB 无命中 → 回退到文件 ``load_distribution``。
+    """
+    ref = (distribution_ref or "").strip()
+    # 旧路径(文件)直接读文件
+    is_path = ref.endswith(".yaml") or ref.endswith(".yml") or "/" in ref
+    if distribution_store is not None and ref and not is_path:
+        rec = (distribution_store.get(ref)
+               or distribution_store.get_by_slug(ref))
+        if rec is not None:
+            return load_distribution_from_dict(rec.content)
+    # 回退:文件路径
+    return load_distribution(ref)
+
+
 async def run_simulation_pipeline(
     req: SimulateRequest,
     model_factory,
     *,
     moderator=None,
     locale: str = DEFAULT_LOCALE,
+    progress_cb=None,
+    distribution_store=None,
 ) -> SimulateResponse:
     """共享的端到端模拟流水线。
 
@@ -68,8 +89,9 @@ async def run_simulation_pipeline(
                 detail=t("sim.material_flagged_by_moderator",
                          locale=locale, reason=cats))
 
-    # 1. 分布加载（文件不存在 → FileNotFoundError）
-    distribution = load_distribution(req.distribution_path)
+    # 1. 分布加载（M1:优先 DB 画像,回退文件;文件不存在 → FileNotFoundError）
+    distribution = resolve_distribution(req.distribution_path,
+                                        distribution_store)
 
     # 2. 造人（P5: 把 locale 传给 builder，让 trait key + value 对应语言）
     pb = PersonaBuilder()
@@ -109,7 +131,8 @@ async def run_simulation_pipeline(
     # 5. 跑模拟（按 rounds 选 decision_only 或 social）
     if req.rounds == 0:
         runner = BatchRunner(decision_concurrency=req.concurrency)
-        results = await runner.run_all(personas, scenario, model_call)
+        results = await runner.run_all(personas, scenario, model_call,
+                                       progress_cb=progress_cb)
     else:
         # M3+ 微信关系可见性：wechat 平台时构建小世界好友图，每个 focal
         # 在 social 轮次只看到自己好友的 L2 输出。其他平台保持全局公开广场。
@@ -124,7 +147,8 @@ async def run_simulation_pipeline(
             rounds=req.rounds, decision_concurrency=req.concurrency,
             dialect=dialect,
             friend_graph=friend_graph, persona_ids=persona_ids)
-        results, _hist = await social.run(personas, scenario, model_call)
+        results, _hist = await social.run(personas, scenario, model_call,
+                                          progress_cb=progress_cb)
 
     # 6. 聚合 + 报告
     agg = aggregate(results)

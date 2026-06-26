@@ -1,7 +1,8 @@
 // =========== Copyright 2026 @ WANXIANG. All Rights Reserved. ===========
 // Modal to create a new sandbox.
-import { useState, type FormEvent } from 'react'
+import { useState, useEffect, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
+import { api } from '@/lib/api'
 
 interface Props {
   isOpen: boolean
@@ -17,12 +18,17 @@ interface Props {
   submitting?: boolean
 }
 
-const DEFAULT_DIST =
-  'wanxiang/datasources/distributions/cn_z_generation_v1.yaml'
+// M1:画像不再硬编码,改为从 /distributions 动态拉取(管理员维护的全局库)。
+// 兜底值:DB 里内置画像的 slug(seed 后必存在),旧 yaml 路径后端也认。
+const DEFAULT_DIST = 'cn_census_2020'
 const DEFAULT_EMOJIS = ['🥤', '👗', '🍔', '🎮', '📱', '🚗', '🏠', '✨']
-const DISTRIBUTIONS = [
-  { value: DEFAULT_DIST, labelZh: '中国 Z 世代 v1', labelEn: 'CN Gen-Z v1' },
-]
+
+interface DistOption {
+  distribution_id: string
+  slug: string
+  name_zh: string
+  name_en: string
+}
 
 export function NewSandboxModal({
   isOpen,
@@ -37,6 +43,23 @@ export function NewSandboxModal({
   const [description, setDescription] = useState('')
   const [populationSize, setPopulationSize] = useState(1000)
   const [distributionPath, setDistributionPath] = useState(defaultDistribution)
+  const [dists, setDists] = useState<DistOption[]>([])
+
+  useEffect(() => {
+    if (!isOpen) return
+    api.get<{ distributions: DistOption[] }>('/distributions')
+      .then((r) => {
+        const list = r.data.distributions ?? []
+        setDists(list)
+        // 若当前选中值不在列表里,默认选第一个(用 distribution_id)
+        if (list.length && !list.some(
+          (d) => d.distribution_id === distributionPath
+                 || d.slug === distributionPath)) {
+          setDistributionPath(list[0].distribution_id)
+        }
+      })
+      .catch(() => { /* 非致命:留默认值,后端会回退 */ })
+  }, [isOpen]) // eslint-disable-line
 
   if (!isOpen) return null
 
@@ -128,9 +151,14 @@ export function NewSandboxModal({
             value={distributionPath}
             onChange={(e) => setDistributionPath(e.target.value)}
           >
-            {DISTRIBUTIONS.map((d) => (
-              <option key={d.value} value={d.value}>
-                {i18n.language === 'en' ? d.labelEn : d.labelZh}
+            {dists.length === 0 && (
+              <option value={distributionPath}>
+                {i18n.language === 'en' ? 'CN Gen-Z v1' : '中国 Z 世代 v1'}
+              </option>
+            )}
+            {dists.map((d) => (
+              <option key={d.distribution_id} value={d.distribution_id}>
+                {i18n.language === 'en' ? (d.name_en || d.name_zh) : d.name_zh}
               </option>
             ))}
           </select>

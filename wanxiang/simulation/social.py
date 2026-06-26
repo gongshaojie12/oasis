@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import asyncio
 from dataclasses import replace
-from typing import Iterable
+from typing import Callable, Iterable, Optional
 
 from wanxiang.actions.dialect import PlatformDialect
 from wanxiang.personas.persona import Persona
@@ -30,6 +30,7 @@ from wanxiang.simulation.aggregate import AggregateReport, aggregate
 from wanxiang.simulation.batch import BatchRunner
 from wanxiang.simulation.decision import (DecisionResult, DecisionRunner,
                                           ModelCall)
+from wanxiang.simulation.batch import ProgressCb
 from wanxiang.simulation.scenario import DecisionKind, ScenarioConfig
 from wanxiang.social_graph.graph import FriendGraph
 
@@ -214,12 +215,33 @@ class SocialRoundsRunner:
         personas: Iterable[Persona],
         scenario: ScenarioConfig,
         model_call: ModelCall,
+        *,
+        progress_cb: Optional[ProgressCb] = None,
     ) -> tuple[list[DecisionResult], list[list[DecisionResult]]]:
         personas_list = list(personas)
         locale = getattr(scenario, "locale", "zh")
         peer_label = _i18n(locale)["peer_label"]
+        n = len(personas_list)
+        # 总工作量 = n × (rounds+1)；每轮起始偏移让进度跨轮单调递增。
+        grand_total = n * (self.rounds + 1)
+
+        def _round_cb(offset: int) -> Optional[ProgressCb]:
+            if progress_cb is None:
+                return None
+
+            def cb(done: int, _total: int,
+                   partial: list[DecisionResult],
+                   persona, result) -> None:
+                # partial 仅为本轮已完成结果；运行态聚合用本轮即可。
+                # offset 让进度跨轮单调;feed 只带最新单体,persona/result 直传。
+                progress_cb(offset + done, grand_total, partial,
+                            persona, result)
+            return cb
+
         # Round 0: 原始 scenario
-        round0 = await self._batch.run_all(personas_list, scenario, model_call)
+        round0 = await self._batch.run_all(
+            personas_list, scenario, model_call,
+            progress_cb=_round_cb(0))
         history: list[list[DecisionResult]] = [round0]
         current = round0
 
@@ -229,11 +251,13 @@ class SocialRoundsRunner:
             and len(self.persona_ids) == len(personas_list)
         )
 
-        for _ in range(self.rounds):
+        for r in range(self.rounds):
+            offset = n * (r + 1)
             if use_graph:
                 current = await self._run_per_focal_round(
                     personas_list, scenario, current, model_call,
-                    locale=locale, peer_label=peer_label)
+                    locale=locale, peer_label=peer_label,
+                    progress_cb=_round_cb(offset))
             else:
                 report = aggregate(current)
                 peer = format_peer_signal(report, dialect=self.dialect,
@@ -243,7 +267,8 @@ class SocialRoundsRunner:
                     material=scenario.material + "\n" + peer_label + peer,
                 )
                 current = await self._batch.run_all(
-                    personas_list, augmented, model_call)
+                    personas_list, augmented, model_call,
+                    progress_cb=_round_cb(offset))
             history.append(current)
 
         return current, history
@@ -257,10 +282,13 @@ class SocialRoundsRunner:
         *,
         locale: str = "zh",
         peer_label: str = "【同辈参考】",
+        progress_cb: Optional[ProgressCb] = None,
     ) -> list[DecisionResult]:
         """每个 focal 用 only-friends 聚合的 peer signal 单独跑。"""
         assert self.friend_graph is not None and self.persona_ids is not None
+        total = len(personas_list)
         sem = asyncio.Semaphore(self.decision_concurrency)
+        done_results: list[DecisionResult] = []
 
         async def one(idx: int, p: Persona) -> DecisionResult:
             peer = per_focal_peer_signal(
@@ -276,7 +304,14 @@ class SocialRoundsRunner:
                 material=scenario.material + "\n" + peer_label + peer,
             )
             async with sem:
-                return await self._decision.run(p, augmented, model_call)
+                res = await self._decision.run(p, augmented, model_call)
+            done_results.append(res)
+            if progress_cb is not None:
+                try:
+                    progress_cb(len(done_results), total, done_results, p, res)
+                except Exception:  # noqa: BLE001
+                    pass
+            return res
 
         return await asyncio.gather(*(
             one(i, p) for i, p in enumerate(personas_list)))

@@ -5,15 +5,21 @@
 // - Authed, sandbox selected: shows real sandbox info; once a report_card
 //   message exists, renders real decision_kind / n_valid / mean from its metadata.
 import { useTranslation } from 'react-i18next'
-import { Activity, ChevronLeft, ChevronRight } from 'lucide-react'
-import type { ChatMessage, Sandbox } from '@/types/api'
+import { Activity, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react'
+import type { ChatMessage, Sandbox, SimProgress } from '@/types/api'
+import { SwarmCanvas } from '@/components/chat/SwarmCanvas'
+import { ReportSummary } from '@/components/chat/ReportSummary'
+import { useSandboxStore } from '@/stores/sandboxStore'
+import { phraseFeed, descFeed } from '@/lib/feedPhrase'
 
 interface Props {
   authed: boolean
   activeSandbox: Sandbox | null
   messages: ChatMessage[]
+  liveProgress?: SimProgress | null
   collapsed: boolean
   onToggleCollapse: () => void
+  onExpandCockpit?: () => void
 }
 
 function PanelCollapseToggle({ collapsed, onClick }: {
@@ -34,15 +40,10 @@ function PanelCollapseToggle({ collapsed, onClick }: {
   )
 }
 
-interface ReportMeta {
-  decision_kind?: string
-  n_valid?: number
-  n_total?: number
-  mean?: number | null
-}
 
 export function LandingDataPanel(p: Props) {
   const { t } = useTranslation()
+  const feedItems = useSandboxStore((s) => s.feedItems)
 
   // Collapsed mode: narrow strip with activity icon + expand button
   if (p.collapsed) {
@@ -108,14 +109,18 @@ export function LandingDataPanel(p: Props) {
 
   // Look for most recent report_card message
   const lastReport = [...p.messages].reverse().find((m) => m.kind === 'report_card')
-  const meta: ReportMeta = (lastReport?.metadata as ReportMeta) || {}
+
+  const live = p.liveProgress && p.liveProgress.status === 'running'
+    ? p.liveProgress : null
+  const pct = live && live.total > 0
+    ? Math.round((live.done / live.total) * 100) : 0
 
   return (
     <aside className="wx-panel" aria-label="WANXIANG live data panel">
       <header>
         <PanelCollapseToggle collapsed={false} onClick={p.onToggleCollapse} />
         <span>{t('landing.panel_title')}</span>
-        {lastReport && <span className="wx-panel-live">LIVE</span>}
+        {(lastReport || live) && <span className="wx-panel-live">LIVE</span>}
       </header>
 
       <div className="wx-panel-stat">
@@ -135,7 +140,75 @@ export function LandingDataPanel(p: Props) {
         </div>
       </div>
 
-      {!lastReport ? (
+      {live && (
+        <>
+          <div className="wx-panel-stat">
+            <div className="wx-panel-stat-label">
+              {t('panel.particles_title')}
+            </div>
+            <SwarmCanvas count={live.total} />
+          </div>
+          <div className="wx-panel-stat">
+            <div className="wx-panel-stat-label">{t('panel.sim_progress')}</div>
+            <div style={{ display: 'flex', justifyContent: 'space-between',
+                          alignItems: 'baseline', marginBottom: 6 }}>
+              <b style={{ fontSize: 22, fontWeight: 800,
+                          color: 'var(--wx-accent-blue, #8B5CF6)' }}>{pct}%</b>
+              <span style={{ fontSize: 12, color: 'var(--wx-text-secondary)' }}>
+                {live.done} / {live.total}
+              </span>
+            </div>
+            <div style={{ height: 6, borderRadius: 4,
+                          background: 'rgba(127,141,164,.18)',
+                          overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${pct}%`,
+                            borderRadius: 4, transition: 'width .3s ease',
+                            background:
+                              'linear-gradient(90deg,#8B5CF6,#A78BFA)' }} />
+            </div>
+          </div>
+          {typeof live.mean === 'number' && (
+            <div className="wx-panel-stat">
+              <div className="wx-panel-stat-label">
+                {t('panel.running_mean')}
+              </div>
+              <div className="wx-panel-stat-value">{live.mean.toFixed(2)}</div>
+            </div>
+          )}
+          {feedItems.length > 0 && (
+            <div className="wx-panel-stat">
+              <div className="wx-panel-stat-label">
+                {t('overlay.activity_feed')}
+              </div>
+              {feedItems.slice(0, 4).map((it) => (
+                <div key={it.id} style={{ fontSize: 12, lineHeight: 1.5,
+                       color: 'var(--wx-text-secondary)', padding: '2px 0' }}>
+                  <b>{descFeed(it)}</b> {phraseFeed(it, t)}
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="wx-panel-stat">
+            <div style={{ display: 'flex', justifyContent: 'space-between',
+                          alignItems: 'center' }}>
+              <span style={{ fontSize: 12.5,
+                             color: 'var(--wx-text-secondary)' }}>
+                {t('panel.sim_running')}…
+              </span>
+              {p.onExpandCockpit && (
+                <button type="button" className="wx-link"
+                        style={{ display: 'flex', alignItems: 'center',
+                                 gap: 4, fontSize: 12 }}
+                        onClick={p.onExpandCockpit}>
+                  <Maximize2 size={13} /> {t('panel.expand_cockpit')}
+                </button>
+              )}
+            </div>
+          </div>
+        </>
+      )}
+
+      {live ? null : !lastReport ? (
         <div className="wx-panel-empty" style={{ minHeight: 120 }}>
           <p
             style={{
@@ -150,41 +223,10 @@ export function LandingDataPanel(p: Props) {
           </p>
         </div>
       ) : (
-        <>
-          <div className="wx-panel-stat">
-            <div className="wx-panel-stat-label">{t('landing.panel_decision_kind')}</div>
-            <div
-              className="wx-panel-stat-value"
-              style={{ fontSize: 15, fontWeight: 500 }}
-            >
-              {meta.decision_kind || '-'}
-            </div>
-          </div>
-          <div className="wx-panel-stat">
-            <div className="wx-panel-stat-label">{t('landing.panel_valid_samples')}</div>
-            <div className="wx-panel-stat-value">
-              {meta.n_valid ?? '-'}
-              {meta.n_total != null && (
-                <span
-                  style={{
-                    fontSize: 12,
-                    color: 'var(--wx-text-tertiary)',
-                    fontWeight: 400,
-                    marginLeft: 6,
-                  }}
-                >
-                  / {meta.n_total}
-                </span>
-              )}
-            </div>
-          </div>
-          {meta.mean !== undefined && meta.mean !== null && (
-            <div className="wx-panel-stat">
-              <div className="wx-panel-stat-label">{t('landing.panel_mean')}</div>
-              <div className="wx-panel-stat-value">{Number(meta.mean).toFixed(2)}</div>
-            </div>
-          )}
-        </>
+        <ReportSummary
+          meta={(lastReport?.metadata as Record<string, unknown>) || {}}
+          feedItems={feedItems}
+        />
       )}
     </aside>
   )

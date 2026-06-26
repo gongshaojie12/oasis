@@ -92,8 +92,10 @@ def build_report(
         # 数值 kind
         s = aggregate.stats
         recommendation["mean"] = s.get("mean")
+        recommendation["median"] = s.get("median")
         recommendation["confidence_band"] = (s.get("p25"), s.get("p75"))
         recommendation["range"] = (s.get("min"), s.get("max"))
+        recommendation["histogram"] = s.get("histogram")
 
     out = {
         "scenario": scenario_block,

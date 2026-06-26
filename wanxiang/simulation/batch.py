@@ -8,12 +8,18 @@ result.error is None 过滤。
 from __future__ import annotations
 
 import asyncio
-from typing import Iterable
+from typing import Callable, Iterable, Optional
 
 from wanxiang.personas.persona import Persona
 from wanxiang.simulation.decision import (DecisionResult, DecisionRunner,
                                           ModelCall)
 from wanxiang.simulation.scenario import ScenarioConfig
+
+# progress_cb(done, total, partial_results, persona, result) —— 每完成一个
+# agent 调一次。persona/result 是刚完成的那个 agent(即 partial_results 末尾
+# 那条对应的 persona)。partial_results 顺序无关,仅供运行态聚合(如均值)。
+ProgressCb = Callable[
+    [int, int, list[DecisionResult], Persona, DecisionResult], None]
 
 
 class BatchRunner:
@@ -29,14 +35,27 @@ class BatchRunner:
         personas: Iterable[Persona],
         scenario: ScenarioConfig,
         model_call: ModelCall,
+        *,
+        progress_cb: Optional[ProgressCb] = None,
     ) -> list[DecisionResult]:
         personas_list = list(personas)
         if not personas_list:
             return []
+        total = len(personas_list)
         sem = asyncio.Semaphore(self.decision_concurrency)
+        # 顺序无关地收集已完成结果，供 progress_cb 做运行态聚合。
+        done_results: list[DecisionResult] = []
 
         async def one(p: Persona) -> DecisionResult:
             async with sem:
-                return await self._runner.run(p, scenario, model_call)
+                res = await self._runner.run(p, scenario, model_call)
+            done_results.append(res)
+            if progress_cb is not None:
+                # 回调内任何异常都不能影响模拟本身。
+                try:
+                    progress_cb(len(done_results), total, done_results, p, res)
+                except Exception:  # noqa: BLE001
+                    pass
+            return res
 
         return await asyncio.gather(*(one(p) for p in personas_list))

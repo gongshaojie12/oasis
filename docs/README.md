@@ -360,3 +360,52 @@ curl -X POST http://localhost:8000/v1/templates/pricing_van_westendorp/instantia
 
 > 对万象这套架构，**服务器扩容的重要性远低于 DeepSeek API 配额 + 任务调度软件层优化**。Stage 0 MVP（2C4G + SQLite + ¥100/月）就能撑到 10 万 agent/sim 级别；超过 50 万再切 4-8C/16GB + PG + Celery。"规模化"主要是**把任务调度做扎实**（分片、配额、重试、监控），而不是堆机器。
 
+
+
+---
+
+## 人群画像数据源（M1 数据接入）
+
+人群画像（distribution）分三块：**demographic**（人口属性）/ **personality**（消费心理）/ **media**（媒介习惯）。
+目前内置画像 `cn_census_2020`（第七次全国人口普查）仅覆盖 demographic；personality / media 需从下列来源补充。
+**所有维度建议标注来源与年份**（不同来源口径/年份/样本范围不完全可比，多源拼接需注明，参考 Aaru 做法）。
+
+上传方式：管理后台 `/admin/distributions` → 上传画像（JSON/YAML），或放入 `wanxiang/datasources/distributions/*.json` 随启动 seed。
+
+### demographic（人口属性）— 官方、免费
+
+| 来源 | 补充维度 | 下载地址 |
+|------|---------|---------|
+| 第七次全国人口普查主要数据 | 性别/年龄/城乡/学历/民族/省份（已入库 `cn_census_2020`） | 国家统计局 https://www.stats.gov.cn → 统计数据 → 普查数据 |
+| 七普长表数据分卷 | 职业、行业、婚姻状况（主表没有，长表有） | 国家统计局 → 七普 → 分卷（就业卷 / 婚姻卷） |
+| 中国统计年鉴 | 收入分组、城乡收入、消费支出结构、就业行业 | https://www.stats.gov.cn → 统计数据 → 统计年鉴（在线 HTML + Excel/PDF） |
+| 国民经济和社会发展统计公报（每年 2 月） | 人均可支配收入、五等分收入分组 | https://www.stats.gov.cn 首页「统计公报」 |
+
+### media（媒介 / 平台习惯）— 官方、免费
+
+| 来源 | 补充维度 | 下载地址 |
+|------|---------|---------|
+| CNNIC《中国互联网络发展状况统计报告》（第55次，2025-01） | 网民规模、各应用渗透率（短视频/社交/电商/支付）、上网时长、城乡/年龄网民结构 | 中文 https://www.cnnic.net.cn/NMediaFile/2025/0220/MAIN1740036167004CKE0DITFO1.pdf ／ 英文 https://www.cnnic.com.cn/IDR/ReportDownloads/202505/P020250514564119130448.pdf ／ 全文页 https://www.100ec.cn/detail--6646318.html |
+| CNNIC 历次报告列表 | 同上（按需取年份） | https://www.cnnic.net.cn → 统计报告 |
+
+> 注：CNNIC 给的是**整体应用渗透率**，不是「抖音 vs 小红书 vs 微信」细分对比；细分平台画像见下方第三方报告。
+
+### personality（消费心理）+ 平台细分 — 学术免费 / 第三方
+
+公开官方统计基本没有「价格敏感度 / 尝鲜意愿」这类心理维度，真实来源：
+
+| 来源 | 补充维度 | 获取 | 是否免费 |
+|------|---------|------|---------|
+| CGSS 中国综合社会调查（人大） | 价值观、消费态度、社会心理（个体微观样本，可统计成分布） | http://cgss.ruc.edu.cn | ✅ 免费（学术注册） |
+| CFPS 中国家庭追踪调查（北大） | 收入、消费、健康、态度（个体/家庭微观样本） | https://www.isss.pku.edu.cn/cfps/ | ✅ 免费（学术注册） |
+| 巨量算数（抖音官方） | 平台用户画像、行业趋势 | https://trendinsight.oceanengine.com | ✅ 免费报告 |
+| QuestMobile | 各 App 用户画像、渗透率 | https://www.questmobile.com.cn | 部分免费摘要 |
+| 艾瑞咨询 | 品类消费、用户行为 | https://report.iresearch.cn | 部分免费 |
+| 尼尔森 / 凯度（Nielsen / Kantar） | 消费者类型、价格敏感型占比 | 官网报告 / 采购 | 摘要免费，完整付费 |
+
+### 处理流程
+
+1. 下载报告（PDF/Excel）。图表型 PDF 可拆成图片，由模型读图提取数字（参见 `cn_census_2020` 的提取方式）。
+2. 整理成画像 JSON（紧凑写法 `{"维度":{"取值":占比}}` 或双语 Plan-B 格式）。
+3. 经 `/admin/distributions` 上传，或放入种子目录。
+4. 每个维度在 description 注明来源 + 年份。

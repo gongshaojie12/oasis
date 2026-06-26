@@ -2,7 +2,7 @@
 // Layout for /admin/* super-admin routes — separate from workspace layout.
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { Users, Building, Receipt, ArrowLeft } from 'lucide-react'
+import { Users, Building, Receipt, Database, ArrowLeft } from 'lucide-react'
 import { BrandLogo } from '@/components/BrandLogo'
 import { I18nToggle } from '@/components/I18nToggle'
 import { ThemeToggle } from '@/components/ThemeToggle'
@@ -11,6 +11,7 @@ const ADMIN_NAV = [
   { to: '/admin/users', icon: Users, key: 'admin.users' },
   { to: '/admin/workspaces', icon: Building, key: 'admin.workspaces' },
   { to: '/admin/transactions', icon: Receipt, key: 'admin.transactions' },
+  { to: '/admin/distributions', icon: Database, key: 'admin.distributions' },
 ]
 
 export function AdminLayout() {

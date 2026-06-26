@@ -232,6 +232,19 @@ def _build_group(group: str, raw_group: Any) -> _TraitListView:
         f"{type(raw_group).__name__}")
 
 
+def load_distribution_from_dict(raw: dict) -> dict[str, _TraitListView]:
+    """Build canonical distribution view from an already-parsed dict.
+
+    与 ``load_distribution(path)`` 等价,只是输入是 dict(yaml.safe_load 的
+    产物或 DB 里存的规范化内容),不读文件 —— M1 让数据库画像也能跑模拟。
+    """
+    raw = raw or {}
+    out: dict[str, _TraitListView] = {}
+    for group in _GROUPS:
+        out[group] = _build_group(group, raw.get(group))
+    return out
+
+
 def load_distribution(path: str) -> dict[str, _TraitListView]:
     """Load a distribution YAML (Plan A or Plan B) into canonical form.
 
@@ -244,8 +257,72 @@ def load_distribution(path: str) -> dict[str, _TraitListView]:
         raise FileNotFoundError(f"distribution file not found: {path}")
     with open(path, "r", encoding="utf-8") as f:
         raw = yaml.safe_load(f) or {}
+    return load_distribution_from_dict(raw)
 
-    out: dict[str, _TraitListView] = {}
+
+def validate_distribution(raw: dict) -> tuple[bool, list[str]]:
+    """校验一份(已解析的)画像 dict 是否可用于造人。
+
+    规则(宽松但够防错):
+    - raw 必须是 mapping
+    - 三组 demographic/personality/media 至少有一组非空
+    - 每个 trait 必须能取出 name + 至少一个 value
+    - 每个 value 的 weight 必须是 >0 的数
+
+    返回 ``(ok, errors)``;ok=False 时 errors 列出问题(供前端回显)。
+    """
+    errors: list[str] = []
+    if not isinstance(raw, dict):
+        return False, ["顶层必须是映射(demographic/personality/media)"]
+
+    groups_present = [g for g in _GROUPS if raw.get(g)]
+    if not groups_present:
+        errors.append(
+            "至少需要 demographic / personality / media 其中一组非空")
+
     for group in _GROUPS:
-        out[group] = _build_group(group, raw.get(group))
-    return out
+        rg = raw.get(group)
+        if rg is None:
+            continue
+        if not isinstance(rg, (dict, list)):
+            errors.append(f"{group} 必须是映射或列表")
+            continue
+        # 统一成 (trait_name, values) 迭代
+        if isinstance(rg, dict):
+            iterable = list(rg.items())
+        else:
+            iterable = []
+            for t in rg:
+                if not isinstance(t, dict):
+                    errors.append(f"{group} 的每个 trait 必须是映射")
+                    continue
+                nm = t.get("name")
+                vals = ((t.get("distribution") or {}).get("values"))
+                iterable.append((nm, vals))
+        for trait_name, choices in iterable:
+            label = trait_name if isinstance(trait_name, str) else (
+                (trait_name or {}).get("zh") if isinstance(trait_name, dict)
+                else str(trait_name))
+            if not label:
+                errors.append(f"{group} 有 trait 缺少 name")
+            # 取出 (value, weight) 对
+            pairs = []
+            if isinstance(choices, dict):
+                pairs = list(choices.items())
+            elif isinstance(choices, list):
+                for v in choices:
+                    if isinstance(v, dict):
+                        pairs.append((v.get("label"), v.get("weight")))
+            if not pairs:
+                errors.append(f"{group}.{label} 没有任何取值")
+                continue
+            for _val, w in pairs:
+                try:
+                    wf = float(w)
+                except (TypeError, ValueError):
+                    errors.append(f"{group}.{label} 的权重非数字: {w!r}")
+                    continue
+                if wf <= 0:
+                    errors.append(f"{group}.{label} 的权重必须 >0: {wf}")
+
+    return (len(errors) == 0), errors

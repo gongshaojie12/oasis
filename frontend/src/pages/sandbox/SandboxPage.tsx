@@ -5,12 +5,14 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import { api } from '@/lib/api'
+import { streamSse } from '@/lib/sse'
 import { useAuthStore } from '@/stores/authStore'
 import { useSandboxStore } from '@/stores/sandboxStore'
 import { ChatBubble } from '@/components/chat/ChatBubble'
 import { Composer } from '@/components/chat/Composer'
 import { Sidebar } from '@/components/chat/Sidebar'
 import { DataPanel } from '@/components/chat/DataPanel'
+import { CockpitOverlay } from '@/components/chat/CockpitOverlay'
 import { SandboxHeader } from '@/components/chat/SandboxHeader'
 import { NewSandboxModal } from '@/components/chat/NewSandboxModal'
 import type {
@@ -37,6 +39,11 @@ export function SandboxPage() {
   const appendMessages = useSandboxStore((s) => s.appendMessages)
   const isSending = useSandboxStore((s) => s.isSending)
   const setSending = useSandboxStore((s) => s.setSending)
+  const liveProgress = useSandboxStore((s) => s.liveProgress)
+  const setLiveProgress = useSandboxStore((s) => s.setLiveProgress)
+  const pushFeedItem = useSandboxStore((s) => s.pushFeedItem)
+  const clearFeed = useSandboxStore((s) => s.clearFeed)
+  const [cockpitOpen, setCockpitOpen] = useState(false)
 
   const [modalOpen, setModalOpen] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -101,22 +108,77 @@ export function SandboxPage() {
     if (!slug || !sandboxId) return
     setSending(true)
     try {
+      // 走流式端点:解析意图后,若需模拟则立即拿到 run_id,再订阅 SSE 进度。
       const r = await api.post<ChatSimulateResponse>(
-        `/workspaces/${slug}/sandboxes/${sandboxId}/chat`,
+        `/workspaces/${slug}/sandboxes/${sandboxId}/chat/stream`,
         { text },
       )
-      const all: ChatMessage[] = [
+      appendMessages([
         r.data.user_message,
         ...(r.data.assistant_messages ?? []),
-      ]
-      appendMessages(all)
+      ])
+
+      if (r.data.streaming && r.data.run_id) {
+        const total = r.data.n ?? 0
+        clearFeed()
+        setLiveProgress({ done: 0, total, status: 'running',
+                          kind: r.data.kind })
+        // 订阅进度流(完成后自然结束)
+        await streamSse(
+          `/workspaces/${slug}/sandboxes/${sandboxId}/runs/${r.data.run_id}/events`,
+          {
+            onEvent: (event, data) => {
+              const d = (data ?? {}) as Record<string, unknown>
+              if (event === 'progress') {
+                setLiveProgress({
+                  done: Number(d.done ?? 0),
+                  total: Number(d.total ?? total),
+                  mean: d.mean as number | null | undefined,
+                  kind: d.kind as string | undefined,
+                  status: 'running',
+                })
+                const feed = d.feed as Record<string, unknown> | undefined
+                if (feed) {
+                  pushFeedItem({
+                    agent_id: Number(feed.agent_id ?? 0),
+                    name: feed.name as string | undefined,
+                    city: feed.city as string | null | undefined,
+                    gender: feed.gender as string | null | undefined,
+                    age: feed.age as string | null | undefined,
+                    kind: String(feed.kind ?? ''),
+                    value: (feed.value ?? null) as number | string | null,
+                    error: feed.error as string | null | undefined,
+                  })
+                }
+              } else if (event === 'done') {
+                const card = d.report_card as ChatMessage | undefined
+                if (card) appendMessages([card])
+                setLiveProgress(null)
+                setSending(false)
+              } else if (event === 'error') {
+                toast.error(String(d.error ?? t('common.error')))
+                setLiveProgress(null)
+                setSending(false)
+              }
+            },
+            onError: () => {
+              toast.error(t('common.error'))
+              setLiveProgress(null)
+              setSending(false)
+            },
+          },
+        )
+        return  // setSending 已在 done/error 分支处理
+      }
+
       if (r.data.error) toast.error(r.data.error)
+      setSending(false)
     } catch (err) {
       const detail =
         (err as { response?: { data?: { detail?: string } } })
           ?.response?.data?.detail ?? t('common.error')
       toast.error(detail)
-    } finally {
+      setLiveProgress(null)
       setSending(false)
     }
   }
@@ -175,8 +237,13 @@ export function SandboxPage() {
         <Composer onSend={handleSend} disabled={isSending} />
       </section>
       {currentSandbox && (
-        <DataPanel sandbox={currentSandbox} messages={messages} />
+        <DataPanel sandbox={currentSandbox} messages={messages}
+                   liveProgress={liveProgress}
+                   onExpandCockpit={() => setCockpitOpen(true)} />
       )}
+      <CockpitOverlay open={cockpitOpen}
+                      onClose={() => setCockpitOpen(false)}
+                      liveProgress={liveProgress} />
       <NewSandboxModal
         isOpen={modalOpen}
         defaultDistribution={currentSandbox?.distribution_path}

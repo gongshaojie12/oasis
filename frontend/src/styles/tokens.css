@@ -8,18 +8,20 @@
 
 /* Common / theme-independent tokens */
 :root {
-  /* Brand accents */
-  --wx-accent-blue: #1B4DFF;
-  --wx-accent-cyan: #00B8D4;
-  --wx-accent-orange: #FF6B3D;
-  --wx-accent-amber: #F5A623;
-  --wx-accent-purple: #7C3AED;
-  /* Gradients */
-  --wx-grad-blue: linear-gradient(135deg, #1B4DFF, #00B8D4);
-  --wx-grad-orange: linear-gradient(135deg, #FF6B3D, #F5A623);
-  /* Status */
-  --wx-success: #00D971;
-  --wx-warning: #F5A623;
+  /* Brand accents — 紫罗兰/薰衣草主调(参考 geo.mandao.com)。
+     原 --wx-accent-blue/cyan 命名保留以兼容各组件引用,但值改为紫系。 */
+  --wx-accent-blue: #8B5CF6;     /* 主品牌紫(浅一档,轻盈) */
+  --wx-accent-cyan: #A78BFA;     /* 辅助浅紫 */
+  --wx-accent-orange: #B79DF7;   /* 更浅的薰衣草 */
+  --wx-accent-amber: #C9B6F5;    /* 最浅薰衣草 */
+  --wx-accent-purple: #A78BFA;
+  --wx-accent-violet-deep: #7C5CE0;  /* CTA 渐变起点(浅版深紫) */
+  /* Gradients — 浅紫调,通透 */
+  --wx-grad-blue: linear-gradient(135deg, #7C5CE0, #8B5CF6 55%, #A78BFA);
+  --wx-grad-orange: linear-gradient(135deg, #A78BFA, #C9B6F5);
+  /* Status(success/warning 保留语义色,danger 保留红;warning 偏紫琥珀) */
+  --wx-success: #00C16A;
+  --wx-warning: #C99A3A;
   --wx-danger: #FF4D6E;
   /* Radius */
   --wx-r-sm: 8px;
@@ -28,109 +30,109 @@
   /* Legacy navy stack (still referenced in a few component selectors —
      resolves correctly only in dark mode; in light mode the surface tokens
      supersede these and visual surfaces are recolored below). */
-  --wx-navy-900: #050a1c;
-  --wx-navy-800: #0B1632;
-  --wx-navy-700: #131e3b;
-  --wx-navy-600: #1a274a;
+  --wx-navy-900: #15082e;
+  --wx-navy-800: #1d0f3d;
+  --wx-navy-700: #281551;
+  --wx-navy-600: #341c66;
 }
 
 /* ===== Light theme (DEFAULT) — ChatGPT-style cream/white ===== */
 :root,
 [data-theme="light"] {
-  /* Surfaces */
+  /* Surfaces — 白 + 若隐若现薰衣草(比之前更淡) */
   --wx-bg-page: #ffffff;
-  --wx-bg-sidebar: #f7f7f8;
+  --wx-bg-sidebar: #fcfbfe;
   --wx-bg-card: #ffffff;
   --wx-bg-input: #ffffff;
-  --wx-bg-hover: rgba(15, 23, 42, 0.05);
-  --wx-bg-active: rgba(27, 77, 255, 0.10);
-  --wx-bg-subtle: rgba(15, 23, 42, 0.03);
-  --wx-bg-overlay: rgba(15, 23, 42, 0.45);
-  /* Text */
-  --wx-text-primary: #0f172a;
-  --wx-text-secondary: #475569;
-  --wx-text-tertiary: #94a3b8;
+  --wx-bg-hover: rgba(139, 92, 246, 0.05);
+  --wx-bg-active: rgba(139, 92, 246, 0.08);
+  --wx-bg-subtle: rgba(139, 92, 246, 0.025);
+  --wx-bg-overlay: rgba(60, 40, 110, 0.40);
+  /* Text — 深蓝灰近黑(参考站 #1D2330) */
+  --wx-text-primary: #1d2330;
+  --wx-text-secondary: #4b5060;
+  --wx-text-tertiary: #9499a8;
   --wx-text-on-primary: #ffffff;
   --wx-text-inverse: #ffffff;
-  /* Borders */
-  --wx-border: rgba(15, 23, 42, 0.10);
-  --wx-border-strong: rgba(15, 23, 42, 0.18);
-  /* Glass (translucent white over light bg) */
-  --wx-glass-bg: rgba(255, 255, 255, 0.85);
-  --wx-glass-border: rgba(15, 23, 42, 0.08);
-  /* Background gradient for body */
-  --wx-grad-bg: linear-gradient(180deg, #ffffff 0%, #f3f4f6 100%);
-  /* Sidebar gradient (slightly darker than main, ChatGPT-style) */
-  --wx-grad-sidebar: linear-gradient(180deg, #f7f7f8 0%, #ececf1 100%);
+  /* Borders — 极浅紫 */
+  --wx-border: rgba(139, 92, 246, 0.10);
+  --wx-border-strong: rgba(139, 92, 246, 0.18);
+  /* Glass (translucent white over lavender bg) */
+  --wx-glass-bg: rgba(255, 255, 255, 0.88);
+  --wx-glass-border: rgba(139, 92, 246, 0.08);
+  /* Background gradient for body — 白到若隐若现薰衣草 */
+  --wx-grad-bg: linear-gradient(180deg, #ffffff 0%, #faf8fe 100%);
+  /* Sidebar gradient (极淡薰衣草) */
+  --wx-grad-sidebar: linear-gradient(180deg, #fcfbfe 0%, #f6f2fd 100%);
   /* Panel gradient */
-  --wx-grad-panel: linear-gradient(180deg, #fafafb 0%, #f3f4f6 100%);
-  /* Shadows */
-  --wx-shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
-  --wx-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
-  --wx-shadow-blue: 0 8px 24px -6px rgba(27, 77, 255, 0.25);
-  --wx-shadow-deep: 0 12px 36px -12px rgba(15, 23, 42, 0.15);
+  --wx-grad-panel: linear-gradient(180deg, #fdfcff 0%, #f8f5fe 100%);
+  /* Shadows — 柔和紫光晕 */
+  --wx-shadow-sm: 0 1px 2px rgba(60, 40, 110, 0.04);
+  --wx-shadow-md: 0 4px 12px rgba(139, 92, 246, 0.08);
+  --wx-shadow-blue: 0 8px 24px -6px rgba(139, 92, 246, 0.20);
+  --wx-shadow-deep: 0 12px 36px -12px rgba(60, 40, 110, 0.14);
   /* Scrollbar */
-  --wx-scrollbar: rgba(15, 23, 42, 0.18);
-  /* Sidebar accent radial-gradient opacity (less intense on light bg) */
-  --wx-sidebar-radial-1: rgba(27, 77, 255, 0.10);
-  --wx-sidebar-radial-2: rgba(0, 184, 212, 0.08);
-  /* Active nav background — gradient */
-  --wx-nav-active-bg: linear-gradient(100deg, rgba(27,77,255,.18), rgba(0,184,212,.06));
-  --wx-nav-active-border: rgba(27, 77, 255, 0.30);
-  --wx-nav-active-color: #1B4DFF;
+  --wx-scrollbar: rgba(139, 92, 246, 0.16);
+  /* Sidebar accent radial-gradient opacity */
+  --wx-sidebar-radial-1: rgba(139, 92, 246, 0.07);
+  --wx-sidebar-radial-2: rgba(167, 139, 250, 0.05);
+  /* Active nav background — 浅紫渐变(若隐若现) */
+  --wx-nav-active-bg: linear-gradient(100deg, rgba(139,92,246,.12), rgba(167,139,250,.04));
+  --wx-nav-active-border: rgba(139, 92, 246, 0.22);
+  --wx-nav-active-color: #7C5CE0;
   /* Code chip bg */
-  --wx-code-bg: rgba(0, 184, 212, 0.10);
+  --wx-code-bg: rgba(167, 139, 250, 0.08);
   /* Toast surface */
   --wx-toast-bg: #ffffff;
-  --wx-toast-color: #0f172a;
+  --wx-toast-color: #1d2330;
 }
 
 /* ===== Dark theme — full port of original chat.html aesthetic ===== */
 [data-theme="dark"] {
-  /* Surfaces */
-  --wx-bg-page: #0B1632;
-  --wx-bg-sidebar: #0E1726;
-  --wx-bg-card: #131e3b;
+  /* Surfaces — 深紫底(原深蓝改紫) */
+  --wx-bg-page: #1a0f33;
+  --wx-bg-sidebar: #160c2c;
+  --wx-bg-card: #241445;
   --wx-bg-input: rgba(0, 0, 0, 0.25);
-  --wx-bg-hover: rgba(120, 145, 220, 0.08);
-  --wx-bg-active: rgba(27, 77, 255, 0.18);
+  --wx-bg-hover: rgba(165, 137, 232, 0.08);
+  --wx-bg-active: rgba(124, 58, 237, 0.22);
   --wx-bg-subtle: rgba(255, 255, 255, 0.02);
-  --wx-bg-overlay: rgba(5, 10, 28, 0.85);
-  /* Text */
-  --wx-text-primary: #E8ECFF;
-  --wx-text-secondary: #9AA5C7;
-  --wx-text-tertiary: #5C6786;
+  --wx-bg-overlay: rgba(15, 6, 33, 0.85);
+  /* Text — 浅薰衣草白 */
+  --wx-text-primary: #ECE6FF;
+  --wx-text-secondary: #A99FC7;
+  --wx-text-tertiary: #6E6388;
   --wx-text-on-primary: #ffffff;
-  --wx-text-inverse: #0f172a;
+  --wx-text-inverse: #1d2330;
   /* Borders */
-  --wx-border: rgba(120, 145, 220, 0.12);
-  --wx-border-strong: rgba(120, 145, 220, 0.22);
+  --wx-border: rgba(165, 137, 232, 0.14);
+  --wx-border-strong: rgba(165, 137, 232, 0.24);
   /* Glass */
-  --wx-glass-bg: rgba(20, 30, 60, 0.6);
-  --wx-glass-border: rgba(120, 145, 220, 0.18);
-  /* Background gradient — original radial navy */
-  --wx-grad-bg: radial-gradient(ellipse at top, #131e3b 0%, #050a1c 70%);
-  --wx-grad-sidebar: linear-gradient(180deg, #0E1726, #16213B);
-  --wx-grad-panel: linear-gradient(180deg, #0E1726, #050a1c);
+  --wx-glass-bg: rgba(40, 24, 75, 0.6);
+  --wx-glass-border: rgba(165, 137, 232, 0.18);
+  /* Background gradient — 紫色径向 */
+  --wx-grad-bg: radial-gradient(ellipse at top, #281551 0%, #15082e 70%);
+  --wx-grad-sidebar: linear-gradient(180deg, #160c2c, #221141);
+  --wx-grad-panel: linear-gradient(180deg, #160c2c, #15082e);
   /* Shadows */
   --wx-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --wx-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-  --wx-shadow-blue: 0 12px 32px -8px rgba(27, 77, 255, 0.4);
+  --wx-shadow-blue: 0 12px 32px -8px rgba(124, 58, 237, 0.45);
   --wx-shadow-deep: 0 24px 64px -16px rgba(0, 0, 0, 0.6);
   /* Scrollbar */
-  --wx-scrollbar: rgba(120, 145, 220, 0.25);
+  --wx-scrollbar: rgba(165, 137, 232, 0.25);
   /* Sidebar accent radial-gradient opacity */
-  --wx-sidebar-radial-1: rgba(27, 77, 255, 0.40);
-  --wx-sidebar-radial-2: rgba(0, 184, 212, 0.28);
+  --wx-sidebar-radial-1: rgba(124, 58, 237, 0.42);
+  --wx-sidebar-radial-2: rgba(165, 137, 232, 0.28);
   /* Active nav background */
-  --wx-nav-active-bg: linear-gradient(100deg, rgba(27,77,255,.22), rgba(0,184,212,.08));
-  --wx-nav-active-border: rgba(123, 162, 255, 0.30);
+  --wx-nav-active-bg: linear-gradient(100deg, rgba(124,58,237,.26), rgba(165,137,232,.10));
+  --wx-nav-active-border: rgba(165, 137, 232, 0.32);
   --wx-nav-active-color: #ffffff;
   /* Code chip bg */
-  --wx-code-bg: rgba(0, 184, 212, 0.12);
+  --wx-code-bg: rgba(124, 58, 237, 0.14);
   /* Toast surface */
-  --wx-toast-bg: #131e3b;
-  --wx-toast-color: #E8ECFF;
+  --wx-toast-bg: #241445;
+  --wx-toast-color: #ECE6FF;
 }
 
 * { box-sizing: border-box; }
@@ -177,7 +179,7 @@ body {
   font: inherit;
   font-weight: 600;
 }
-.wx-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 16px 36px -8px rgba(27, 77, 255, 0.6); }
+.wx-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 16px 36px -8px rgba(139, 92, 246, 0.4); }
 .wx-btn-primary:active { transform: translateY(0); }
 .wx-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
@@ -204,7 +206,7 @@ body {
   outline: none;
   transition: border 0.15s, box-shadow 0.15s;
 }
-.wx-input:focus { border-color: var(--wx-accent-cyan); box-shadow: 0 0 0 3px rgba(0, 184, 212, 0.15); }
+.wx-input:focus { border-color: var(--wx-accent-cyan); box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.14); }
 .wx-input::placeholder { color: var(--wx-text-tertiary); }
 
 .wx-label {
@@ -333,11 +335,11 @@ body {
 }
 .wx-new-btn {
   display: flex; align-items: center; gap: 9px; justify-content: center;
-  background: linear-gradient(135deg, #1B4DFF, #3D6BFF);
+  background: linear-gradient(135deg, #8B5CF6, #A78BFA);
   color: var(--wx-text-on-primary); border: none; cursor: pointer;
   font: inherit; font-weight: 600; font-size: 13.5px;
   padding: 12px; border-radius: 11px; margin: 4px 4px 18px;
-  box-shadow: 0 8px 18px -8px rgba(27,77,255,.7);
+  box-shadow: 0 8px 18px -8px rgba(139,92,246,.45);
   transition: transform .15s;
 }
 .wx-new-btn:hover { transform: translateY(-1px); }
@@ -448,7 +450,7 @@ body {
 .wx-usr-av {
   width: 34px; height: 34px;
   border-radius: 9px;
-  background: linear-gradient(135deg, #FF6B3D, #F5A623);
+  background: linear-gradient(135deg, #A78BFA, #C9B6F5);
   display: grid; place-items: center;
   font-weight: 700; font-size: 13px; color: var(--wx-text-on-primary);
   flex-shrink: 0;
@@ -472,10 +474,10 @@ body {
 }
 .wx-ct-ava {
   width: 34px; height: 34px; border-radius: 10px;
-  background: linear-gradient(135deg, #1B4DFF, #00B8D4);
+  background: linear-gradient(135deg, #7C5CE0, #A78BFA);
   display: grid; place-items: center;
   color: var(--wx-text-on-primary); font-size: 16px;
-  box-shadow: 0 4px 12px -3px rgba(27,77,255,.5);
+  box-shadow: 0 4px 12px -3px rgba(139,92,246,.35);
 }
 .wx-ct-name b {
   font-size: 14.5px; font-weight: 600;
@@ -511,8 +513,8 @@ body {
   display: grid; place-items: center;
   flex-shrink: 0; font-weight: 700; font-size: 14px; color: var(--wx-text-on-primary);
 }
-.wx-m-av.ai { background: linear-gradient(135deg, #1B4DFF, #00B8D4); }
-.wx-m-av.u  { background: linear-gradient(135deg, #FF6B3D, #F5A623); }
+.wx-m-av.ai { background: linear-gradient(135deg, #7C5CE0, #A78BFA); }
+.wx-m-av.u  { background: linear-gradient(135deg, #A78BFA, #C9B6F5); }
 .wx-m-body { flex: 1; min-width: 0; }
 .wx-m-name {
   font-size: 12.5px; color: var(--wx-text-secondary);
@@ -627,7 +629,7 @@ body {
   width: 38px; height: 38px;
   border-radius: 12px; cursor: pointer;
   display: grid; place-items: center;
-  box-shadow: 0 6px 14px -4px rgba(27,77,255,.6);
+  box-shadow: 0 6px 14px -4px rgba(139,92,246,.4);
   transition: transform .15s;
 }
 .wx-composer-send:disabled { opacity: .4; cursor: not-allowed; transform: none; }
@@ -853,7 +855,7 @@ body {
 .wx-pill-success { background: rgba(0, 217, 113, .14); color: var(--wx-success); }
 .wx-pill-warning { background: rgba(245, 166, 35, .14); color: var(--wx-warning); }
 .wx-pill-danger { background: rgba(255, 77, 110, .14); color: var(--wx-danger); }
-.wx-pill-info { background: rgba(0, 184, 212, .14); color: var(--wx-accent-cyan); }
+.wx-pill-info { background: rgba(124, 58, 237, .14); color: var(--wx-accent-cyan); }
 
 .wx-side-link {
   display: flex; align-items: center; gap: 9px;
@@ -904,3 +906,106 @@ body {
 }
 .wx-icon-btn:hover { background: var(--wx-bg-hover); color: var(--wx-text-primary); }
 .wx-icon-btn-danger:hover { color: var(--wx-danger); background: rgba(255, 77, 110, .08); }
+
+/* ===== 全屏模拟驾驶舱 (CockpitOverlay) ===== */
+.wx-cockpit-backdrop {
+  position: fixed; inset: 0; z-index: 9998;
+  background: var(--wx-bg-overlay);
+  backdrop-filter: blur(14px);
+  display: grid; place-items: center;
+  padding: 24px;
+}
+.wx-cockpit {
+  width: min(1100px, 96vw); height: min(86vh, 760px);
+  background: var(--wx-grad-panel, var(--wx-bg-card));
+  border: 1px solid var(--wx-border);
+  border-radius: 18px;
+  box-shadow: var(--wx-shadow-lg, 0 24px 64px rgba(0,0,0,.4));
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.wx-cockpit-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--wx-border);
+}
+.wx-cockpit-title {
+  font-size: 16px; font-weight: 800;
+  color: var(--wx-text-primary);
+}
+.wx-cockpit-close {
+  margin-left: auto;
+  display: inline-flex; align-items: center; gap: 5px;
+  background: transparent; border: 1px solid var(--wx-border);
+  color: var(--wx-text-secondary);
+  border-radius: 8px; padding: 6px 12px; cursor: pointer;
+  font: inherit; font-size: 13px;
+  transition: background .12s, color .12s;
+}
+.wx-cockpit-close:hover {
+  background: var(--wx-bg-hover); color: var(--wx-text-primary);
+}
+.wx-cockpit-body {
+  flex: 1; min-height: 0;
+  display: grid; grid-template-columns: 1.6fr 1fr; gap: 18px;
+  padding: 20px 22px;
+}
+.wx-cockpit-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.wx-cockpit-prog-head {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 6px;
+}
+.wx-cockpit-prog-head b {
+  font-size: 30px; font-weight: 800; color: var(--wx-accent-cyan);
+}
+.wx-cockpit-prog-head span { font-size: 13px; color: var(--wx-text-secondary); }
+.wx-cockpit-track {
+  height: 8px; border-radius: 5px;
+  background: rgba(127,141,164,.18); overflow: hidden;
+}
+.wx-cockpit-track i {
+  display: block; height: 100%; border-radius: 5px;
+  background: linear-gradient(90deg, var(--wx-accent-blue), var(--wx-accent-cyan));
+  transition: width .3s ease;
+}
+.wx-cockpit-stats { display: flex; flex-direction: column; gap: 10px; }
+.wx-cockpit-stat {
+  display: flex; justify-content: space-between; align-items: baseline;
+  padding: 10px 0; border-bottom: 1px solid var(--wx-border);
+  font-size: 13px;
+}
+.wx-cockpit-stat span { color: var(--wx-text-secondary); }
+.wx-cockpit-stat b {
+  font-size: 16px; font-weight: 700; color: var(--wx-text-primary);
+}
+.wx-cockpit-feed {
+  display: flex; flex-direction: column; min-height: 0;
+  background: var(--wx-bg-card); border: 1px solid var(--wx-border);
+  border-radius: 12px; padding: 14px; overflow: hidden;
+}
+.wx-cockpit-feed-title {
+  font-size: 12px; font-weight: 700; color: var(--wx-text-secondary);
+  text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;
+}
+.wx-cockpit-feed-list { flex: 1; min-height: 0; overflow-y: auto; }
+.wx-cockpit-feed-empty {
+  font-size: 12px; color: var(--wx-text-tertiary);
+  text-align: center; padding: 24px 8px;
+}
+.wx-cockpit-feed-row {
+  display: flex; gap: 10px; padding: 9px 0;
+  border-bottom: 1px solid var(--wx-border);
+  animation: wxrise .4s ease;
+}
+@keyframes wxrise { from { opacity: 0; transform: translateY(-4px); } }
+.wx-cockpit-fav {
+  width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
+  display: grid; place-items: center; font-size: 11px; font-weight: 700;
+}
+.wx-cockpit-ft {
+  font-size: 12px; line-height: 1.5; color: var(--wx-text-secondary);
+}
+.wx-cockpit-ft b { color: var(--wx-text-primary); }
+@media (max-width: 760px) {
+  .wx-cockpit-body { grid-template-columns: 1fr; }
+}

@@ -96,6 +96,35 @@ export interface ChatSimulateResponse {
   missing?: string[]
   error?: string
   report?: Record<string, unknown>
+  // 流式模拟:后端立即返回 run_id,前端用它订阅 SSE 进度。
+  streaming?: boolean
+  run_id?: string
+  n?: number
+  kind?: string
+}
+
+// 模拟进行中的实时进度(由 SSE progress 事件驱动)。
+export interface SimProgress {
+  done: number
+  total: number
+  mean?: number | null
+  kind?: string
+  status: 'running' | 'done' | 'error'
+}
+
+// 决策动态 feed 单项(单个虚拟人的一次真实决策)。
+// id 由客户端生成(后端 progress.feed 不含),用作 React key —— 不能用
+// agent_id,因为 social 多轮会让同一 agent 重复出现。
+export interface FeedItem {
+  id: string
+  agent_id: number
+  name?: string
+  city?: string | null
+  gender?: string | null
+  age?: string | null
+  kind: string
+  value: number | string | null
+  error?: string | null
 }
 
 // P7: Reports / Billing / Members / API keys / Admin
