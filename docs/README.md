@@ -376,10 +376,14 @@ curl -X POST http://localhost:8000/v1/templates/pricing_van_westendorp/instantia
 
 | 来源 | 补充维度 | 下载地址 |
 |------|---------|---------|
-| 第七次全国人口普查主要数据 | 性别/年龄/城乡/学历/民族/省份（已入库 `cn_census_2020`） | 国家统计局 https://www.stats.gov.cn → 统计数据 → 普查数据 |
-| 七普长表数据分卷 | 职业、行业、婚姻状况（主表没有，长表有） | 国家统计局 → 七普 → 分卷（就业卷 / 婚姻卷） |
-| 中国统计年鉴 | 收入分组、城乡收入、消费支出结构、就业行业 | https://www.stats.gov.cn → 统计数据 → 统计年鉴（在线 HTML + Excel/PDF） |
+| 第七次全国人口普查主要数据 | 性别/年龄/城乡/学历/民族/省份（已入库 `cn_census_2020`） | https://www.stats.gov.cn/sj/pcsj/rkpc/d7c/ |
+| 《中国人口普查年鉴-2020》**中册** | 就业 / 行业 / 职业（长表 10% 抽样；第四卷 4-1~4-6 表） | 官方 https://www.stats.gov.cn/sj/pcsj/rkpc/7rp/indexch.htm （点 HTML→中册）／ 第三方逐表 https://www.zgtjnj.org/naviBooklist-n3022062702-1.html |
+| 《中国人口普查年鉴-2020》**下册** | 婚姻状况（第五卷婚姻生育；8-3 老年人口婚姻状况等） | 官方同上（点 HTML→下册）／ 第三方逐表 https://www.zgtjnj.org/navibooklist-n3022062703-1.html |
+| 中国统计年鉴（**注意：`ndsj` 综合年鉴，非普查年鉴**） | 收入分组、城乡收入、消费支出结构 | https://www.stats.gov.cn/sj/ndsj/ （选最新年份 indexch.htm） |
 | 国民经济和社会发展统计公报（每年 2 月） | 人均可支配收入、五等分收入分组 | https://www.stats.gov.cn 首页「统计公报」 |
+
+> ⚠️ 人口普查年鉴是**在线 HTML 光盘版，无整本下载按钮**，只能逐表浏览/复制：进官方页点绿色「HTML」→选 上/中/下册 →翻到对应表 →把网页表格复制进 Excel；或用上方第三方站逐表查看。只需取你要的 2-3 张表（如职业大类、婚姻状况），不必下整本。
+> 区分两本：`pcsj/rkpc/7rp` = **人口普查年鉴**（婚姻/职业在此）；`ndsj` = **综合统计年鉴**（收入/GDP 在此），勿混。
 
 ### media（媒介 / 平台习惯）— 官方、免费
 
