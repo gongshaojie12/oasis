@@ -101,3 +101,7 @@ docker-compose.override.yml
 tmp
 docs/1.png
 .gstack/
+
+# 人口普查原始数据(不上传 GitHub,体积大且为第三方版权数据)
+docs/persons/
+docs/person.pdf
