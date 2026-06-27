@@ -16,9 +16,12 @@ interface DistSummary {
   name_en: string
   description: string
   source_type: string
-  trait_counts: { demographic?: number; personality?: number; media?: number }
+  trait_counts: { demographic?: number; personality?: number;
+                  media?: number; joint?: number }
   enabled: boolean
   builtin: boolean
+  has_joint?: boolean
+  joint_dims?: number
   updated_at?: string
 }
 
@@ -105,7 +108,16 @@ export function AdminDistributionsPage() {
       header: t('admin.dist_name'),
       render: (d) => (
         <div style={{ lineHeight: 1.3 }}>
-          <div style={{ fontWeight: 600 }}>{d.name_zh}</div>
+          <div style={{ fontWeight: 600,
+                        display: 'flex', alignItems: 'center', gap: 6 }}>
+            {d.name_zh}
+            {d.has_joint && (
+              <span className="wx-pill wx-pill-info"
+                    title={t('admin.dist_joint_hint')}>
+                {t('admin.dist_joint')}
+              </span>
+            )}
+          </div>
           <div className="text-xs" style={{ color: 'var(--wx-text-tertiary)' }}>
             {d.slug} {d.builtin && `· ${t('admin.dist_builtin')}`}
           </div>

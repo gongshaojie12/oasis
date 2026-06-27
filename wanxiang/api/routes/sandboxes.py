@@ -69,7 +69,7 @@ class CreateSandboxReq(BaseModel):
     name: str = Field(min_length=1, max_length=64)
     emoji: str = Field(default="🥤", max_length=8)
     description: str = ""
-    distribution_path: str = "cn_census_2020"
+    distribution_path: str = "cn_national_joint_2020"
     population_size: int = Field(default=1000, ge=10, le=1_000_000)
 
 

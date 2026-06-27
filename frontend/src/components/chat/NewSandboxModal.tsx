@@ -20,7 +20,7 @@ interface Props {
 
 // M1:画像不再硬编码,改为从 /distributions 动态拉取(管理员维护的全局库)。
 // 兜底值:DB 里内置画像的 slug(seed 后必存在),旧 yaml 路径后端也认。
-const DEFAULT_DIST = 'cn_census_2020'
+const DEFAULT_DIST = 'cn_national_joint_2020'
 const DEFAULT_EMOJIS = ['🥤', '👗', '🍔', '🎮', '📱', '🚗', '🏠', '✨']
 
 interface DistOption {

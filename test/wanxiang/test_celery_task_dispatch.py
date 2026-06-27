@@ -85,7 +85,7 @@ def test_celery_eager_runs_pipeline_to_completion(
     c.headers.update({"X-API-Key": "demo-key"})
 
     DIST = os.path.abspath(
-        "wanxiang/datasources/distributions/cn_z_generation_v1.yaml")
+        "test/wanxiang/fixtures/cn_z_generation_v1.yaml")
     body = {
         "distribution_path": DIST, "n": 3, "seed": 1,
         "scenario": {"material": "x", "question": "?", "kind": "rate"},

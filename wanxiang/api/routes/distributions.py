@@ -68,6 +68,14 @@ def _ingest(req_name: str, raw: dict, *, dp_epsilon: float | None,
         raise HTTPException(status_code=400,
                             detail={"message": "画像校验失败",
                                     "errors": errors[:20]})
+    # 含联合分布块时,额外校验其结构(成员编码越界等)
+    if isinstance(raw.get("joint"), dict):
+        from wanxiang.datasources.joint import validate_joint
+        jok, jerrs = validate_joint(raw)
+        if not jok:
+            raise HTTPException(status_code=400,
+                                detail={"message": "联合分布校验失败",
+                                        "errors": jerrs[:20]})
     profile = UploadSource(raw, req_name).load()
     warnings = scan_pii(profile)
     if do_synthetic:

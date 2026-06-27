@@ -135,6 +135,9 @@ class Persona:
     # render_system_prompt 等下游自检使用，不参与 equality 比较时通常
     # 是相同 locale 才比较，无需在 __eq__ 上特殊处理。
     locale: str = "zh"
+    # 联合分布(IPU/IPF)抽样时,同一户的成员共享 household_id;
+    # 独立/边际抽样路径恒为 None(向后兼容,旧调用与等值不受影响)。
+    household_id: int | None = None
 
     def trait_count(self) -> int:
         """三组特质合计维数（不含 name/agent_id）。"""

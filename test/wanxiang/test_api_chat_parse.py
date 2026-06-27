@@ -11,7 +11,7 @@ from wanxiang.api.deps import get_model_factory
 
 PROJECT_ROOT = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", ".."))
-DIST = os.path.join(PROJECT_ROOT, "wanxiang", "datasources", "distributions",
+DIST = os.path.join(PROJECT_ROOT, "test", "wanxiang", "fixtures",
                     "cn_z_generation_v1.yaml")
 
 
@@ -71,12 +71,12 @@ def test_chat_parse_with_explicit_default_distribution(client):
 
 
 def test_chat_parse_uses_bundled_default_when_not_provided(client):
-    """没传 default_distribution_path → 用内置 cn_z_generation_v1.yaml。"""
+    """没传 default_distribution_path → 用内置默认 cn_national_joint_2020。"""
     res = client.post("/v1/chat/parse", json={"user_text": "测一下"})
     assert res.status_code == 200
     body = res.json()
     if body["request"] is not None:
-        assert "cn_z_generation_v1.yaml" in body["request"]["distribution_path"]
+        assert "cn_national_joint_2020" in body["request"]["distribution_path"]
 
 
 def test_chat_parse_then_simulate_chain(client):

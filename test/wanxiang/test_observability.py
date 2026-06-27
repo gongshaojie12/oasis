@@ -108,8 +108,8 @@ def test_metrics_counts_simulate_requests(client):
     import os as _os
     project_root = _os.path.abspath(
         _os.path.join(_os.path.dirname(__file__), "..", ".."))
-    distro = _os.path.join(project_root, "wanxiang", "datasources",
-                            "distributions", "cn_z_generation_v1.yaml")
+    distro = _os.path.join(project_root, "test", "wanxiang",
+                            "fixtures", "cn_z_generation_v1.yaml")
     body = {"distribution_path": distro, "n": 5, "seed": 1,
             "scenario": {"material": "m", "question": "q", "kind": "rate"},
             "rounds": 0, "model": {"provider": "stub"}}

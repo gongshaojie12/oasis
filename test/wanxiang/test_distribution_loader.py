@@ -9,7 +9,7 @@ from wanxiang.personas import PersonaBuilder
 
 SAMPLES_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-    "..", "wanxiang", "datasources", "distributions",
+    "..", "test", "wanxiang", "fixtures",
 )
 
 

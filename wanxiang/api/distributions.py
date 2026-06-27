@@ -35,6 +35,9 @@ class DistributionRecord:
 
     def to_summary(self) -> dict:
         """列表用(不含 content,体积小)。"""
+        joint = self.content.get("joint") if isinstance(self.content, dict) \
+            else None
+        has_joint = isinstance(joint, dict) and bool(joint.get("dimensions"))
         return {
             "distribution_id": self.distribution_id,
             "slug": self.slug,
@@ -45,6 +48,10 @@ class DistributionRecord:
             "trait_counts": self.trait_counts,
             "enabled": self.enabled,
             "builtin": self.builtin,
+            "has_joint": has_joint,
+            "joint_dims": len(joint.get("dimensions", [])) if has_joint else 0,
+            "joint_provenance": (joint.get("provenance")
+                                 if has_joint else None),
             "updated_at": self.updated_at.isoformat() if self.updated_at
             else None,
         }
@@ -66,6 +73,9 @@ def count_traits(content: dict) -> dict:
     for g in ("demographic", "personality", "media"):
         v = (content or {}).get(g)
         out[g] = len(v) if isinstance(v, (list, dict)) else 0
+    j = (content or {}).get("joint")
+    if isinstance(j, dict) and isinstance(j.get("dimensions"), list):
+        out["joint"] = len(j["dimensions"])
     return out
 
 

@@ -11,7 +11,7 @@ from wanxiang.personas.builder import PersonaBuilder
 
 DIST = os.path.abspath(os.path.join(
     os.path.dirname(__file__), "..", "..",
-    "wanxiang", "datasources", "distributions",
+    "test", "wanxiang", "fixtures",
     "cn_z_generation_v1.yaml"))
 
 

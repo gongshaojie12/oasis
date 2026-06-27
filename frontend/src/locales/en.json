@@ -296,6 +296,8 @@
   "admin.dist_enabled": "On",
   "admin.dist_actions": "Actions",
   "admin.dist_builtin": "builtin",
+  "admin.dist_joint": "Joint",
+  "admin.dist_joint_hint": "True cross-dimension joint (IPF synthesis); combos match real population",
   "admin.dist_view": "View",
   "admin.dist_toggle": "Enable/Disable",
   "admin.dist_duplicate": "Duplicate",

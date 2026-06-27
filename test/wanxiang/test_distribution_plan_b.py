@@ -11,7 +11,7 @@ from wanxiang.datasources.distribution import load_distribution
 
 DIST_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..",
-                  "wanxiang", "datasources", "distributions"))
+                  "test", "wanxiang", "fixtures"))
 
 
 def _write(tmp_path, content):

@@ -3,6 +3,9 @@
 from wanxiang.datasources.distribution import (load_distribution,
                                                load_distribution_from_dict,
                                                validate_distribution)
+from wanxiang.datasources.joint import (JointView, load_joint_from_dict,
+                                        validate_joint, count_joint_dims)
 
 __all__ = ["load_distribution", "load_distribution_from_dict",
-           "validate_distribution"]
+           "validate_distribution", "JointView", "load_joint_from_dict",
+           "validate_joint", "count_joint_dims"]

@@ -1,0 +1,5514 @@
+# =========== Copyright 2026 @ WANXIANG. All Rights Reserved. ===========
+# 中国 Z 世代示例分布（v1） — spec §M2 缺口#1 扩充至 200+ 维特质。
+# 来源：粗略匹配国家统计局口径、CNNIC 互联网报告、QuestMobile / 艾瑞 / Kantar 公开数据。
+# 仅用于 MVP 演示与离线模拟，不可作为商业决策依据。
+#
+# 数值维 (0-1) 统一按 5-9 个桶离散化；
+# 小时类按 0.0 / 0.5 / 1.0 / 2.0 / 3.0 / 5.0 离散；
+# 权重无需归一，PersonaBuilder 按比例抽样。
+#
+# 维度统计：demographic 45 + personality 80 + media 80 = 205+
+name: 中国 Z 世代 v1
+demographic:
+- name:
+    zh: 城市
+    en: city
+  distribution:
+    values:
+    - label:
+        zh: 北京
+        en: Beijing
+      weight: 0.15
+    - label:
+        zh: 上海
+        en: Shanghai
+      weight: 0.18
+    - label:
+        zh: 广州
+        en: Guangzhou
+      weight: 0.12
+    - label:
+        zh: 深圳
+        en: Shenzhen
+      weight: 0.15
+    - label:
+        zh: 杭州
+        en: Hangzhou
+      weight: 0.08
+    - label:
+        zh: 成都
+        en: Chengdu
+      weight: 0.07
+    - label:
+        zh: 武汉
+        en: Wuhan
+      weight: 0.05
+    - label:
+        zh: 西安
+        en: Xi'an
+      weight: 0.04
+    - label:
+        zh: 南京
+        en: Nanjing
+      weight: 0.04
+    - label:
+        zh: 重庆
+        en: Chongqing
+      weight: 0.04
+    - label:
+        zh: 长沙
+        en: Changsha
+      weight: 0.03
+    - label:
+        zh: 郑州
+        en: Zhengzhou
+      weight: 0.03
+    - label:
+        zh: 其它
+        en: other
+      weight: 0.02
+- name:
+    zh: 性别
+    en: gender
+  distribution:
+    values:
+    - label:
+        zh: 男
+        en: male
+      weight: 0.48
+    - label:
+        zh: 女
+        en: female
+      weight: 0.51
+    - label:
+        zh: 非二元
+        en: non-binary
+      weight: 0.01
+- name:
+    zh: 年龄段
+    en: age band
+  distribution:
+    values:
+    - label:
+        zh: 16-18
+        en: 16-18
+      weight: 0.1
+    - label:
+        zh: 18-22
+        en: 18-22
+      weight: 0.28
+    - label:
+        zh: 23-26
+        en: 23-26
+      weight: 0.32
+    - label:
+        zh: 27-30
+        en: 27-30
+      weight: 0.22
+    - label:
+        zh: 31-32
+        en: 31-32
+      weight: 0.08
+- name:
+    zh: 月收入区间
+    en: monthly income range
+  distribution:
+    values:
+    - label:
+        zh: 0-3000
+        en: 0-3000
+      weight: 0.12
+    - label:
+        zh: 3000-5000
+        en: 3000-5000
+      weight: 0.18
+    - label:
+        zh: 5000-8000
+        en: 5000-8000
+      weight: 0.25
+    - label:
+        zh: 8000-15000
+        en: 8000-15000
+      weight: 0.28
+    - label:
+        zh: 15000-25000
+        en: 15000-25000
+      weight: 0.12
+    - label:
+        zh: 25000+
+        en: 25000+
+      weight: 0.05
+- name:
+    zh: 年龄
+    en: age
+  distribution:
+    values:
+    - label:
+        zh: 17
+        en: 17
+      weight: 0.04
+    - label:
+        zh: 19
+        en: 19
+      weight: 0.1
+    - label:
+        zh: 21
+        en: 21
+      weight: 0.12
+    - label:
+        zh: 23
+        en: 23
+      weight: 0.14
+    - label:
+        zh: 25
+        en: 25
+      weight: 0.16
+    - label:
+        zh: 27
+        en: 27
+      weight: 0.16
+    - label:
+        zh: 29
+        en: 29
+      weight: 0.14
+    - label:
+        zh: 31
+        en: 31
+      weight: 0.1
+    - label:
+        zh: 32
+        en: 32
+      weight: 0.04
+- name:
+    zh: 省份
+    en: province
+  distribution:
+    values:
+    - label:
+        zh: 北京
+        en: Beijing
+      weight: 0.05
+    - label:
+        zh: 上海
+        en: Shanghai
+      weight: 0.05
+    - label:
+        zh: 广东
+        en: Guangdong
+      weight: 0.12
+    - label:
+        zh: 江苏
+        en: Jiangsu
+      weight: 0.08
+    - label:
+        zh: 浙江
+        en: Zhejiang
+      weight: 0.08
+    - label:
+        zh: 山东
+        en: Shandong
+      weight: 0.07
+    - label:
+        zh: 河南
+        en: Henan
+      weight: 0.07
+    - label:
+        zh: 四川
+        en: Sichuan
+      weight: 0.06
+    - label:
+        zh: 湖北
+        en: Hubei
+      weight: 0.05
+    - label:
+        zh: 福建
+        en: Fujian
+      weight: 0.04
+    - label:
+        zh: 湖南
+        en: Hunan
+      weight: 0.04
+    - label:
+        zh: 安徽
+        en: Anhui
+      weight: 0.04
+    - label:
+        zh: 河北
+        en: Hebei
+      weight: 0.04
+    - label:
+        zh: 陕西
+        en: Shaanxi
+      weight: 0.03
+    - label:
+        zh: 辽宁
+        en: Liaoning
+      weight: 0.03
+    - label:
+        zh: 广西
+        en: Guangxi
+      weight: 0.03
+    - label:
+        zh: 其它
+        en: other
+      weight: 0.12
+- name:
+    zh: 城市线级
+    en: city tier
+  distribution:
+    values:
+    - label:
+        zh: 一线
+        en: tier-1
+      weight: 0.18
+    - label:
+        zh: 新一线
+        en: new tier-1
+      weight: 0.22
+    - label:
+        zh: 二线
+        en: tier-2
+      weight: 0.2
+    - label:
+        zh: 三线
+        en: tier-3
+      weight: 0.18
+    - label:
+        zh: 四线
+        en: tier-4
+      weight: 0.12
+    - label:
+        zh: 五线及以下
+        en: tier-5 and below
+      weight: 0.1
+- name:
+    zh: 户籍类型
+    en: household registration type
+  distribution:
+    values:
+    - label:
+        zh: 本地户籍
+        en: local hukou
+      weight: 0.42
+    - label:
+        zh: 外地户籍
+        en: non-local hukou
+      weight: 0.58
+- name:
+    zh: 户籍属性
+    en: household registration nature
+  distribution:
+    values:
+    - label:
+        zh: 城市户籍
+        en: urban hukou
+      weight: 0.65
+    - label:
+        zh: 农村户籍
+        en: rural hukou
+      weight: 0.35
+- name:
+    zh: 受教育程度
+    en: education
+  distribution:
+    values:
+    - label:
+        zh: 高中及以下
+        en: high school or below
+      weight: 0.12
+    - label:
+        zh: 大专
+        en: associate
+      weight: 0.22
+    - label:
+        zh: 本科
+        en: bachelor
+      weight: 0.52
+    - label:
+        zh: 硕士
+        en: master
+      weight: 0.11
+    - label:
+        zh: 博士
+        en: doctorate
+      weight: 0.03
+- name:
+    zh: 职业类型
+    en: occupation type
+  distribution:
+    values:
+    - label:
+        zh: 互联网科技
+        en: internet & tech
+      weight: 0.16
+    - label:
+        zh: 金融
+        en: finance
+      weight: 0.08
+    - label:
+        zh: 制造业
+        en: manufacturing
+      weight: 0.1
+    - label:
+        zh: 教育培训
+        en: education & training
+      weight: 0.08
+    - label:
+        zh: 医疗健康
+        en: healthcare
+      weight: 0.06
+    - label:
+        zh: 政府事业单位
+        en: government & public institution
+      weight: 0.07
+    - label:
+        zh: 服务业
+        en: service industry
+      weight: 0.15
+    - label:
+        zh: 自由职业
+        en: freelance
+      weight: 0.07
+    - label:
+        zh: 学生
+        en: student
+      weight: 0.18
+    - label:
+        zh: 待业失业
+        en: unemployed
+      weight: 0.05
+- name:
+    zh: 所在行业
+    en: industry
+  distribution:
+    values:
+    - label:
+        zh: 科技
+        en: tech
+      weight: 0.18
+    - label:
+        zh: 快消
+        en: FMCG
+      weight: 0.1
+    - label:
+        zh: 教育
+        en: education
+      weight: 0.1
+    - label:
+        zh: 医疗
+        en: healthcare
+      weight: 0.07
+    - label:
+        zh: 餐饮
+        en: food & beverage
+      weight: 0.08
+    - label:
+        zh: 零售
+        en: retail
+      weight: 0.08
+    - label:
+        zh: 金融
+        en: finance
+      weight: 0.06
+    - label:
+        zh: 地产建筑
+        en: real estate & construction
+      weight: 0.06
+    - label:
+        zh: 传媒娱乐
+        en: media & entertainment
+      weight: 0.06
+    - label:
+        zh: 政府公共
+        en: government & public
+      weight: 0.06
+    - label:
+        zh: 其它
+        en: other
+      weight: 0.15
+- name:
+    zh: 月可支配收入档位
+    en: monthly disposable income tier
+  distribution:
+    values:
+    - label:
+        zh: <2000
+        en: <2000
+      weight: 0.1
+    - label:
+        zh: 2000-5000
+        en: 2000-5000
+      weight: 0.2
+    - label:
+        zh: 5000-8000
+        en: 5000-8000
+      weight: 0.25
+    - label:
+        zh: 8000-12000
+        en: 8000-12000
+      weight: 0.2
+    - label:
+        zh: 12000-20000
+        en: 12000-20000
+      weight: 0.15
+    - label:
+        zh: '>20000'
+        en: '>20000'
+      weight: 0.1
+- name:
+    zh: 年储蓄额档位
+    en: annual savings tier
+  distribution:
+    values:
+    - label:
+        zh: 0以下
+        en: below 0
+      weight: 0.1
+    - label:
+        zh: 0-1万
+        en: 0-10K
+      weight: 0.3
+    - label:
+        zh: 1-5万
+        en: 10K-50K
+      weight: 0.3
+    - label:
+        zh: 5-10万
+        en: 50K-100K
+      weight: 0.18
+    - label:
+        zh: 10-30万
+        en: 100K-300K
+      weight: 0.1
+    - label:
+        zh: 30万+
+        en: 300K+
+      weight: 0.02
+- name:
+    zh: 月负债还款档位
+    en: monthly debt repayment tier
+  distribution:
+    values:
+    - label:
+        zh: '0'
+        en: '0'
+      weight: 0.45
+    - label:
+        zh: <1000
+        en: <1000
+      weight: 0.2
+    - label:
+        zh: 1000-3000
+        en: 1000-3000
+      weight: 0.18
+    - label:
+        zh: 3000-6000
+        en: 3000-6000
+      weight: 0.1
+    - label:
+        zh: 6000-10000
+        en: 6000-10000
+      weight: 0.05
+    - label:
+        zh: '>10000'
+        en: '>10000'
+      weight: 0.02
+- name:
+    zh: 婚恋状态
+    en: relationship status
+  distribution:
+    values:
+    - label:
+        zh: 单身
+        en: single
+      weight: 0.5
+    - label:
+        zh: 恋爱中
+        en: dating
+      weight: 0.25
+    - label:
+        zh: 已婚未育
+        en: married no kids
+      weight: 0.12
+    - label:
+        zh: 已婚有子
+        en: married with kids
+      weight: 0.1
+    - label:
+        zh: 离异
+        en: divorced
+      weight: 0.025
+    - label:
+        zh: 丧偶
+        en: widowed
+      weight: 0.005
+- name:
+    zh: 家庭人数
+    en: household size
+  distribution:
+    values:
+    - label:
+        zh: '1'
+        en: '1'
+      weight: 0.22
+    - label:
+        zh: '2'
+        en: '2'
+      weight: 0.24
+    - label:
+        zh: '3'
+        en: '3'
+      weight: 0.28
+    - label:
+        zh: '4'
+        en: '4'
+      weight: 0.16
+    - label:
+        zh: '5'
+        en: '5'
+      weight: 0.07
+    - label:
+        zh: 6+
+        en: 6+
+      weight: 0.03
+- name:
+    zh: 是否有子女
+    en: has children
+  distribution:
+    values:
+    - label:
+        zh: 是
+        en: 'yes'
+      weight: 0.12
+    - label:
+        zh: 否
+        en: 'no'
+      weight: 0.88
+- name:
+    zh: 子女数量
+    en: children count
+  distribution:
+    values:
+    - label:
+        zh: '0'
+        en: '0'
+      weight: 0.88
+    - label:
+        zh: '1'
+        en: '1'
+      weight: 0.09
+    - label:
+        zh: '2'
+        en: '2'
+      weight: 0.025
+    - label:
+        zh: 3+
+        en: 3+
+      weight: 0.005
+- name:
+    zh: 父母健在数
+    en: living parents count
+  distribution:
+    values:
+    - label:
+        zh: '2'
+        en: '2'
+      weight: 0.78
+    - label:
+        zh: '1'
+        en: '1'
+      weight: 0.18
+    - label:
+        zh: '0'
+        en: '0'
+      weight: 0.04
+- name:
+    zh: 父母是否同城
+    en: parents in same city
+  distribution:
+    values:
+    - label:
+        zh: 同城
+        en: same city
+      weight: 0.42
+    - label:
+        zh: 异地
+        en: different city
+      weight: 0.58
+- name:
+    zh: 居住状态
+    en: living arrangement
+  distribution:
+    values:
+    - label:
+        zh: 合租
+        en: shared rental
+      weight: 0.22
+    - label:
+        zh: 独居租房
+        en: solo rental
+      weight: 0.18
+    - label:
+        zh: 与父母同住
+        en: lives with parents
+      weight: 0.25
+    - label:
+        zh: 自有住房
+        en: owns home
+      weight: 0.18
+    - label:
+        zh: 与伴侣同住
+        en: lives with partner
+      weight: 0.17
+- name:
+    zh: 住房面积档位
+    en: home size tier
+  distribution:
+    values:
+    - label:
+        zh: <30平
+        en: <30 sqm
+      weight: 0.18
+    - label:
+        zh: 30-50平
+        en: 30-50 sqm
+      weight: 0.28
+    - label:
+        zh: 50-80平
+        en: 50-80 sqm
+      weight: 0.3
+    - label:
+        zh: 80-120平
+        en: 80-120 sqm
+      weight: 0.18
+    - label:
+        zh: '>120平'
+        en: '>120 sqm'
+      weight: 0.06
+- name:
+    zh: 通勤时长档位
+    en: commute time tier
+  distribution:
+    values:
+    - label:
+        zh: <15分钟
+        en: <15 min
+      weight: 0.2
+    - label:
+        zh: 15-30分钟
+        en: 15-30 min
+      weight: 0.3
+    - label:
+        zh: 30-60分钟
+        en: 30-60 min
+      weight: 0.3
+    - label:
+        zh: 60-90分钟
+        en: 60-90 min
+      weight: 0.15
+    - label:
+        zh: '>90分钟'
+        en: '>90 min'
+      weight: 0.05
+- name:
+    zh: 车辆拥有
+    en: vehicle ownership
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.45
+    - label:
+        zh: 自行车
+        en: bicycle
+      weight: 0.1
+    - label:
+        zh: 电瓶车
+        en: e-scooter
+      weight: 0.18
+    - label:
+        zh: 汽车
+        en: car
+      weight: 0.22
+    - label:
+        zh: 多辆
+        en: multiple
+      weight: 0.05
+- name:
+    zh: 宠物拥有
+    en: pet ownership
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.62
+    - label:
+        zh: 猫
+        en: cat
+      weight: 0.2
+    - label:
+        zh: 狗
+        en: dog
+      weight: 0.14
+    - label:
+        zh: 其它
+        en: other
+      weight: 0.04
+- name:
+    zh: 吸烟习惯
+    en: smoking habit
+  distribution:
+    values:
+    - label:
+        zh: 从不
+        en: never
+      weight: 0.72
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.18
+    - label:
+        zh: 常吸
+        en: frequent
+      weight: 0.1
+- name:
+    zh: 饮酒频率
+    en: drinking frequency
+  distribution:
+    values:
+    - label:
+        zh: 从不
+        en: never
+      weight: 0.32
+    - label:
+        zh: 月几次
+        en: a few times a month
+      weight: 0.4
+    - label:
+        zh: 周几次
+        en: a few times a week
+      weight: 0.23
+    - label:
+        zh: 每天
+        en: daily
+      weight: 0.05
+- name:
+    zh: 运动频率
+    en: exercise frequency
+  distribution:
+    values:
+    - label:
+        zh: 从不
+        en: never
+      weight: 0.22
+    - label:
+        zh: 月几次
+        en: a few times a month
+      weight: 0.32
+    - label:
+        zh: 周一到两次
+        en: 1-2 times a week
+      weight: 0.28
+    - label:
+        zh: 周三次以上
+        en: 3+ times a week
+      weight: 0.18
+- name:
+    zh: 日均睡眠小时
+    en: average daily sleep hours
+  distribution:
+    values:
+    - label:
+        zh: <5
+        en: <5
+      weight: 0.05
+    - label:
+        zh: 5-6
+        en: 5-6
+      weight: 0.15
+    - label:
+        zh: 6-7
+        en: 6-7
+      weight: 0.3
+    - label:
+        zh: 7-8
+        en: 7-8
+      weight: 0.32
+    - label:
+        zh: 8-9
+        en: 8-9
+      weight: 0.14
+    - label:
+        zh: '>=9'
+        en: '>=9'
+      weight: 0.04
+- name:
+    zh: BMI 类别
+    en: BMI category
+  distribution:
+    values:
+    - label:
+        zh: 偏瘦
+        en: underweight
+      weight: 0.18
+    - label:
+        zh: 标准
+        en: normal
+      weight: 0.52
+    - label:
+        zh: 偏胖
+        en: overweight
+      weight: 0.22
+    - label:
+        zh: 肥胖
+        en: obese
+      weight: 0.08
+- name:
+    zh: 慢性病情况
+    en: chronic disease status
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.78
+    - label:
+        zh: 有一种
+        en: one condition
+      weight: 0.18
+    - label:
+        zh: 多种
+        en: multiple
+      weight: 0.04
+- name:
+    zh: 心理健康状态
+    en: mental health status
+  distribution:
+    values:
+    - label:
+        zh: 健康
+        en: healthy
+      weight: 0.45
+    - label:
+        zh: 亚健康
+        en: sub-healthy
+      weight: 0.4
+    - label:
+        zh: 有困扰
+        en: distressed
+      weight: 0.15
+- name:
+    zh: 母语方言
+    en: native dialect
+  distribution:
+    values:
+    - label:
+        zh: 普通话
+        en: Mandarin
+      weight: 0.55
+    - label:
+        zh: 粤语
+        en: Cantonese
+      weight: 0.1
+    - label:
+        zh: 吴语
+        en: Wu
+      weight: 0.08
+    - label:
+        zh: 闽南语
+        en: Minnan
+      weight: 0.06
+    - label:
+        zh: 西南官话
+        en: Southwestern Mandarin
+      weight: 0.1
+    - label:
+        zh: 北方方言
+        en: Northern dialect
+      weight: 0.06
+    - label:
+        zh: 其它
+        en: other
+      weight: 0.05
+- name:
+    zh: 英语水平
+    en: English proficiency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.25
+    - label:
+        zh: 基础
+        en: basic
+      weight: 0.45
+    - label:
+        zh: 熟练
+        en: proficient
+      weight: 0.22
+    - label:
+        zh: 流利
+        en: fluent
+      weight: 0.08
+- name:
+    zh: 是否持有护照
+    en: holds passport
+  distribution:
+    values:
+    - label:
+        zh: 是
+        en: 'yes'
+      weight: 0.32
+    - label:
+        zh: 否
+        en: 'no'
+      weight: 0.68
+- name:
+    zh: 是否出过境
+    en: has traveled abroad
+  distribution:
+    values:
+    - label:
+        zh: 是
+        en: 'yes'
+      weight: 0.28
+    - label:
+        zh: 否
+        en: 'no'
+      weight: 0.72
+- name:
+    zh: 主要支付方式
+    en: primary payment method
+  distribution:
+    values:
+    - label:
+        zh: 支付宝
+        en: Alipay
+      weight: 0.42
+    - label:
+        zh: 微信支付
+        en: WeChat Pay
+      weight: 0.5
+    - label:
+        zh: 银行卡
+        en: bank card
+      weight: 0.05
+    - label:
+        zh: 云闪付
+        en: UnionPay QuickPass
+      weight: 0.02
+    - label:
+        zh: 数字人民币
+        en: digital RMB
+      weight: 0.01
+- name:
+    zh: 信用卡数量
+    en: credit card count
+  distribution:
+    values:
+    - label:
+        zh: '0'
+        en: '0'
+      weight: 0.4
+    - label:
+        zh: '1'
+        en: '1'
+      weight: 0.28
+    - label:
+        zh: '2'
+        en: '2'
+      weight: 0.18
+    - label:
+        zh: '3'
+        en: '3'
+      weight: 0.1
+    - label:
+        zh: 4+
+        en: 4+
+      weight: 0.04
+- name:
+    zh: 是否有房贷
+    en: has mortgage
+  distribution:
+    values:
+    - label:
+        zh: 是
+        en: 'yes'
+      weight: 0.18
+    - label:
+        zh: 否
+        en: 'no'
+      weight: 0.82
+- name:
+    zh: 是否有车贷
+    en: has car loan
+  distribution:
+    values:
+    - label:
+        zh: 是
+        en: 'yes'
+      weight: 0.12
+    - label:
+        zh: 否
+        en: 'no'
+      weight: 0.88
+- name:
+    zh: 是否使用花呗白条
+    en: uses BNPL credit
+  distribution:
+    values:
+    - label:
+        zh: 是
+        en: 'yes'
+      weight: 0.55
+    - label:
+        zh: 否
+        en: 'no'
+      weight: 0.45
+- name:
+    zh: 是否有消费贷
+    en: has consumer loan
+  distribution:
+    values:
+    - label:
+        zh: 是
+        en: 'yes'
+      weight: 0.2
+    - label:
+        zh: 否
+        en: 'no'
+      weight: 0.8
+- name:
+    zh: 月花呗使用档位
+    en: monthly BNPL usage tier
+  distribution:
+    values:
+    - label:
+        zh: '0'
+        en: '0'
+      weight: 0.45
+    - label:
+        zh: <500
+        en: <500
+      weight: 0.15
+    - label:
+        zh: 500-2000
+        en: 500-2000
+      weight: 0.2
+    - label:
+        zh: 2000-5000
+        en: 2000-5000
+      weight: 0.15
+    - label:
+        zh: 5000+
+        en: 5000+
+      weight: 0.05
+- name:
+    zh: 净资产档位
+    en: net worth tier
+  distribution:
+    values:
+    - label:
+        zh: 负资产
+        en: negative net worth
+      weight: 0.1
+    - label:
+        zh: 0-5万
+        en: 0-50K
+      weight: 0.3
+    - label:
+        zh: 5-20万
+        en: 50K-200K
+      weight: 0.3
+    - label:
+        zh: 20-50万
+        en: 200K-500K
+      weight: 0.18
+    - label:
+        zh: 50-200万
+        en: 500K-2M
+      weight: 0.1
+    - label:
+        zh: 200万+
+        en: 2M+
+      weight: 0.02
+- name:
+    zh: 星座
+    en: zodiac sign
+  distribution:
+    values:
+    - label:
+        zh: 白羊
+        en: Aries
+      weight: 0.083
+    - label:
+        zh: 金牛
+        en: Taurus
+      weight: 0.083
+    - label:
+        zh: 双子
+        en: Gemini
+      weight: 0.083
+    - label:
+        zh: 巨蟹
+        en: Cancer
+      weight: 0.083
+    - label:
+        zh: 狮子
+        en: Leo
+      weight: 0.083
+    - label:
+        zh: 处女
+        en: Virgo
+      weight: 0.083
+    - label:
+        zh: 天秤
+        en: Libra
+      weight: 0.083
+    - label:
+        zh: 天蝎
+        en: Scorpio
+      weight: 0.083
+    - label:
+        zh: 射手
+        en: Sagittarius
+      weight: 0.083
+    - label:
+        zh: 摩羯
+        en: Capricorn
+      weight: 0.083
+    - label:
+        zh: 水瓶
+        en: Aquarius
+      weight: 0.083
+    - label:
+        zh: 双鱼
+        en: Pisces
+      weight: 0.087
+- name:
+    zh: 生肖
+    en: Chinese zodiac
+  distribution:
+    values:
+    - label:
+        zh: 鼠
+        en: Rat
+      weight: 0.083
+    - label:
+        zh: 牛
+        en: Ox
+      weight: 0.083
+    - label:
+        zh: 虎
+        en: Tiger
+      weight: 0.083
+    - label:
+        zh: 兔
+        en: Rabbit
+      weight: 0.083
+    - label:
+        zh: 龙
+        en: Dragon
+      weight: 0.083
+    - label:
+        zh: 蛇
+        en: Snake
+      weight: 0.083
+    - label:
+        zh: 马
+        en: Horse
+      weight: 0.083
+    - label:
+        zh: 羊
+        en: Goat
+      weight: 0.083
+    - label:
+        zh: 猴
+        en: Monkey
+      weight: 0.083
+    - label:
+        zh: 鸡
+        en: Rooster
+      weight: 0.083
+    - label:
+        zh: 狗
+        en: dog
+      weight: 0.083
+    - label:
+        zh: 猪
+        en: Pig
+      weight: 0.087
+personality:
+- name:
+    zh: 价格敏感度
+    en: price sensitivity
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 尝鲜意愿
+    en: novelty seeking
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.08
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.22
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.12
+- name:
+    zh: 健康意识
+    en: health consciousness
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 开放性
+    en: openness
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.4
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 尽责性
+    en: conscientiousness
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.4
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 外向性
+    en: extraversion
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.2
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 宜人性
+    en: agreeableness
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.04
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.4
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 神经质
+    en: neuroticism
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.18
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 品牌忠诚度
+    en: brand loyalty
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.15
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.18
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 节俭程度
+    en: frugality
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 炫耀消费倾向
+    en: conspicuous consumption tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.3
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.2
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.15
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.05
+- name:
+    zh: 享乐主义倾向
+    en: hedonism tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 实用主义倾向
+    en: pragmatism tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.15
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.35
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 环保关注度
+    en: environmental concern
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.22
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.08
+- name:
+    zh: 反消费主义倾向
+    en: anti-consumerism tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.3
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.2
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.15
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.05
+- name:
+    zh: 物质主义倾向
+    en: materialism tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.15
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.2
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 冲动购买倾向
+    en: impulse buying tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.15
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.18
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 计划购买倾向
+    en: planned buying tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.07
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.12
+- name:
+    zh: 线上购物偏好
+    en: online shopping preference
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.1
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.2
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.35
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.3
+- name:
+    zh: 线下购物偏好
+    en: offline shopping preference
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.2
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.25
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.18
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 比价/找折扣习惯
+    en: price comparison habit
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.25
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 国货偏好
+    en: domestic brand preference
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.15
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.2
+- name:
+    zh: 奢侈品向往
+    en: luxury aspiration
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.4
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.15
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.12
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.08
+- name:
+    zh: 对广告信任度
+    en: ad trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.3
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.35
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.2
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.1
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.05
+- name:
+    zh: 对KOL信任度
+    en: KOL trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.15
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.18
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 对朋友信任度
+    en: friend trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.03
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.1
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.25
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.4
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.22
+- name:
+    zh: 对家人信任度
+    en: family trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.03
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.07
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.2
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.35
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.35
+- name:
+    zh: 对专家信任度
+    en: expert trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.07
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.13
+- name:
+    zh: 对官方媒体信任度
+    en: official media trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.12
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.22
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.22
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.14
+- name:
+    zh: 对国际媒体信任度
+    en: international media trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.3
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.22
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.13
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.05
+- name:
+    zh: 对品牌官方信任度
+    en: brand official trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.07
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.22
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.36
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 对用户评价信任度
+    en: user review trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 对陌生人信任度
+    en: stranger trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.4
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.2
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.08
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.02
+- name:
+    zh: 价值-成就
+    en: value-achievement
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.12
+- name:
+    zh: 价值-权力
+    en: value-power
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.25
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.25
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.15
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.05
+- name:
+    zh: 价值-享乐
+    en: value-hedonism
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 价值-刺激
+    en: value-stimulation
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.18
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.27
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.18
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 价值-自主
+    en: value-self-direction
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 价值-普世
+    en: value-universalism
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.22
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.08
+- name:
+    zh: 价值-仁爱
+    en: value-benevolence
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.12
+- name:
+    zh: 价值-传统
+    en: value-tradition
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.15
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.18
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 价值-从众
+    en: value-conformity
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.2
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.28
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.15
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 价值-安全
+    en: value-security
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.15
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.32
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.18
+- name:
+    zh: 损失厌恶
+    en: loss aversion
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.15
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.2
+- name:
+    zh: 当下偏好
+    en: present bias
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.22
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.13
+- name:
+    zh: 锚定效应敏感度
+    en: anchoring sensitivity
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.22
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.08
+- name:
+    zh: 框架效应敏感度
+    en: framing sensitivity
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.22
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.08
+- name:
+    zh: 默认选项偏差
+    en: default option bias
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.22
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.08
+- name:
+    zh: 沉没成本谬误
+    en: sunk cost fallacy
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 可得性偏差
+    en: availability bias
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.08
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.22
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 确认偏差
+    en: confirmation bias
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 从众心理
+    en: conformity
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.23
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 稀缺响应
+    en: scarcity response
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.07
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 健身动机
+    en: fitness motivation
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.15
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.18
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 美妆意识
+    en: beauty awareness
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.2
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.25
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.2
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 时尚意识
+    en: fashion awareness
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 美食探索倾向
+    en: food exploration tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.15
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.2
+- name:
+    zh: 旅行意愿
+    en: travel willingness
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.07
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.17
+- name:
+    zh: 事业野心
+    en: career ambition
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.22
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.11
+- name:
+    zh: 工作生活平衡偏好
+    en: work-life balance preference
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.15
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.2
+- name:
+    zh: 家庭中心度
+    en: family centricity
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.08
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.22
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 爱国情怀
+    en: patriotism
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.03
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.1
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.25
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.35
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.27
+- name:
+    zh: 民族自豪感
+    en: national pride
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.04
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.12
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.28
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.32
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.24
+- name:
+    zh: 乐观程度
+    en: optimism
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.07
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.12
+- name:
+    zh: 宿命论倾向
+    en: fatalism tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.2
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.25
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.18
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 内控倾向
+    en: internal locus of control
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.07
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.13
+- name:
+    zh: 错失恐惧FOMO
+    en: FOMO
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.12
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.22
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.11
+- name:
+    zh: 自我提升驱动
+    en: self-improvement drive
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.07
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.13
+- name:
+    zh: 社交比较倾向
+    en: social comparison tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.23
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 分享意愿
+    en: sharing willingness
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.18
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.28
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.28
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.18
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.08
+- name:
+    zh: 意见领袖倾向
+    en: opinion leader tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.35
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.2
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.1
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.05
+- name:
+    zh: 意见追随倾向
+    en: opinion follower tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.22
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.08
+- name:
+    zh: 潜水观察倾向
+    en: lurker tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 冲突回避倾向
+    en: conflict avoidance tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.07
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.13
+- name:
+    zh: 圈内忠诚度
+    en: in-group loyalty
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 对外群开放度
+    en: out-group openness
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.15
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.27
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.2
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.08
+- name:
+    zh: 道德表演倾向
+    en: moral performance tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.25
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.25
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.15
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.05
+- name:
+    zh: 隐私关注度
+    en: privacy concern
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 风险偏好
+    en: risk appetite
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.18
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.28
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.17
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 时间视野长度
+    en: time horizon
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 耐心程度
+    en: patience
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.23
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 延迟满足能力
+    en: delayed gratification
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.12
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.27
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.22
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.09
+- name:
+    zh: 变化容忍度
+    en: change tolerance
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.22
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.11
+- name:
+    zh: 好奇心
+    en: curiosity
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.17
+- name:
+    zh: 共情能力
+    en: empathy
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 创意倾向
+    en: creative tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.22
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.11
+- name:
+    zh: 分析倾向
+    en: analytical tendency
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.07
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.13
+- name:
+    zh: 审美敏感度
+    en: aesthetic sensitivity
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.22
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.13
+- name:
+    zh: 自律程度
+    en: self-discipline
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.23
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.1
+- name:
+    zh: 情绪稳定性
+    en: emotional stability
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.07
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.13
+- name:
+    zh: 抗压能力
+    en: stress resilience
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.07
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.13
+- name:
+    zh: 孤独感
+    en: loneliness
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.15
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.18
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 幸福感
+    en: happiness
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.12
+media:
+- name:
+    zh: 小红书
+    en: Xiaohongshu
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.2
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.6'
+        en: '0.6'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.3
+- name:
+    zh: 抖音
+    en: Douyin
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.6'
+        en: '0.6'
+      weight: 0.4
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.35
+- name:
+    zh: 微信
+    en: WeChat
+  distribution:
+    values:
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.1
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.2
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.4
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.3
+- name:
+    zh: 微信日均时长
+    en: WeChat daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.05
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.15
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.3
+    - label:
+        zh: '3.0'
+        en: '3.0'
+      weight: 0.25
+    - label:
+        zh: '4.0'
+        en: '4.0'
+      weight: 0.15
+    - label:
+        zh: '5.0'
+        en: '5.0'
+      weight: 0.1
+- name:
+    zh: QQ日均时长
+    en: QQ daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.45
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.25
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.15
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.1
+    - label:
+        zh: '3.0'
+        en: '3.0'
+      weight: 0.05
+- name:
+    zh: 微博日均时长
+    en: Weibo daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.2
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.12
+    - label:
+        zh: '3.0'
+        en: '3.0'
+      weight: 0.08
+- name:
+    zh: 小红书日均时长
+    en: Xiaohongshu daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.25
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.27
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.18
+    - label:
+        zh: '3.0'
+        en: '3.0'
+      weight: 0.12
+- name:
+    zh: 抖音日均时长
+    en: Douyin daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.08
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.15
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.27
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.25
+    - label:
+        zh: '3.0'
+        en: '3.0'
+      weight: 0.15
+    - label:
+        zh: '5.0'
+        en: '5.0'
+      weight: 0.1
+- name:
+    zh: 快手日均时长
+    en: Kuaishou daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.45
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.25
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.15
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.1
+    - label:
+        zh: '3.0'
+        en: '3.0'
+      weight: 0.05
+- name:
+    zh: B站日均时长
+    en: Bilibili daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.25
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.25
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.15
+    - label:
+        zh: '3.0'
+        en: '3.0'
+      weight: 0.1
+- name:
+    zh: 知乎日均时长
+    en: Zhihu daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.4
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.2
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.08
+    - label:
+        zh: '3.0'
+        en: '3.0'
+      weight: 0.02
+- name:
+    zh: 豆瓣日均时长
+    en: Douban daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.65
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.2
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.1
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.04
+    - label:
+        zh: '3.0'
+        en: '3.0'
+      weight: 0.01
+- name:
+    zh: 贴吧日均时长
+    en: Tieba daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.7
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.18
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.08
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.03
+    - label:
+        zh: '3.0'
+        en: '3.0'
+      weight: 0.01
+- name:
+    zh: 今日头条日均时长
+    en: Toutiao daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.4
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.27
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.18
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.1
+    - label:
+        zh: '3.0'
+        en: '3.0'
+      weight: 0.05
+- name:
+    zh: 公众号日均时长
+    en: WeChat OA daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.25
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.13
+    - label:
+        zh: '3.0'
+        en: '3.0'
+      weight: 0.07
+- name:
+    zh: 淘宝直播日均时长
+    en: Taobao Live daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.55
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.22
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.13
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.07
+    - label:
+        zh: '3.0'
+        en: '3.0'
+      weight: 0.03
+- name:
+    zh: 京东App日均时长
+    en: JD App daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.35
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.2
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.08
+    - label:
+        zh: '3.0'
+        en: '3.0'
+      weight: 0.02
+- name:
+    zh: 马蜂窝日均时长
+    en: Mafengwo daily hours
+  distribution:
+    values:
+    - label:
+        zh: '0.0'
+        en: '0.0'
+      weight: 0.8
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.13
+    - label:
+        zh: '1.0'
+        en: '1.0'
+      weight: 0.05
+    - label:
+        zh: '2.0'
+        en: '2.0'
+      weight: 0.02
+- name:
+    zh: 小红书发布频率
+    en: Xiaohongshu posting frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.55
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.25
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.13
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.07
+- name:
+    zh: 抖音发布频率
+    en: Douyin posting frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.65
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.2
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.1
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.05
+- name:
+    zh: 微信朋友圈发布频率
+    en: WeChat Moments posting frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.2
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.3
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.3
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.2
+- name:
+    zh: B站发布频率
+    en: Bilibili posting frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.85
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.1
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.04
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.01
+- name:
+    zh: 微博发布频率
+    en: Weibo posting frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.6
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.22
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.13
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.05
+- name:
+    zh: 知乎发布频率
+    en: Zhihu posting frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.82
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.12
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.05
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.01
+- name:
+    zh: 公众号发布频率
+    en: WeChat OA posting frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.92
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.05
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.02
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.01
+- name:
+    zh: 播客发布频率
+    en: podcast posting frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.96
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.025
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.012
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.003
+- name:
+    zh: 评论频率
+    en: comment frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.1
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.4
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.35
+    - label:
+        zh: 很频繁
+        en: very frequent
+      weight: 0.15
+- name:
+    zh: 分享频率
+    en: share frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.12
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.42
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.32
+    - label:
+        zh: 很频繁
+        en: very frequent
+      weight: 0.14
+- name:
+    zh: 点赞频率
+    en: like frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.05
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.2
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.4
+    - label:
+        zh: 很频繁
+        en: very frequent
+      weight: 0.35
+- name:
+    zh: 私信频率
+    en: DM frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.15
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.35
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.3
+    - label:
+        zh: 很频繁
+        en: very frequent
+      weight: 0.2
+- name:
+    zh: 潜水占比
+    en: lurker ratio
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 对长辈信息信任度
+    en: elder info trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.22
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.13
+- name:
+    zh: 对同事信息信任度
+    en: coworker info trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.07
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.22
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.35
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.11
+- name:
+    zh: 对同学信息信任度
+    en: classmate info trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.05
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.32
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.3
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 对邻居信息信任度
+    en: neighbor info trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.2
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.28
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.15
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 对美妆KOL信任度
+    en: beauty KOL trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.2
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.28
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.27
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.18
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 对数码KOL信任度
+    en: tech KOL trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.15
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.22
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.08
+- name:
+    zh: 对母婴KOL信任度
+    en: parenting KOL trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.4
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.25
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.18
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.12
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.05
+- name:
+    zh: 对财经KOL信任度
+    en: finance KOL trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.25
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.25
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.15
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.05
+- name:
+    zh: 对央视信任度
+    en: CCTV trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.07
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.18
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.28
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.17
+- name:
+    zh: 对自媒体信任度
+    en: self-media trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.18
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.32
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.15
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.05
+- name:
+    zh: 对学术论文信任度
+    en: academic paper trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.1
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.2
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.3
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.25
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.15
+- name:
+    zh: 对短视频信息信任度
+    en: short-video info trust
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.2
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.32
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.28
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.15
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.05
+- name:
+    zh: 新闻消费频率
+    en: news consumption frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.1
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.3
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.4
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.2
+- name:
+    zh: 电视剧消费频率
+    en: TV drama consumption frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.15
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.35
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.35
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.15
+- name:
+    zh: 综艺消费频率
+    en: variety show consumption frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.18
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.38
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.3
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.14
+- name:
+    zh: 体育消费频率
+    en: sports consumption frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.35
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.35
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.2
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.1
+- name:
+    zh: 音乐流媒频率
+    en: music streaming frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.05
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.18
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.42
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.35
+- name:
+    zh: 有声书频率
+    en: audiobook frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.45
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.3
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.18
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.07
+- name:
+    zh: 播客消费频率
+    en: podcast consumption frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.55
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.25
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.15
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.05
+- name:
+    zh: 手游消费频率
+    en: mobile game frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.15
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.3
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.32
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.23
+- name:
+    zh: 端游主机频率
+    en: PC/console game frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.55
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.25
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.13
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.07
+- name:
+    zh: Vlog 消费频率
+    en: vlog consumption frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.2
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.35
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.3
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.15
+- name:
+    zh: 知识视频频率
+    en: knowledge video frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.15
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.3
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.35
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.2
+- name:
+    zh: ASMR频率
+    en: ASMR frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.65
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.22
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.1
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.03
+- name:
+    zh: 动漫消费频率
+    en: anime consumption frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.4
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.3
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.2
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.1
+- name:
+    zh: 美食视频频率
+    en: food video frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.1
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.3
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.4
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.2
+- name:
+    zh: 旅行视频频率
+    en: travel video frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.18
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.4
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.3
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.12
+- name:
+    zh: 纪录片频率
+    en: documentary frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.3
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.4
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.22
+    - label:
+        zh: 重度
+        en: heavy
+      weight: 0.08
+- name:
+    zh: 天猫使用频率
+    en: Tmall usage frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.15
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.35
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.35
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.15
+- name:
+    zh: 淘宝使用频率
+    en: Taobao usage frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.05
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.2
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.4
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.35
+- name:
+    zh: 拼多多使用频率
+    en: Pinduoduo usage frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.2
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.25
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.3
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.25
+- name:
+    zh: 京东使用频率
+    en: JD usage frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.18
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.35
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.32
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.15
+- name:
+    zh: 小红书电商使用频率
+    en: Xiaohongshu commerce usage frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.45
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.28
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.18
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.09
+- name:
+    zh: 抖音电商使用频率
+    en: Douyin commerce usage frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.3
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.3
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.25
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.15
+- name:
+    zh: 美团使用频率
+    en: Meituan usage frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.1
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.2
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.4
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.3
+- name:
+    zh: 饿了么使用频率
+    en: Eleme usage frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.25
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.25
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.3
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.2
+- name:
+    zh: 大众点评使用频率
+    en: Dianping usage frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.3
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.4
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.22
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.08
+- name:
+    zh: 肯德基App使用频率
+    en: KFC App usage frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.55
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.28
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.13
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.04
+- name:
+    zh: 麦当劳App使用频率
+    en: McDonald's App usage frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.6
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.25
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.12
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.03
+- name:
+    zh: 瑞幸App使用频率
+    en: Luckin App usage frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.5
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.2
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.2
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.1
+- name:
+    zh: 星巴克App使用频率
+    en: Starbucks App usage frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.65
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.2
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.12
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.03
+- name:
+    zh: 闲鱼使用频率
+    en: Xianyu usage frequency
+  distribution:
+    values:
+    - label:
+        zh: 无
+        en: none
+      weight: 0.3
+    - label:
+        zh: 每月
+        en: monthly
+      weight: 0.4
+    - label:
+        zh: 每周
+        en: weekly
+      weight: 0.22
+    - label:
+        zh: 每日
+        en: daily
+      weight: 0.08
+- name:
+    zh: 主要设备
+    en: primary device
+  distribution:
+    values:
+    - label:
+        zh: iOS
+        en: iOS
+      weight: 0.35
+    - label:
+        zh: Android
+        en: Android
+      weight: 0.63
+    - label:
+        zh: 其它
+        en: other
+      weight: 0.02
+- name:
+    zh: 日均解锁手机次数
+    en: daily phone unlocks
+  distribution:
+    values:
+    - label:
+        zh: '20'
+        en: '20'
+      weight: 0.1
+    - label:
+        zh: '50'
+        en: '50'
+      weight: 0.25
+    - label:
+        zh: '80'
+        en: '80'
+      weight: 0.3
+    - label:
+        zh: '120'
+        en: '120'
+      weight: 0.2
+    - label:
+        zh: '180'
+        en: '180'
+      weight: 0.1
+    - label:
+        zh: 250+
+        en: 250+
+      weight: 0.05
+- name:
+    zh: 睡前刷机分钟
+    en: minutes scrolling before bed
+  distribution:
+    values:
+    - label:
+        zh: '0'
+        en: '0'
+      weight: 0.05
+    - label:
+        zh: '15'
+        en: '15'
+      weight: 0.15
+    - label:
+        zh: '30'
+        en: '30'
+      weight: 0.25
+    - label:
+        zh: '60'
+        en: '60'
+      weight: 0.3
+    - label:
+        zh: '90'
+        en: '90'
+      weight: 0.15
+    - label:
+        zh: 120+
+        en: 120+
+      weight: 0.1
+- name:
+    zh: 日均屏幕总时长
+    en: daily total screen time
+  distribution:
+    values:
+    - label:
+        zh: <3h
+        en: <3h
+      weight: 0.05
+    - label:
+        zh: 3-5h
+        en: 3-5h
+      weight: 0.2
+    - label:
+        zh: 5-7h
+        en: 5-7h
+      weight: 0.3
+    - label:
+        zh: 7-9h
+        en: 7-9h
+      weight: 0.25
+    - label:
+        zh: 9-12h
+        en: 9-12h
+      weight: 0.15
+    - label:
+        zh: '>12h'
+        en: '>12h'
+      weight: 0.05
+- name:
+    zh: 使用VPN
+    en: uses VPN
+  distribution:
+    values:
+    - label:
+        zh: 是
+        en: 'yes'
+      weight: 0.08
+    - label:
+        zh: 否
+        en: 'no'
+      weight: 0.92
+- name:
+    zh: 使用广告屏蔽
+    en: uses ad-blocker
+  distribution:
+    values:
+    - label:
+        zh: 是
+        en: 'yes'
+      weight: 0.12
+    - label:
+        zh: 否
+        en: 'no'
+      weight: 0.88
+- name:
+    zh: 推送通知容忍度
+    en: push notification tolerance
+  distribution:
+    values:
+    - label:
+        zh: '0.1'
+        en: '0.1'
+      weight: 0.3
+    - label:
+        zh: '0.3'
+        en: '0.3'
+      weight: 0.3
+    - label:
+        zh: '0.5'
+        en: '0.5'
+      weight: 0.2
+    - label:
+        zh: '0.7'
+        en: '0.7'
+      weight: 0.13
+    - label:
+        zh: '0.9'
+        en: '0.9'
+      weight: 0.07
+- name:
+    zh: 广告跳过速度
+    en: ad skip speed
+  distribution:
+    values:
+    - label:
+        zh: 立即跳
+        en: skip immediately
+      weight: 0.55
+    - label:
+        zh: 几秒后跳
+        en: skip after a few seconds
+      weight: 0.3
+    - label:
+        zh: 看完
+        en: watch till end
+      weight: 0.15
+- name:
+    zh: 无痕浏览频率
+    en: incognito browsing frequency
+  distribution:
+    values:
+    - label:
+        zh: 从不
+        en: never
+      weight: 0.55
+    - label:
+        zh: 偶尔
+        en: occasionally
+      weight: 0.3
+    - label:
+        zh: 经常
+        en: often
+      weight: 0.12
+    - label:
+        zh: 总是
+        en: always
+      weight: 0.03
+- name:
+    zh: 深色模式偏好
+    en: dark mode preference
+  distribution:
+    values:
+    - label:
+        zh: 是
+        en: 'yes'
+      weight: 0.55
+    - label:
+        zh: 否
+        en: 'no'
+      weight: 0.45
+- name:
+    zh: 默认字号偏好
+    en: default font size preference
+  distribution:
+    values:
+    - label:
+        zh: 小
+        en: small
+      weight: 0.1
+    - label:
+        zh: 标准
+        en: normal
+      weight: 0.65
+    - label:
+        zh: 大
+        en: large
+      weight: 0.2
+    - label:
+        zh: 超大
+        en: extra large
+      weight: 0.05
+- name:
+    zh: 自动播放视频偏好
+    en: video autoplay preference
+  distribution:
+    values:
+    - label:
+        zh: 是
+        en: 'yes'
+      weight: 0.55
+    - label:
+        zh: 否
+        en: 'no'
+      weight: 0.45
+- name:
+    zh: 开启数据流量节省
+    en: data saver enabled
+  distribution:
+    values:
+    - label:
+        zh: 是
+        en: 'yes'
+      weight: 0.35
+    - label:
+        zh: 否
+        en: 'no'
+      weight: 0.65
+- name:
+    zh: 应用安装数量档位
+    en: installed app count tier
+  distribution:
+    values:
+    - label:
+        zh: <30
+        en: <30
+      weight: 0.1
+    - label:
+        zh: 30-60
+        en: 30-60
+      weight: 0.3
+    - label:
+        zh: 60-100
+        en: 60-100
+      weight: 0.35
+    - label:
+        zh: 100-150
+        en: 100-150
+      weight: 0.18
+    - label:
+        zh: '>150'
+        en: '>150'
+      weight: 0.07
+- name:
+    zh: 允许个性化推荐
+    en: personalized recommendation consent
+  distribution:
+    values:
+    - label:
+        zh: 全部允许
+        en: allow all
+      weight: 0.55
+    - label:
+        zh: 部分允许
+        en: allow some
+      weight: 0.3
+    - label:
+        zh: 全部关闭
+        en: block all
+      weight: 0.15

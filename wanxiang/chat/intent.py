@@ -89,7 +89,7 @@ _SYSTEM_PROMPT = _SYSTEM_PROMPT_ZH
 
 # 默认画像:指向 DB 内置画像 slug(resolve_distribution 会解析);
 # 不再用文件路径,因为内置画像现在以 DB 为唯一真相源。
-_BUNDLED_DIST = "cn_census_2020"
+_BUNDLED_DIST = "cn_national_joint_2020"
 
 
 class IntentParseResult(BaseModel):

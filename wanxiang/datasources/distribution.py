@@ -242,6 +242,15 @@ def load_distribution_from_dict(raw: dict) -> dict[str, _TraitListView]:
     out: dict[str, _TraitListView] = {}
     for group in _GROUPS:
         out[group] = _build_group(group, raw.get(group))
+    # 联合分布(合成个体池):若 content 含 joint 块,挂到私有键。
+    # 三个 group 循环只按名取 _GROUPS,不会碰它 → 现有抽样/调用方零影响。
+    try:
+        from wanxiang.datasources.joint import load_joint_from_dict
+        jv = load_joint_from_dict(raw)
+        if jv is not None:
+            out["__joint__"] = jv  # type: ignore[assignment]
+    except Exception:  # pragma: no cover (defensive)
+        pass
     return out
 
 

@@ -78,6 +78,9 @@ class UploadSource:
                  "distribution": {"values": t["distribution"]["values"]}}
                 for t in list(view.get(g, []))
             ]
+        # 联合分布块原样透传(否则联合画像上传后退化成边际)
+        if isinstance(self.raw.get("joint"), dict):
+            content["joint"] = self.raw["joint"]
         name = self.name or content.get("name") or "uploaded"
         return DistributionProfile(content=content, name=name,
                                    source_type="upload")

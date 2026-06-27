@@ -301,6 +301,8 @@
   "admin.dist_enabled": "启用",
   "admin.dist_actions": "操作",
   "admin.dist_builtin": "内置",
+  "admin.dist_joint": "联合分布",
+  "admin.dist_joint_hint": "维度间真实联合(IPF合成),组合更贴近真实人口",
   "admin.dist_view": "查看",
   "admin.dist_toggle": "启用/禁用",
   "admin.dist_duplicate": "复制",

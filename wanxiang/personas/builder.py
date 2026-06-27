@@ -98,6 +98,13 @@ class PersonaBuilder:
         """
         if locale not in ("zh", "en"):
             locale = "zh"
+        # 联合分布路径:若 distribution 含合成个体池,从池里抽整组特质
+        # (保持组合真实),personality/media 仍按边际独立抽。
+        joint = distribution.get("__joint__")
+        if joint is not None:
+            return self._sample_joint(joint, distribution, n, seed,
+                                      name_prefix, locale)
+
         rng = random.Random(seed)
         prepared: dict[str, list[tuple[str, list[Any], list[float]]]] = {}
         for group in _GROUP_NAMES:
@@ -123,3 +130,49 @@ class PersonaBuilder:
                     locale=locale,
                 ))
         return personas
+
+    def _sample_joint(self, joint, distribution, n, seed, name_prefix, locale):
+        """联合分布抽样:从合成个体池加权抽户,户内成员共享 household_id。
+
+        - 所有 joint 维度(年龄/性别/学历/婚姻/职业/家庭规模/省份)→ demographic。
+        - personality/media 仍按各自边际独立抽(联合表不含这两组)。
+        - 确定性:固定 random.Random(seed) + 固定抽取顺序。
+        - 精确 n:逐户填充,末户超出则截断。
+        """
+        rng = random.Random(seed)
+        # personality/media 边际(联合表通常不含,缺则空)
+        pers = _prepare_group(distribution.get("personality"), locale)
+        media = _prepare_group(distribution.get("media"), locale)
+        ndim = len(joint.dimensions)
+
+        personas: list[Persona] = []
+        label = name_prefix if name_prefix is not None else "agent"
+        hh_id = 0
+        while len(personas) < n:
+            household = joint.pick_household(rng)
+            members = household.get("members") or [[0] * ndim]
+            for mem in members:
+                if len(personas) >= n:
+                    break
+                demo: dict[str, Any] = {}
+                for di in range(ndim):
+                    ci = mem[di] if di < len(mem) else 0
+                    demo[joint.dim_label(di, locale)] = \
+                        joint.cat_label(di, ci, locale)
+                p_traits = self._draw_marginal(pers, rng)
+                m_traits = self._draw_marginal(media, rng)
+                personas.append(Persona(
+                    agent_id=len(personas),
+                    name=f"{label}#{len(personas)}",
+                    demographic=demo, personality=p_traits, media=m_traits,
+                    locale=locale, household_id=hh_id))
+            hh_id += 1
+        return personas
+
+    @staticmethod
+    def _draw_marginal(prepared, rng) -> dict[str, Any]:
+        out: dict[str, Any] = {}
+        for trait_name, values, weights in prepared:
+            if values:
+                out[trait_name] = rng.choices(values, weights=weights, k=1)[0]
+        return out

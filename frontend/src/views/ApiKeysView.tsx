@@ -212,7 +212,7 @@ export function ApiKeysView({ slug }: { slug: string }) {
         <div className="wx-code-block">
 {`curl -H "X-API-Key: <YOUR_KEY>" \\
      -H "Content-Type: application/json" \\
-     -d '{"scenario":{"material":"...","question":"...","kind":"rate"},"n":50,"rounds":0,"distribution_path":"cn_census_2020"}' \\
+     -d '{"scenario":{"material":"...","question":"...","kind":"rate"},"n":50,"rounds":0,"distribution_path":"cn_national_joint_2020"}' \\
      ${window.location.origin}/v1/simulations/async`}
         </div>
       </GlassCard>

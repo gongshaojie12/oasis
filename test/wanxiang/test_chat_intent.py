@@ -33,7 +33,7 @@ def test_complete_extraction_returns_simulate_request():
     r = asyncio.run(parse_intent(
         "帮我测一线 Z 世代对新品轻气泡 ¥6 的购买意愿",
         model_call=_scripted(raw),
-        default_distribution_path="wanxiang/datasources/distributions/cn_z_generation_v1.yaml"))
+        default_distribution_path="test/wanxiang/fixtures/cn_z_generation_v1.yaml"))
     assert isinstance(r, IntentParseResult)
     assert r.intent == "simulate"
     assert r.missing == []

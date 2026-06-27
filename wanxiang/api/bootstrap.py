@@ -252,6 +252,9 @@ def _normalize_for_storage(raw: dict) -> dict:
                 "distribution": {"values": trait["distribution"]["values"]},
             })
         out[group] = traits
+    # 联合分布块原样透传(合成个体池),否则会被丢弃 → 联合画像退化成边际。
+    if isinstance(raw.get("joint"), dict):
+        out["joint"] = raw["joint"]
     return out
 
 

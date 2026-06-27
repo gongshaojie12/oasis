@@ -13,7 +13,7 @@ from wanxiang.api.deps import get_model_factory
 
 PROJECT_ROOT = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", ".."))
-DIST = os.path.join(PROJECT_ROOT, "wanxiang", "datasources", "distributions",
+DIST = os.path.join(PROJECT_ROOT, "test", "wanxiang", "fixtures",
                     "cn_z_generation_v1.yaml")
 
 
