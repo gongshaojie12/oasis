@@ -7,7 +7,7 @@ import uuid
 from datetime import datetime
 from threading import Lock
 
-from wanxiang.api.sandboxes import ChatMessage, Sandbox
+from wanxiang.api.sandboxes import ChatMessage, Sandbox, SandboxGroup
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS sandboxes (
@@ -21,10 +21,21 @@ CREATE TABLE IF NOT EXISTS sandboxes (
     created_by_user_id TEXT,
     created_at TEXT NOT NULL,
     last_active_at TEXT NOT NULL,
-    archived INTEGER NOT NULL DEFAULT 0
+    archived INTEGER NOT NULL DEFAULT 0,
+    group_id TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_sandboxes_workspace
     ON sandboxes(workspace_id, last_active_at DESC);
+
+CREATE TABLE IF NOT EXISTS sandbox_groups (
+    group_id TEXT PRIMARY KEY,
+    workspace_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    created_by_user_id TEXT,
+    created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_groups_workspace
+    ON sandbox_groups(workspace_id);
 
 CREATE TABLE IF NOT EXISTS chat_messages (
     message_id TEXT PRIMARY KEY,
@@ -38,6 +49,11 @@ CREATE TABLE IF NOT EXISTS chat_messages (
 );
 CREATE INDEX IF NOT EXISTS idx_chat_messages_sandbox_time
     ON chat_messages(sandbox_id, created_at);
+"""
+
+# 运行库已存在 sandboxes 表 → CREATE IF NOT EXISTS 不会补列,显式幂等迁移。
+_MIGRATE = """
+ALTER TABLE sandboxes ADD COLUMN IF NOT EXISTS group_id TEXT;
 """
 
 
@@ -54,6 +70,17 @@ def _row_to_sandbox(row: dict) -> Sandbox:
         created_at=datetime.fromisoformat(row["created_at"]),
         last_active_at=datetime.fromisoformat(row["last_active_at"]),
         archived=bool(row["archived"]),
+        group_id=row.get("group_id"),
+    )
+
+
+def _row_to_group(row: dict) -> SandboxGroup:
+    return SandboxGroup(
+        group_id=row["group_id"],
+        workspace_id=row["workspace_id"],
+        name=row["name"],
+        created_by_user_id=row.get("created_by_user_id"),
+        created_at=datetime.fromisoformat(row["created_at"]),
     )
 
 
@@ -82,6 +109,7 @@ class PgSandboxStore:
         if eager_init:
             with self._connect() as conn:
                 conn.execute(_SCHEMA)
+                conn.execute(_MIGRATE)
 
     def _connect(self):
         import psycopg
@@ -97,13 +125,13 @@ class PgSandboxStore:
                 "INSERT INTO sandboxes "
                 "(sandbox_id, workspace_id, name, emoji, description, "
                 " distribution_path, population_size, created_by_user_id, "
-                " created_at, last_active_at, archived) "
-                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                " created_at, last_active_at, archived, group_id) "
+                "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                 (sb.sandbox_id, sb.workspace_id, sb.name, sb.emoji,
                  sb.description, sb.distribution_path, sb.population_size,
                  sb.created_by_user_id, sb.created_at.isoformat(),
                  sb.last_active_at.isoformat(),
-                 1 if sb.archived else 0))
+                 1 if sb.archived else 0, sb.group_id))
         return sb
 
     def get_sandbox(self, sandbox_id: str) -> Sandbox | None:
@@ -127,7 +155,8 @@ class PgSandboxStore:
 
     def update_sandbox(self, sandbox_id: str, **fields) -> Sandbox | None:
         allowed = {"name", "emoji", "description", "distribution_path",
-                    "population_size", "last_active_at", "archived"}
+                    "population_size", "last_active_at", "archived",
+                    "group_id"}
         sets = {k: v for k, v in fields.items() if k in allowed}
         if not sets:
             return self.get_sandbox(sandbox_id)
@@ -195,3 +224,51 @@ class PgSandboxStore:
         if limit:
             items = items[-limit:]
         return items
+
+    # ---- groups ----
+    def create_group(self, group: SandboxGroup) -> SandboxGroup:
+        if group.group_id == "auto":
+            group.group_id = uuid.uuid4().hex
+        with self._lock, self._connect() as conn:
+            conn.execute(
+                "INSERT INTO sandbox_groups "
+                "(group_id, workspace_id, name, created_by_user_id, "
+                " created_at) VALUES (%s, %s, %s, %s, %s)",
+                (group.group_id, group.workspace_id, group.name,
+                 group.created_by_user_id, group.created_at.isoformat()))
+        return group
+
+    def get_group(self, group_id: str) -> SandboxGroup | None:
+        with self._connect() as conn:
+            cur = conn.execute(
+                "SELECT * FROM sandbox_groups WHERE group_id = %s",
+                (group_id,))
+            row = cur.fetchone()
+        return _row_to_group(row) if row else None
+
+    def list_groups(self, workspace_id: str) -> list[SandboxGroup]:
+        with self._connect() as conn:
+            cur = conn.execute(
+                "SELECT * FROM sandbox_groups WHERE workspace_id = %s "
+                "ORDER BY created_at ASC",
+                (workspace_id,))
+            rows = cur.fetchall()
+        return [_row_to_group(r) for r in rows]
+
+    def rename_group(self, group_id: str, name: str) -> SandboxGroup | None:
+        with self._lock, self._connect() as conn:
+            conn.execute(
+                "UPDATE sandbox_groups SET name = %s WHERE group_id = %s",
+                (name, group_id))
+        return self.get_group(group_id)
+
+    def delete_group(self, group_id: str) -> bool:
+        """删分组:其下 sandbox 解绑(group_id=NULL),不删任务。"""
+        with self._lock, self._connect() as conn:
+            conn.execute(
+                "UPDATE sandboxes SET group_id = NULL WHERE group_id = %s",
+                (group_id,))
+            cur = conn.execute(
+                "DELETE FROM sandbox_groups WHERE group_id = %s",
+                (group_id,))
+            return cur.rowcount > 0

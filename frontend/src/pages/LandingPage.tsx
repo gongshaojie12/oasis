@@ -13,16 +13,18 @@
 //     api_keys / settings without leaving the SPA
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { isAuthenticated } from '@/lib/auth'
 import { api } from '@/lib/api'
 import { streamSse } from '@/lib/sse'
 import { useAuthStore } from '@/stores/authStore'
 import { useSandboxStore } from '@/stores/sandboxStore'
-import { LandingSidebar, type ViewKey, type CreateSandboxPayload } from '@/components/landing/LandingSidebar'
+import { LandingSidebar, type ViewKey } from '@/components/landing/LandingSidebar'
 import { LandingChat } from '@/components/landing/LandingChat'
 import { LandingDataPanel } from '@/components/landing/LandingDataPanel'
 import { CockpitOverlay } from '@/components/chat/CockpitOverlay'
 import { AuthGateModal } from '@/components/landing/AuthGateModal'
+import { ConfirmDialog } from '@/components/data/ConfirmDialog'
 import { DashboardView } from '@/views/DashboardView'
 import { ReportsView } from '@/views/ReportsView'
 import { BillingView } from '@/views/BillingView'
@@ -30,7 +32,7 @@ import { MembersView } from '@/views/MembersView'
 import { ApiKeysView } from '@/views/ApiKeysView'
 import { SettingsView } from '@/views/SettingsView'
 import { useTranslation } from 'react-i18next'
-import type { ChatMessage, Sandbox, SimProgress } from '@/types/api'
+import type { ChatMessage, Sandbox, SandboxGroup, SimProgress } from '@/types/api'
 
 export function LandingPage() {
   const { t } = useTranslation()
@@ -42,6 +44,7 @@ export function LandingPage() {
 
   const [authed, setAuthed] = useState(false)
   const [sandboxes, setSandboxes] = useState<Sandbox[]>([])
+  const [groups, setGroups] = useState<SandboxGroup[]>([])
   const [activeSandbox, setActiveSandbox] = useState<Sandbox | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [loading, setLoading] = useState(false)
@@ -52,6 +55,12 @@ export function LandingPage() {
   const clearFeed = useSandboxStore((s) => s.clearFeed)
   const [gateOpen, setGateOpen] = useState(false)
   const [gateTab, setGateTab] = useState<'login' | 'register'>('register')
+  const [pendingDelete, setPendingDelete] = useState<Sandbox | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  // 上传文档:提炼后的素材 + 文件名 + 解析中状态
+  const [attachMaterial, setAttachMaterial] = useState<string | null>(null)
+  const [attachName, setAttachName] = useState<string | null>(null)
+  const [attaching, setAttaching] = useState(false)
   const [pendingText, setPendingText] = useState<string | undefined>(undefined)
   const [activeView, setActiveView] = useState<ViewKey>('chat')
   // Collapsible panels (default expanded). Persist user choice in localStorage.
@@ -102,9 +111,9 @@ export function LandingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authed])
 
-  // Load sandboxes for current workspace.
+  // Load sandboxes + groups for current workspace.
   useEffect(() => {
-    if (!authed || !currentWs) { setSandboxes([]); return }
+    if (!authed || !currentWs) { setSandboxes([]); setGroups([]); return }
     api.get(`/workspaces/${currentWs.slug}/sandboxes`)
       .then((r) => {
         const list: Sandbox[] = r.data.sandboxes || []
@@ -117,6 +126,9 @@ export function LandingPage() {
         })
       })
       .catch(() => setSandboxes([]))
+    api.get(`/workspaces/${currentWs.slug}/sandboxes/groups`)
+      .then((r) => setGroups(r.data.groups || []))
+      .catch(() => setGroups([]))
   }, [authed, currentWs?.slug])
 
   // Load messages for active sandbox.
@@ -136,6 +148,74 @@ export function LandingPage() {
       return
     }
     setActiveView(view)
+  }
+
+  // 「+ 新对话」: 清空进入空白聊天态。不立即建任务——用户发首条消息时
+  // handleSend 会兜底自动建任务（人群规模可在对话里指定）。
+  function handleNewChat() {
+    if (!authed) {
+      setGateTab('register')
+      setGateOpen(true)
+      return
+    }
+    setActiveSandbox(null)
+    setMessages([])
+    setActiveView('chat')
+  }
+
+  // 选历史对话：切任务 + 切回聊天视图（message 加载副作用会拉历史）
+  function handlePickSandbox(sb: Sandbox) {
+    setActiveSandbox(sb)
+    setActiveView('chat')
+  }
+
+  // 确保有一个 sandbox 可用(上传/聊天都需要),没有则自动建。
+  async function ensureSandbox(): Promise<Sandbox | null> {
+    if (!currentWs) return null
+    if (activeSandbox) return activeSandbox
+    const created = await api.post(
+      `/workspaces/${currentWs.slug}/sandboxes`,
+      { name: t('landing.default_sandbox_name'), emoji: '🔬',
+        population_size: 50 })
+    const sb = created.data as Sandbox
+    setActiveSandbox(sb)
+    setSandboxes((prev) => [sb, ...prev])
+    return sb
+  }
+
+  async function handleAttach(file: File) {
+    if (!authed) { setGateTab('register'); setGateOpen(true); return }
+    if (!currentWs) { nav('/workspaces'); return }
+    setAttaching(true)
+    setAttachName(file.name)
+    try {
+      const sb = await ensureSandbox()
+      if (!sb) return
+      const form = new FormData()
+      form.append('file', file)
+      const r = await api.post(
+        `/workspaces/${currentWs.slug}/sandboxes/${sb.sandbox_id}/documents`,
+        form)
+      setAttachMaterial(r.data.material as string)
+      toast.success(t('chat.attach_done'))
+    } catch (e: unknown) {
+      let detail = t('chat.attach_failed')
+      if (typeof e === 'object' && e && 'response' in e) {
+        const d = (e as { response?: { data?: { detail?: string } } })
+          .response?.data?.detail
+        if (d) detail = d
+      }
+      toast.error(detail)
+      setAttachName(null)
+      setAttachMaterial(null)
+    } finally {
+      setAttaching(false)
+    }
+  }
+
+  function clearAttach() {
+    setAttachName(null)
+    setAttachMaterial(null)
   }
 
   async function handleSend(text: string) {
@@ -175,10 +255,13 @@ export function LandingPage() {
       }
       setMessages((prev) => [...prev, tempUserMsg])
 
+      const body: { text: string; document_context?: string } = { text }
+      if (attachMaterial) body.document_context = attachMaterial
       const r = await api.post(
         `/workspaces/${currentWs.slug}/sandboxes/${sb.sandbox_id}/chat/stream`,
-        { text },
+        body,
       )
+      clearAttach()
       setMessages((prev) => {
         const without = prev.filter((m) => m.message_id !== tempUserMsg.message_id)
         return [
@@ -190,6 +273,17 @@ export function LandingPage() {
 
       if (r.data.streaming && r.data.run_id) {
         const total = (r.data.n as number) ?? sb.population_size
+        // 用户在对话里指定了人数 → 后端已更新任务规模；前端同步本地状态，
+        // 让右侧「样本规模」面板和左侧列表显示一致。
+        if (typeof r.data.n === 'number' && r.data.n !== sb.population_size) {
+          const newN = r.data.n as number
+          const sbId2 = sb.sandbox_id
+          setActiveSandbox((prev) =>
+            prev && prev.sandbox_id === sbId2
+              ? { ...prev, population_size: newN } : prev)
+          setSandboxes((prev) => prev.map((s) =>
+            s.sandbox_id === sbId2 ? { ...s, population_size: newN } : s))
+        }
         clearFeed()
         setLiveProgress({ done: 0, total, status: 'running',
                           kind: r.data.kind })
@@ -264,12 +358,82 @@ export function LandingPage() {
     }
   }
 
-  async function createSandboxFromSidebar(payload: CreateSandboxPayload) {
-    if (!authed || !currentWs) return
-    const r = await api.post(`/workspaces/${currentWs.slug}/sandboxes`, payload)
-    const created = r.data as Sandbox
-    setSandboxes((prev) => [created, ...prev])
-    setActiveSandbox(created)
+  async function handleConfirmDelete() {
+    if (!currentWs || !pendingDelete) return
+    const target = pendingDelete
+    setDeleting(true)
+    try {
+      await api.delete(
+        `/workspaces/${currentWs.slug}/sandboxes/${target.sandbox_id}`)
+      setSandboxes((prev) => {
+        const remaining = prev.filter(
+          (s) => s.sandbox_id !== target.sandbox_id)
+        // 删的是当前激活沙盒 → 切到剩余第一个或清空
+        if (activeSandbox?.sandbox_id === target.sandbox_id) {
+          setActiveSandbox(remaining[0] ?? null)
+        }
+        return remaining
+      })
+      toast.success(t('sandbox.deleted'))
+      setPendingDelete(null)
+    } catch {
+      toast.error(t('common.error'))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  // ---- 分组管理 ----
+  async function handleCreateGroup(name: string) {
+    if (!currentWs) return
+    try {
+      const r = await api.post(
+        `/workspaces/${currentWs.slug}/sandboxes/groups`, { name })
+      setGroups((prev) => [...prev, r.data as SandboxGroup])
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  async function handleRenameGroup(group: SandboxGroup, name: string) {
+    if (!currentWs) return
+    try {
+      await api.patch(
+        `/workspaces/${currentWs.slug}/sandboxes/groups/${group.group_id}`,
+        { name })
+      setGroups((prev) => prev.map((g) =>
+        g.group_id === group.group_id ? { ...g, name } : g))
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  async function handleDeleteGroup(group: SandboxGroup) {
+    if (!currentWs) return
+    try {
+      await api.delete(
+        `/workspaces/${currentWs.slug}/sandboxes/groups/${group.group_id}`)
+      setGroups((prev) => prev.filter((g) => g.group_id !== group.group_id))
+      // 其下任务解绑(后端已置 null),本地同步
+      setSandboxes((prev) => prev.map((s) =>
+        s.group_id === group.group_id ? { ...s, group_id: null } : s))
+      toast.success(t('sandbox.group_deleted'))
+    } catch {
+      toast.error(t('common.error'))
+    }
+  }
+
+  async function handleMoveSandbox(sb: Sandbox, groupId: string | null) {
+    if (!currentWs) return
+    try {
+      await api.patch(
+        `/workspaces/${currentWs.slug}/sandboxes/${sb.sandbox_id}`,
+        { group_id: groupId })
+      setSandboxes((prev) => prev.map((s) =>
+        s.sandbox_id === sb.sandbox_id ? { ...s, group_id: groupId } : s))
+    } catch {
+      toast.error(t('common.error'))
+    }
   }
 
   // Right panel only renders on chat view → drop the 3rd grid column to give
@@ -291,6 +455,10 @@ export function LandingPage() {
           messages={messages}
           loading={loading}
           onSend={handleSend}
+          onAttach={handleAttach}
+          attachName={attachName}
+          attaching={attaching}
+          onRemoveAttach={clearAttach}
         />
       )
     }
@@ -329,10 +497,16 @@ export function LandingPage() {
           workspaces={workspaces}
           currentWs={currentWs}
           sandboxes={sandboxes}
+          groups={groups}
           activeSandbox={activeSandbox}
           onSelectWorkspace={setCurrentWorkspace}
-          onSelectSandbox={setActiveSandbox}
-          onCreateSandbox={createSandboxFromSidebar}
+          onSelectSandbox={handlePickSandbox}
+          onDeleteSandbox={(s) => setPendingDelete(s)}
+          onNewChat={handleNewChat}
+          onCreateGroup={handleCreateGroup}
+          onRenameGroup={handleRenameGroup}
+          onDeleteGroup={handleDeleteGroup}
+          onMoveSandbox={handleMoveSandbox}
           user={user}
           collapsed={leftCollapsed}
           onToggleCollapse={toggleLeft}
@@ -366,6 +540,16 @@ export function LandingPage() {
       <CockpitOverlay open={cockpitOpen}
                       onClose={() => setCockpitOpen(false)}
                       liveProgress={liveProgress} />
+      <ConfirmDialog
+        isOpen={pendingDelete !== null}
+        title={t('sandbox.delete')}
+        message={t('sandbox.delete_confirm',
+                   { name: pendingDelete?.name ?? '' })}
+        destructive
+        loading={deleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </>
   )
 }

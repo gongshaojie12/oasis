@@ -41,7 +41,7 @@ _SYSTEM_PROMPT_ZH = """你是「万象 WANXIANG」的 AI 首席模拟官。
     "question": <提问文本>,
     "kind": <上述五种之一>,
     "options": [<choose 时的候选>] 或 null,
-    "n": <虚拟人数量整数，默认 50>,
+    "n": <用户明确说出的虚拟人数量整数；用户没提及人数时填 null>,
     "rounds": <社交轮数整数，默认 0>
   },
   "missing": [<尚需用户补充的字段名>],
@@ -71,7 +71,7 @@ Reply with strict JSON only, in the schema:
     "question": <the question to ask agents>,
     "kind": <one of the five kinds above>,
     "options": [<candidate options for choose>] or null,
-    "n": <number of agents, integer, default 50>,
+    "n": <integer number of agents ONLY if the user explicitly states it; null if the user does not mention a count>,
     "rounds": <number of social rounds, integer, default 0>
   },
   "missing": [<field names the user still needs to provide>],
@@ -91,6 +91,9 @@ _SYSTEM_PROMPT = _SYSTEM_PROMPT_ZH
 # 不再用文件路径,因为内置画像现在以 DB 为唯一真相源。
 _BUNDLED_DIST = "cn_national_joint_2020"
 
+# 用户没明说人数时的占位默认值（路由层若任务已有规模则不会用到它）
+_DEFAULT_N = 50
+
 
 class IntentParseResult(BaseModel):
     intent: Literal["simulate", "unknown"]
@@ -98,6 +101,9 @@ class IntentParseResult(BaseModel):
     missing: list[str] = []
     explanation: str = ""
     confidence: float = 0.0
+    # 用户是否在本句话里明确说了人数。False 时 request.n 是占位默认值，
+    # 路由层应保留任务现有 population_size（不被默认值覆盖）。
+    n_explicit: bool = False
 
 
 def _strip_fence(s: str) -> str:
@@ -164,10 +170,14 @@ async def parse_intent(
         f_missing.append("kind")
     if kind == "choose" and not options:
         f_missing.append("options")
-    if n is None or not isinstance(n, (int, float)) or n <= 0:
-        f_missing.append("n")
-    else:
+    # 人数是可选的：用户没明说就用占位默认值（路由层会保留任务现值），
+    # 说了才视为显式设定。n 不再算 missing。
+    if n is not None and isinstance(n, (int, float)) and n > 0:
         n = int(n)
+        n_explicit = True
+    else:
+        n = _DEFAULT_N  # 占位，不代表用户意图
+        n_explicit = False
 
     all_missing = list(dict.fromkeys(missing + f_missing))  # 合并去重
 
@@ -196,4 +206,5 @@ async def parse_intent(
 
     return IntentParseResult(intent="simulate", request=req, missing=[],
                               explanation=explanation,
-                              confidence=confidence)
+                              confidence=confidence,
+                              n_explicit=n_explicit)

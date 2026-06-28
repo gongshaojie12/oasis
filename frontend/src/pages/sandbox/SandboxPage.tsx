@@ -15,6 +15,7 @@ import { DataPanel } from '@/components/chat/DataPanel'
 import { CockpitOverlay } from '@/components/chat/CockpitOverlay'
 import { SandboxHeader } from '@/components/chat/SandboxHeader'
 import { NewSandboxModal } from '@/components/chat/NewSandboxModal'
+import { ConfirmDialog } from '@/components/data/ConfirmDialog'
 import type {
   ChatMessage,
   ChatSimulateResponse,
@@ -47,6 +48,8 @@ export function SandboxPage() {
 
   const [modalOpen, setModalOpen] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<Sandbox | null>(null)
+  const [deleting, setDeleting] = useState(false)
   const scrollRef = useRef<HTMLDivElement | null>(null)
 
   // Load sandbox list whenever workspace changes
@@ -202,6 +205,32 @@ export function SandboxPage() {
     }
   }
 
+  async function handleConfirmDelete() {
+    if (!slug || !pendingDelete) return
+    const target = pendingDelete
+    setDeleting(true)
+    try {
+      await api.delete(`/workspaces/${slug}/sandboxes/${target.sandbox_id}`)
+      const remaining = sandboxes.filter(
+        (s) => s.sandbox_id !== target.sandbox_id)
+      setSandboxes(remaining)
+      toast.success(t('sandbox.deleted'))
+      setPendingDelete(null)
+      // 删的是当前打开的沙盒 → 切到剩余第一个，否则回工作区根
+      if (target.sandbox_id === sandboxId) {
+        if (remaining.length) {
+          nav(`/w/${slug}/sandboxes/${remaining[0].sandbox_id}`)
+        } else {
+          nav(`/w/${slug}`)
+        }
+      }
+    } catch {
+      toast.error(t('common.error'))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <div className="wx-app">
       <Sidebar
@@ -210,6 +239,7 @@ export function SandboxPage() {
         activeSandboxId={sandboxId ?? null}
         onPickSandbox={(id) => nav(`/w/${slug}/sandboxes/${id}`)}
         onCreateSandbox={() => setModalOpen(true)}
+        onDeleteSandbox={(s) => setPendingDelete(s)}
       />
       <section className="wx-chat-col">
         {currentSandbox && (
@@ -250,6 +280,16 @@ export function SandboxPage() {
         onClose={() => setModalOpen(false)}
         onSubmit={handleCreateSandbox}
         submitting={creating}
+      />
+      <ConfirmDialog
+        isOpen={pendingDelete !== null}
+        title={t('sandbox.delete')}
+        message={t('sandbox.delete_confirm',
+                   { name: pendingDelete?.name ?? '' })}
+        destructive
+        loading={deleting}
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setPendingDelete(null)}
       />
     </div>
   )

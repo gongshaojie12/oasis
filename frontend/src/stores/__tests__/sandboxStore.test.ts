@@ -12,6 +12,7 @@ function mkSandbox(id = 's1'): Sandbox {
     created_at: new Date().toISOString(),
     last_active_at: new Date().toISOString(),
     archived: false,
+    group_id: null,
   }
 }
 

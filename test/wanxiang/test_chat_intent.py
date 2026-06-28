@@ -144,7 +144,9 @@ def test_choose_with_missing_options_auto_added_to_missing():
     assert "options" in r.missing
 
 
-def test_negative_n_treated_as_missing():
+def test_invalid_n_falls_back_to_default_not_missing():
+    """人数现在是可选项：非法/缺失的 n 不再算 missing，而是用占位默认值并
+    标记 n_explicit=False（路由层会保留任务现有 population_size）。"""
     raw = json.dumps({
         "intent": "simulate",
         "fields": {"material": "m", "question": "q", "kind": "rate",
@@ -153,8 +155,24 @@ def test_negative_n_treated_as_missing():
     })
     r = asyncio.run(parse_intent("x", _scripted(raw),
                                   default_distribution_path="x.yaml"))
-    assert r.request is None
-    assert "n" in r.missing
+    assert r.request is not None
+    assert "n" not in r.missing
+    assert r.n_explicit is False
+
+
+def test_explicit_n_sets_n_explicit_flag():
+    """用户明说人数 → n_explicit=True，request.n 取该值。"""
+    raw = json.dumps({
+        "intent": "simulate",
+        "fields": {"material": "m", "question": "q", "kind": "rate",
+                   "options": None, "n": 300, "rounds": 0},
+        "missing": [], "explanation": "ok", "confidence": 0.9
+    })
+    r = asyncio.run(parse_intent("测 300 人", _scripted(raw),
+                                  default_distribution_path="x.yaml"))
+    assert r.request is not None
+    assert r.request.n == 300
+    assert r.n_explicit is True
 
 
 def test_model_call_exception_returns_unknown():

@@ -353,6 +353,8 @@ body {
 }
 .wx-sandbox {
   display: flex; gap: 11px;
+  align-items: center;
+  position: relative;
   padding: 11px 12px;
   border-radius: 11px;
   cursor: pointer;
@@ -369,6 +371,27 @@ body {
 .wx-sandbox.on {
   background: var(--wx-nav-active-bg);
   border-color: var(--wx-nav-active-border);
+}
+.wx-sandbox-del {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: .16s;
+  color: var(--wx-text-tertiary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+}
+.wx-sandbox:hover .wx-sandbox-del,
+.wx-sandbox:focus-within .wx-sandbox-del { opacity: 1; }
+.wx-sandbox-del:hover {
+  color: var(--wx-danger);
+  background: var(--wx-bg-active);
 }
 .wx-sb-emoji {
   width: 30px; height: 30px;
@@ -454,6 +477,96 @@ body {
   display: grid; place-items: center;
   font-weight: 700; font-size: 13px; color: var(--wx-text-on-primary);
   flex-shrink: 0;
+}
+
+/* 「+ 新建分组」按钮 */
+.wx-newgroup-btn {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 9px;
+  font-size: 12.5px;
+  color: var(--wx-text-secondary);
+  background: transparent;
+  border: 1px dashed var(--wx-border);
+  cursor: pointer; font: inherit;
+  transition: background .12s, color .12s;
+}
+.wx-newgroup-btn:hover {
+  background: var(--wx-bg-hover); color: var(--wx-text-primary);
+}
+
+/* 分组 */
+.wx-group { margin-bottom: 2px; }
+.wx-group-head {
+  display: flex; align-items: center; position: relative;
+  border-radius: 8px;
+}
+.wx-group-head:hover { background: var(--wx-bg-hover); }
+.wx-group-toggle {
+  display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0;
+  padding: 7px 8px; background: transparent; border: none; cursor: pointer;
+  color: var(--wx-text-secondary); font: inherit; font-size: 12px;
+  font-weight: 600; text-align: left;
+}
+.wx-group-name {
+  flex: 1; min-width: 0; white-space: nowrap; overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wx-group-count {
+  font-size: 10.5px; color: var(--wx-text-tertiary); font-weight: 500;
+}
+.wx-group-more {
+  opacity: 0; transition: .16s; flex-shrink: 0;
+  background: none; border: none; cursor: pointer;
+  color: var(--wx-text-tertiary); padding: 4px; margin-right: 4px;
+  border-radius: 6px; display: inline-flex;
+}
+.wx-group-head:hover .wx-group-more { opacity: 1; }
+.wx-group-more:hover { background: var(--wx-bg-active); color: var(--wx-text-primary); }
+.wx-group-children { padding-left: 10px; }
+.wx-group-empty {
+  font-size: 11px; color: var(--wx-text-tertiary);
+  padding: 6px 12px; line-height: 1.4;
+}
+
+/* 弹出菜单(任务 … / 分组 … / 用户区) */
+.wx-pop-menu, .wx-user-menu {
+  position: absolute; z-index: 50;
+  min-width: 160px;
+  background: var(--wx-bg-card, var(--wx-bg-page));
+  border: 1px solid var(--wx-border);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px -8px rgba(0,0,0,.28);
+  padding: 5px;
+}
+.wx-pop-menu { top: 100%; right: 6px; margin-top: 2px; }
+.wx-user-menu { bottom: 100%; left: 0; right: 0; margin-bottom: 6px; }
+.wx-pop-label {
+  font-size: 10px; color: var(--wx-text-tertiary);
+  text-transform: uppercase; letter-spacing: 1px;
+  padding: 6px 10px 4px;
+}
+.wx-pop-empty {
+  font-size: 11.5px; color: var(--wx-text-tertiary); padding: 6px 10px;
+}
+.wx-pop-sep { height: 1px; background: var(--wx-border); margin: 5px 4px; }
+.wx-pop-item, .wx-user-menu-item {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 8px 10px; border-radius: 7px;
+  font-size: 12.5px; color: var(--wx-text-secondary);
+  background: transparent; border: none; cursor: pointer;
+  text-align: left; font: inherit; text-decoration: none;
+  transition: background .12s, color .12s;
+}
+.wx-pop-item:hover, .wx-user-menu-item:hover {
+  background: var(--wx-bg-hover); color: var(--wx-text-primary);
+}
+.wx-pop-item:disabled { opacity: .4; cursor: default; }
+.wx-pop-item.danger, .wx-user-menu-item.danger { color: var(--wx-danger); }
+.wx-pop-item.danger:hover, .wx-user-menu-item.danger:hover {
+  background: rgba(255,77,110,.1); color: var(--wx-danger);
 }
 
 /* Chat column */
@@ -641,6 +754,39 @@ body {
   max-width: 720px;
   margin: 4px auto 0;
 }
+
+/* 上传:附件按钮 + 已附资料 chip */
+.wx-attach-btn {
+  background: transparent; border: none; cursor: pointer;
+  color: var(--wx-text-tertiary);
+  width: 38px; height: 38px; flex-shrink: 0;
+  border-radius: 12px; display: grid; place-items: center;
+  transition: background .12s, color .12s;
+}
+.wx-attach-btn:hover:not(:disabled) {
+  background: var(--wx-bg-hover); color: var(--wx-accent-blue);
+}
+.wx-attach-btn:disabled { opacity: .4; cursor: not-allowed; }
+.wx-attach-chip {
+  max-width: 720px; margin: 0 auto 8px;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 12px; color: var(--wx-text-secondary);
+  background: var(--wx-bg-active);
+  border: 1px solid var(--wx-glass-border);
+  border-radius: 10px; padding: 6px 10px; width: fit-content;
+}
+.wx-attach-name {
+  max-width: 320px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.wx-attach-x {
+  background: none; border: none; cursor: pointer;
+  color: var(--wx-text-tertiary); display: inline-flex;
+  padding: 2px; border-radius: 5px;
+}
+.wx-attach-x:hover { color: var(--wx-danger); background: var(--wx-bg-hover); }
+.wx-spin { animation: wx-spin 1s linear infinite; }
+@keyframes wx-spin { to { transform: rotate(360deg); } }
 
 /* Data panel */
 .wx-panel {

@@ -142,6 +142,52 @@ def test_chat_simulate_simulate_intent_with_missing_fields():
     assert len(body["assistant_messages"]) == 1
 
 
+def test_explicit_n_in_chat_updates_sandbox_population():
+    """用户在对话里明说人数 → 任务 population_size 同步更新为该值。"""
+    intent = {
+        "intent": "simulate",
+        "fields": {"material": "新品 ¥6", "question": "0-10 评分",
+                    "kind": "rate", "options": None, "n": 300, "rounds": 0},
+        "missing": [], "explanation": "ok", "confidence": 0.9,
+    }
+    client = _setup(intent)
+    reg = _register(client, "chatsim_n1@x.com", "C")
+    h = _auth(reg["access_token"])
+    ws, sb = _make_sandbox(client, h)  # 建任务时 population_size=60
+    assert sb["population_size"] == 60
+    r = client.post(
+        f"/v1/workspaces/{ws['slug']}/sandboxes/{sb['sandbox_id']}/chat",
+        headers=h, json={"text": "测一下在 300 人中的购买意愿"})
+    assert r.status_code == 200, r.text
+    # 任务规模应被更新为 300
+    sb2 = client.get(
+        f"/v1/workspaces/{ws['slug']}/sandboxes/{sb['sandbox_id']}",
+        headers=h).json()
+    assert sb2["population_size"] == 300
+
+
+def test_unspecified_n_keeps_sandbox_population():
+    """用户没说人数(LLM 给 null)→ 任务 population_size 不变。"""
+    intent = {
+        "intent": "simulate",
+        "fields": {"material": "新品 ¥6", "question": "0-10 评分",
+                    "kind": "rate", "options": None, "n": None, "rounds": 0},
+        "missing": [], "explanation": "ok", "confidence": 0.9,
+    }
+    client = _setup(intent)
+    reg = _register(client, "chatsim_n2@x.com", "C")
+    h = _auth(reg["access_token"])
+    ws, sb = _make_sandbox(client, h)  # population_size=60
+    r = client.post(
+        f"/v1/workspaces/{ws['slug']}/sandboxes/{sb['sandbox_id']}/chat",
+        headers=h, json={"text": "测一下购买意愿"})
+    assert r.status_code == 200, r.text
+    sb2 = client.get(
+        f"/v1/workspaces/{ws['slug']}/sandboxes/{sb['sandbox_id']}",
+        headers=h).json()
+    assert sb2["population_size"] == 60  # 保持不变
+
+
 def test_chat_simulate_404_when_sandbox_missing():
     client = _setup({"intent": "unknown", "fields": {}, "missing": [],
                       "explanation": "", "confidence": 0})

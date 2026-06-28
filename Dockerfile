@@ -65,7 +65,11 @@ RUN pip install --upgrade pip && \
         reportlab==4.5.1 \
         "bcrypt==4.3.0" \
         "python-jose[cryptography]==3.4.0" \
-        "email-validator==2.2.0"
+        "email-validator==2.2.0" \
+        "python-multipart==0.0.20" \
+        "pypdf==5.1.0" \
+        "python-docx==1.1.2" \
+        "openpyxl==3.1.5"
 
 # 拷贝源码
 COPY oasis ./oasis

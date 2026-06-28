@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Send } from 'lucide-react'
+import { Loader2, Paperclip, Send, X } from 'lucide-react'
 import { I18nToggle } from '@/components/I18nToggle'
 import { ThemeToggle } from '@/components/ThemeToggle'
 import { useBrandStore } from '@/stores/brandStore'
@@ -18,6 +18,11 @@ interface Props {
   messages: ChatMessage[]
   loading: boolean
   onSend: (text: string) => void
+  // 文档上传(产品资料 → 提炼素材)
+  onAttach?: (file: File) => void
+  attachName?: string | null
+  attaching?: boolean
+  onRemoveAttach?: () => void
 }
 
 export function LandingChat(p: Props) {
@@ -27,6 +32,7 @@ export function LandingChat(p: Props) {
   const nav = useNavigate()
   const [text, setText] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
+  const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -147,7 +153,58 @@ export function LandingChat(p: Props) {
       </div>
 
       <form className="wx-composer" onSubmit={handleSend}>
+        {/* 已附资料 chip / 解析中 */}
+        {(p.attachName || p.attaching) && (
+          <div className="wx-attach-chip">
+            {p.attaching ? (
+              <>
+                <Loader2 size={13} className="wx-spin" />
+                {t('chat.attach_parsing')}
+              </>
+            ) : (
+              <>
+                <Paperclip size={13} />
+                <span className="wx-attach-name">
+                  {t('chat.attach_ready', { name: p.attachName })}
+                </span>
+                <button
+                  type="button"
+                  className="wx-attach-x"
+                  aria-label={t('chat.attach_remove')}
+                  onClick={p.onRemoveAttach}
+                >
+                  <X size={13} />
+                </button>
+              </>
+            )}
+          </div>
+        )}
         <div className="wx-composer-inner">
+          {p.authed && p.onAttach && (
+            <>
+              <input
+                ref={fileRef}
+                type="file"
+                hidden
+                accept=".pdf,.docx,.xlsx,.txt,.md,.csv,image/*"
+                onChange={(e) => {
+                  const f = e.target.files?.[0]
+                  if (f) p.onAttach?.(f)
+                  e.target.value = ''
+                }}
+              />
+              <button
+                type="button"
+                className="wx-attach-btn"
+                title={t('chat.attach')}
+                aria-label={t('chat.attach')}
+                disabled={p.attaching || p.loading}
+                onClick={() => fileRef.current?.click()}
+              >
+                <Paperclip size={17} />
+              </button>
+            </>
+          )}
           <textarea
             aria-label={t('landing.composer_placeholder')}
             value={text}

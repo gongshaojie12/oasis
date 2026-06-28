@@ -17,14 +17,15 @@ import asyncio
 import uuid
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import (APIRouter, Depends, File, HTTPException, Query, Request,
+                     UploadFile)
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from wanxiang.api.auth_user import require_user
 from wanxiang.api.deps import get_model_factory
 from wanxiang.api.i18n import get_request_locale, t
-from wanxiang.api.sandboxes import ChatMessage, Sandbox
+from wanxiang.api.sandboxes import ChatMessage, Sandbox, SandboxGroup
 
 router = APIRouter()
 
@@ -80,6 +81,17 @@ class UpdateSandboxReq(BaseModel):
     population_size: int | None = None
     distribution_path: str | None = None
     archived: bool | None = None
+    # group_id 支持显式置 null(移出分组)。用 model_fields_set 区分
+    # "未提供" 与 "显式设为 null"。
+    group_id: str | None = None
+
+
+class CreateGroupReq(BaseModel):
+    name: str = Field(min_length=1, max_length=64)
+
+
+class RenameGroupReq(BaseModel):
+    name: str = Field(min_length=1, max_length=64)
 
 
 class AddMessageReq(BaseModel):
@@ -97,6 +109,8 @@ class ChatSimulateReq(BaseModel):
     # 旧默认值 {"provider": "stub"} 会让请求永远带 stub,导致工作区
     # 配置的通义/DeepSeek 等永远不生效(req_model 非 None → 直接返回 stub)。
     model: dict | None = None
+    # 上传文档经 LLM 提炼后的素材;随本条聊天拼进 parse_intent 当 material 线索。
+    document_context: str | None = Field(default=None, max_length=4000)
 
 
 # ---- CRUD ----
@@ -128,6 +142,56 @@ def create_sandbox(slug: str, req: CreateSandboxReq, request: Request,
     return sb.to_dict()
 
 
+# ---- groups（预测任务分组）----
+# ⚠️ 必须声明在 /{sandbox_id} 动态段之前，否则 "groups" 会被当成 sandbox_id。
+
+@router.get("/workspaces/{slug}/sandboxes/groups")
+def list_groups(slug: str, request: Request, user=Depends(require_user)):
+    locale = get_request_locale(request)
+    ws = _resolve_workspace_and_member(slug, request, user.user_id, locale)
+    groups = request.app.state.sandbox_store.list_groups(ws.workspace_id)
+    return {"groups": [g.to_dict() for g in groups]}
+
+
+@router.post("/workspaces/{slug}/sandboxes/groups")
+def create_group(slug: str, req: CreateGroupReq, request: Request,
+                 user=Depends(require_user)):
+    locale = get_request_locale(request)
+    ws = _resolve_workspace_and_member(slug, request, user.user_id, locale)
+    g = SandboxGroup(group_id="auto", workspace_id=ws.workspace_id,
+                     name=req.name, created_by_user_id=user.user_id)
+    g = request.app.state.sandbox_store.create_group(g)
+    return g.to_dict()
+
+
+def _resolve_group(group_id: str, workspace_id: str,
+                   request: Request, locale: str) -> SandboxGroup:
+    g = request.app.state.sandbox_store.get_group(group_id)
+    if not g or g.workspace_id != workspace_id:
+        raise HTTPException(404, t("sandbox.group_not_found", locale=locale))
+    return g
+
+
+@router.patch("/workspaces/{slug}/sandboxes/groups/{group_id}")
+def rename_group(slug: str, group_id: str, req: RenameGroupReq,
+                 request: Request, user=Depends(require_user)):
+    locale = get_request_locale(request)
+    ws = _resolve_workspace_and_member(slug, request, user.user_id, locale)
+    _resolve_group(group_id, ws.workspace_id, request, locale)
+    g = request.app.state.sandbox_store.rename_group(group_id, req.name)
+    return g.to_dict() if g else None
+
+
+@router.delete("/workspaces/{slug}/sandboxes/groups/{group_id}")
+def delete_group(slug: str, group_id: str, request: Request,
+                 user=Depends(require_user)):
+    locale = get_request_locale(request)
+    ws = _resolve_workspace_and_member(slug, request, user.user_id, locale)
+    _resolve_group(group_id, ws.workspace_id, request, locale)
+    request.app.state.sandbox_store.delete_group(group_id)
+    return {"ok": True}
+
+
 @router.get("/workspaces/{slug}/sandboxes/{sandbox_id}")
 def get_sandbox(slug: str, sandbox_id: str, request: Request,
                  user=Depends(require_user)):
@@ -143,7 +207,18 @@ def update_sandbox(slug: str, sandbox_id: str, req: UpdateSandboxReq,
     locale = get_request_locale(request)
     ws = _resolve_workspace_and_member(slug, request, user.user_id, locale)
     _resolve_sandbox(sandbox_id, ws.workspace_id, request, locale)
+    # 一般字段:None 视为未提供而跳过。
     patch = {k: v for k, v in req.model_dump().items() if v is not None}
+    # group_id 例外:显式提供(含 null=移出分组)就应用。
+    if "group_id" in req.model_fields_set:
+        gid = req.group_id
+        if gid is not None:
+            # 校验分组存在且属于本工作区
+            g = request.app.state.sandbox_store.get_group(gid)
+            if not g or g.workspace_id != ws.workspace_id:
+                raise HTTPException(404, t("sandbox.group_not_found",
+                                            locale=locale))
+        patch["group_id"] = gid
     sb = request.app.state.sandbox_store.update_sandbox(sandbox_id, **patch)
     return sb.to_dict() if sb else None
 
@@ -156,6 +231,57 @@ def delete_sandbox(slug: str, sandbox_id: str, request: Request,
     _resolve_sandbox(sandbox_id, ws.workspace_id, request, locale)
     request.app.state.sandbox_store.delete_sandbox(sandbox_id)
     return {"ok": True}
+
+
+# ---- 文档上传(提炼成模拟素材)----
+
+_MAX_DOC_BYTES = 10 * 1024 * 1024  # 10 MB
+
+
+@router.post("/workspaces/{slug}/sandboxes/{sandbox_id}/documents")
+async def upload_document(slug: str, sandbox_id: str, request: Request,
+                          file: UploadFile = File(...),
+                          model_factory=Depends(get_model_factory),
+                          user=Depends(require_user)):
+    """上传产品资料文档/图片 → 解析 + LLM 提炼成素材(material)。"""
+    from wanxiang.api.model_resolve import resolve_workspace_model
+    from wanxiang.chat import docparse
+
+    locale = get_request_locale(request)
+    ws = _resolve_workspace_and_member(slug, request, user.user_id, locale)
+    sb = _resolve_sandbox(sandbox_id, ws.workspace_id, request, locale)
+
+    filename = file.filename or "upload"
+    kind = docparse.kind_of(filename)
+    if kind == "unsupported":
+        raise HTTPException(400, t("doc.unsupported", locale=locale))
+
+    data = await file.read()
+    if len(data) > _MAX_DOC_BYTES:
+        raise HTTPException(400, t("doc.too_large", locale=locale))
+    if not data:
+        raise HTTPException(400, t("doc.empty", locale=locale))
+
+    model_cfg = resolve_workspace_model(
+        None, ws.workspace_id, request.app.state.model_config_store)
+    model_call = model_factory(model_cfg)
+
+    try:
+        if kind == "image":
+            material = await docparse.distill_image_material(
+                data, filename, model_call)
+        else:
+            text = docparse.extract_text(filename, data)
+            material = await docparse.distill_material(text, model_call)
+    except docparse.DocParseError as e:
+        raise HTTPException(400, str(e))
+    except Exception as e:  # noqa: BLE001 — 视觉模型不支持等
+        raise HTTPException(
+            422, t("doc.distill_failed", locale=locale) + f" ({e})")
+
+    _ = sb  # 鉴权用;素材不落库,由前端随下一条聊天带回
+    return {"filename": filename, "kind": kind,
+            "material": material, "chars": len(material)}
 
 
 # ---- messages ----
@@ -224,8 +350,12 @@ async def _prepare_chat_simulation(slug: str, sandbox_id: str,
     model_cfg = resolve_workspace_model(
         req_model, ws.workspace_id, request.app.state.model_config_store)
     model_call = model_factory(model_cfg)
+    # 上传文档已提炼的素材拼进意图解析文本(资料已被提炼得短,不超限)。
+    parse_text = req.text
+    if req.document_context:
+        parse_text = f"{req.text}\n\n【附带资料】\n{req.document_context}"
     intent = await parse_intent(
-        req.text, model_call=model_call,
+        parse_text, model_call=model_call,
         default_distribution_path=sb.distribution_path,
         locale=locale,
     )
@@ -246,9 +376,13 @@ async def _prepare_chat_simulation(slug: str, sandbox_id: str,
     sim_req.model = model_cfg
     if not sim_req.distribution_path:
         sim_req.distribution_path = sb.distribution_path
-    # 样本数始终以沙盒设置的实际值为准 —— LLM 解析出的 n(几乎总是默认 50)
-    # 仅作兜底,不能覆盖用户在沙盒里设的 population_size。
-    sim_req.n = sb.population_size
+    # 人群规模：用户在本句话里明说了人数(n_explicit)→ 以它为准，并把任务
+    # population_size 同步更新(让面板/列表显示一致)；没明说 → 沿用任务现值。
+    if intent.n_explicit and sim_req.n and sim_req.n != sb.population_size:
+        ss.update_sandbox(sandbox_id, population_size=sim_req.n)
+        sb = _resolve_sandbox(sandbox_id, ws.workspace_id, request, locale)
+    else:
+        sim_req.n = sb.population_size
 
     return {"clarify": False, "user_msg": user_msg, "parse_msg": parse_msg,
             "sim_req": sim_req, "model_cfg": model_cfg, "ws": ws, "sb": sb}

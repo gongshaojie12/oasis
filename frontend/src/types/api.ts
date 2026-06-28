@@ -65,6 +65,15 @@ export interface Sandbox {
   created_at: string
   last_active_at: string
   archived: boolean
+  group_id: string | null
+}
+
+export interface SandboxGroup {
+  group_id: string
+  workspace_id: string
+  name: string
+  created_by_user_id: string | null
+  created_at: string
 }
 
 export type ChatMessageKind =

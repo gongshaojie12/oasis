@@ -236,6 +236,27 @@ CATALOG: dict[str, dict[Locale, str]] = {
         "zh": "Sandbox 不属于当前 Workspace",
         "en": "Sandbox does not belong to this workspace",
     },
+    "sandbox.group_not_found": {
+        "zh": "分组不存在",
+        "en": "Group not found",
+    },
+    "doc.unsupported": {
+        "zh": "不支持的文件格式(支持 PDF/Word/Excel/TXT/MD/CSV/图片)",
+        "en": "Unsupported file type (PDF/Word/Excel/TXT/MD/CSV/image)",
+    },
+    "doc.too_large": {
+        "zh": "文件过大(上限 10MB)",
+        "en": "File too large (max 10MB)",
+    },
+    "doc.empty": {
+        "zh": "文件为空",
+        "en": "Empty file",
+    },
+    "doc.distill_failed": {
+        "zh": "资料提炼失败,请确认工作区模型可用(图片需视觉模型)",
+        "en": "Failed to distill material; check the workspace model "
+              "(images need a vision model)",
+    },
     # model config
     "model_config.key_required": {
         "zh": "该 provider 需要 API Key",

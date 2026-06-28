@@ -36,6 +36,8 @@ class Sandbox:
     last_active_at: datetime = field(
         default_factory=lambda: datetime.now(timezone.utc))
     archived: bool = False
+    # 所属分组(预测任务分组管理);None = 未分组
+    group_id: str | None = None
 
     def to_dict(self) -> dict:
         return {
@@ -50,6 +52,27 @@ class Sandbox:
             "created_at": self.created_at.isoformat(),
             "last_active_at": self.last_active_at.isoformat(),
             "archived": self.archived,
+            "group_id": self.group_id,
+        }
+
+
+@dataclass
+class SandboxGroup:
+    """预测任务分组(类似 ChatGPT 项目/文件夹)。"""
+    group_id: str
+    workspace_id: str
+    name: str
+    created_by_user_id: str | None = None
+    created_at: datetime = field(
+        default_factory=lambda: datetime.now(timezone.utc))
+
+    def to_dict(self) -> dict:
+        return {
+            "group_id": self.group_id,
+            "workspace_id": self.workspace_id,
+            "name": self.name,
+            "created_by_user_id": self.created_by_user_id,
+            "created_at": self.created_at.isoformat(),
         }
 
 
@@ -86,6 +109,7 @@ class InMemorySandboxStore:
     def __init__(self):
         self._sb: dict[str, Sandbox] = {}
         self._msgs: list[ChatMessage] = []
+        self._groups: dict[str, SandboxGroup] = {}
         self._lock = Lock()
 
     def create_sandbox(self, sb: Sandbox) -> Sandbox:
@@ -151,6 +175,42 @@ class InMemorySandboxStore:
             items = items[-limit:]
         return items
 
+    # ---- groups ----
+    def create_group(self, group: SandboxGroup) -> SandboxGroup:
+        if group.group_id == "auto":
+            group.group_id = uuid.uuid4().hex
+        with self._lock:
+            self._groups[group.group_id] = group
+        return group
+
+    def get_group(self, group_id: str) -> SandboxGroup | None:
+        return self._groups.get(group_id)
+
+    def list_groups(self, workspace_id: str) -> list[SandboxGroup]:
+        with self._lock:
+            items = [g for g in self._groups.values()
+                     if g.workspace_id == workspace_id]
+        return sorted(items, key=lambda g: g.created_at)
+
+    def rename_group(self, group_id: str, name: str) -> SandboxGroup | None:
+        with self._lock:
+            g = self._groups.get(group_id)
+            if not g:
+                return None
+            g.name = name
+            return g
+
+    def delete_group(self, group_id: str) -> bool:
+        """删分组:把其下 sandbox 解绑(group_id=None),不删任务。"""
+        with self._lock:
+            if group_id not in self._groups:
+                return False
+            del self._groups[group_id]
+            for sb in self._sb.values():
+                if sb.group_id == group_id:
+                    sb.group_id = None
+            return True
+
 
 def make_sandbox_store(dsn: str | None, *, eager_init: bool = True):
     if not dsn:
@@ -175,6 +235,6 @@ def make_sandbox_store(dsn: str | None, *, eager_init: bool = True):
 
 
 __all__ = [
-    "Sandbox", "ChatMessage",
+    "Sandbox", "SandboxGroup", "ChatMessage",
     "InMemorySandboxStore", "make_sandbox_store",
 ]

@@ -3,6 +3,7 @@
 // Mirrors chat.html .sb / .sandbox / .usr.
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { Trash2 } from 'lucide-react'
 import { BrandLogo } from '@/components/BrandLogo'
 import { useAuthStore } from '@/stores/authStore'
 import { clearTokens } from '@/lib/auth'
@@ -15,6 +16,7 @@ interface Props {
   activeSandboxId: string | null
   onPickSandbox: (id: string) => void
   onCreateSandbox: () => void
+  onDeleteSandbox: (s: Sandbox) => void
 }
 
 function fmtTime(iso: string, lang: string): string {
@@ -35,6 +37,7 @@ export function Sidebar({
   activeSandboxId,
   onPickSandbox,
   onCreateSandbox,
+  onDeleteSandbox,
 }: Props) {
   const { t, i18n } = useTranslation()
   const nav = useNavigate()
@@ -77,18 +80,34 @@ export function Sidebar({
           </div>
         )}
         {sandboxes.map((s) => (
-          <button
+          <div
             key={s.sandbox_id}
-            type="button"
+            role="button"
+            tabIndex={0}
             className={`wx-sandbox ${s.sandbox_id === activeSandboxId ? 'on' : ''}`}
             onClick={() => onPickSandbox(s.sandbox_id)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onPickSandbox(s.sandbox_id)
+              }
+            }}
           >
             <span className="wx-sb-emoji" aria-hidden="true">{s.emoji}</span>
             <span className="wx-sb-txt">
               <b>{s.name}</b>
               <small>{fmtTime(s.last_active_at, i18n.language)}</small>
             </span>
-          </button>
+            <button
+              type="button"
+              className="wx-sandbox-del"
+              title={t('sandbox.delete')}
+              aria-label={t('sandbox.delete')}
+              onClick={(e) => { e.stopPropagation(); onDeleteSandbox(s) }}
+            >
+              <Trash2 size={14} />
+            </button>
+          </div>
         ))}
       </div>
       <div className="wx-sb-foot">
